@@ -25,8 +25,8 @@ export interface KdsTicket {
 })
 export class KdsGridComponent implements OnInit, OnDestroy {
   @Input() tickets: KdsTicket[] = [];
-  @Output() onAdvanceTicket = new EventEmitter<{ ticketId: string; nextStatus: string }>();
-  @Output() onToggleItem = new EventEmitter<{ ticketId: string; itemId?: string; itemIndex: number }>();
+  @Output() advanceTicket = new EventEmitter<{ ticketId: string; nextStatus: string }>();
+  @Output() toggleItemPrepared = new EventEmitter<{ ticketId: string; itemId?: string; itemIndex: number }>();
 
   private timerInterval: ReturnType<typeof setInterval> | null = null;
   now: number = Date.now();
@@ -57,11 +57,11 @@ export class KdsGridComponent implements OnInit, OnDestroy {
   }
 
   advance(ticket: KdsTicket): void {
-    this.onAdvanceTicket.emit({ ticketId: ticket.id, nextStatus: 'READY' });
+    this.advanceTicket.emit({ ticketId: ticket.id, nextStatus: 'READY' });
   }
 
   toggleItem(ticket: KdsTicket, itemIndex: number): void {
     const item = ticket.items[itemIndex];
-    this.onToggleItem.emit({ ticketId: ticket.id, itemId: item?.id, itemIndex });
+    this.toggleItemPrepared.emit({ ticketId: ticket.id, itemId: item?.id, itemIndex });
   }
 }

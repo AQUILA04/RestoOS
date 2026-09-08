@@ -1,5 +1,5 @@
 <div *ngIf="!authenticated">
-  <resto-pin-lockscreen [users]="staff" (onLoginSuccess)="onPinLogin($event)"></resto-pin-lockscreen>
+  <resto-pin-lockscreen [users]="staff" (loginSuccess)="onPinLogin($event)"></resto-pin-lockscreen>
   <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
 </div>
 
@@ -15,8 +15,8 @@
       [zones]="zones"
       [tables]="tables"
       [activeZoneId]="activeZoneId"
-      (onZoneSelect)="activeZoneId = $event"
-      (onTableSelect)="selectTable($event)">
+      (zoneSelect)="activeZoneId = $event"
+      (tableSelect)="selectTable($event)">
     </resto-floor-plan>
   </div>
 
@@ -27,9 +27,9 @@
       [products]="products"
       [cartItems]="cartItems"
       [activeCategoryId]="activeCategoryId"
-      (onCategorySelect)="onCategorySelect($event)"
-      (onProductSelect)="onProductSelect($event)"
-      (onCheckout)="submitOrder()">
+      (categorySelect)="onCategorySelect($event)"
+      (productSelect)="onProductSelect($event)"
+      (checkout)="submitOrder()">
     </resto-pos-layout>
   </div>
 
@@ -42,8 +42,8 @@
     [isOpen]="modifierOpen"
     [productName]="modifierProductName"
     [modifierGroups]="modifierGroups"
-    (onConfirm)="onModifiersConfirmed($event)"
-    (onClose)="modifierOpen = false">
+    (confirm)="onModifiersConfirmed($event)"
+    (dismiss)="modifierOpen = false">
   </resto-modifier-modal>
 
   <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>

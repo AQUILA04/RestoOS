@@ -12,7 +12,8 @@
         <td>
           <button type="button" id="edit-price-btn" (click)="startEdit(p)">Modifier</button>
           <ng-container *ngIf="editingProductId === p.id">
-            <input id="store-price-override" [(ngModel)]="overridePrice" />
+            <label class="sr-only" for="store-price-override">Prix local</label>
+            <input id="store-price-override" name="store-price-override" [(ngModel)]="overridePrice" />
             <button type="button" id="save-override-btn" (click)="saveOverride(p)">Enregistrer</button>
           </ng-container>
         </td>

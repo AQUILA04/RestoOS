@@ -26,16 +26,16 @@ export class FloorPlanComponent {
   @Input() zones: ZoneTab[] = [];
   @Input() tables: TableNode[] = [];
   @Input() activeZoneId: string | null = null;
-  @Output() onTableSelect = new EventEmitter<TableNode>();
-  @Output() onZoneSelect = new EventEmitter<string>();
+  @Output() tableSelect = new EventEmitter<TableNode>();
+  @Output() zoneSelect = new EventEmitter<string>();
 
   selectZone(zoneId: string): void {
     this.activeZoneId = zoneId;
-    this.onZoneSelect.emit(zoneId);
+    this.zoneSelect.emit(zoneId);
   }
 
   selectTable(table: TableNode): void {
-    this.onTableSelect.emit(table);
+    this.tableSelect.emit(table);
   }
 
   get filteredTables(): TableNode[] {

@@ -8,7 +8,7 @@ import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from
 })
 export class PinLockscreenComponent implements OnChanges {
   @Input() users: Array<{ id: string; name: string; avatarUrl?: string }> = [];
-  @Output() onLoginSuccess = new EventEmitter<{ userId: string; pin: string }>();
+  @Output() loginSuccess = new EventEmitter<{ userId: string; pin: string }>();
 
   selectedUserId: string | null = null;
   enteredPin = '';
@@ -48,7 +48,7 @@ export class PinLockscreenComponent implements OnChanges {
   submitPin(): void {
     const userId = this.selectedUserId || this.users[0]?.id || localStorage.getItem('user_id');
     if (userId && this.enteredPin.length === 4) {
-      this.onLoginSuccess.emit({
+      this.loginSuccess.emit({
         userId,
         pin: this.enteredPin
       });

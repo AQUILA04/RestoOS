@@ -26,8 +26,8 @@ export class ModifierModalComponent {
   @Input() modifierGroups: ModifierGroupItem[] = [];
   @Input() isOpen: boolean = false;
 
-  @Output() onConfirm = new EventEmitter<ModifierOptionItem[]>();
-  @Output() onClose = new EventEmitter<void>();
+  @Output() confirm = new EventEmitter<ModifierOptionItem[]>();
+  @Output() dismiss = new EventEmitter<void>();
 
   selectedOptions: Map<string, ModifierOptionItem> = new Map();
 
@@ -57,13 +57,13 @@ export class ModifierModalComponent {
 
   confirmSelection(): void {
     if (this.isValid) {
-      this.onConfirm.emit(Array.from(this.selectedOptions.values()));
+      this.confirm.emit(Array.from(this.selectedOptions.values()));
       this.selectedOptions.clear();
     }
   }
 
   closeModal(): void {
     this.selectedOptions.clear();
-    this.onClose.emit();
+    this.dismiss.emit();
   }
 }
