@@ -60,7 +60,8 @@ jobs:
           RESTOOS_JWT_SECRET: e2e-secret-key-which-is-long-enough-123456
           SPRING_MAIL_HOST: localhost
           SPRING_MAIL_PORT: 1025
-          SPRING_REDIS_HOST: localhost      - if: always()
+          SPRING_REDIS_HOST: localhost
+      - if: always()
         run: docker compose -f docker-compose.test.yml down -v
       - uses: actions/upload-artifact@v4
         if: always()
