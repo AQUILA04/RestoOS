@@ -48,21 +48,44 @@ export class AdminPortalPage {
   }
 
   /** Seed JWT + tenant context used by admin dashboard / catalog pages. */
-  async injectSession(token: string, organizationId: string, storeId: string) {
-    await this.page.goto('/admin/dashboard');
+  async injectSession(
+    token: string,
+    organizationId: string,
+    storeId: string,
+    userId?: string
+  ) {
+    await this.page.goto('/admin/dashboard', { waitUntil: 'domcontentloaded' });
+    await this.page.waitForSelector('resto-root', { state: 'attached', timeout: 15000 });
     await this.page.evaluate(
-      ([accessToken, org, store]) => {
+      ([accessToken, org, store, uid]) => {
         localStorage.setItem('access_token', accessToken as string);
         localStorage.setItem('organization_id', org as string);
         localStorage.setItem('store_id', store as string);
+        localStorage.setItem('resto_authenticated', 'true');
+        if (uid) {
+          localStorage.setItem('user_id', uid as string);
+        }
       },
-      [token, organizationId, storeId]
+      [token, organizationId, storeId, userId || '']
     );
+    await this.page.reload({ waitUntil: 'networkidle' });
+    await expect(this.page.locator('h1')).toContainText('Dashboard', { timeout: 15000 });
   }
 
   async setStorePriceOverride(productName: string, newPrice: string) {
+    const productsResponse = this.page.waitForResponse(
+      (res) =>
+        res.url().includes('/products') &&
+        res.request().method() === 'GET' &&
+        res.ok(),
+      { timeout: 15000 }
+    );
     await this.gotoCatalogManager();
-    await this.page.locator(`tr:has-text("${productName}") #edit-price-btn`).click();
+    await expect(this.page.locator('h1')).toContainText('Catalogue', { timeout: 15000 });
+    await productsResponse;
+    const row = this.page.locator(`tr:has-text("${productName}")`);
+    await expect(row).toBeVisible({ timeout: 15000 });
+    await row.locator('#edit-price-btn').click();
     await this.storePriceOverrideInput.fill(newPrice);
     await this.savePriceOverrideBtn.click();
     await expect(this.toastMessage).toContainText('Prix local mis à jour');

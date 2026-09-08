@@ -59,10 +59,16 @@ export class KdsPageComponent implements OnInit, OnDestroy {
   }
 
   onAdvance(event: { ticketId: string; nextStatus: string }): void {
-    // Golden path: ready button always advances to READY and drops the ticket
-    this.api.patchData(`/api/v1/kitchen/orders/${event.ticketId}/status`, { status: 'READY' }).subscribe({
+    this.api.patchData(`/api/v1/kitchen/orders/${event.ticketId}/status`, { status: event.nextStatus }).subscribe({
       next: () => {
-        this.tickets = this.tickets.filter((t) => t.id !== event.ticketId);
+        if (event.nextStatus === 'READY') {
+          this.tickets = this.tickets.filter((t) => t.id !== event.ticketId);
+          return;
+        }
+        const ticket = this.tickets.find((t) => t.id === event.ticketId);
+        if (ticket) {
+          ticket.status = event.nextStatus as KdsTicket['status'];
+        }
       },
       error: () => undefined,
     });

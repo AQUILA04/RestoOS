@@ -1,8 +1,10 @@
+// Ensure sockjs/stomp Node shims exist before any app imports evaluate.
 (window as any).global = window;
 
-import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
-import { AppModule } from './app/app.module';
+async function bootstrap(): Promise<void> {
+  const { platformBrowserDynamic } = await import('@angular/platform-browser-dynamic');
+  const { AppModule } = await import('./app/app.module');
+  await platformBrowserDynamic().bootstrapModule(AppModule);
+}
 
-platformBrowserDynamic()
-  .bootstrapModule(AppModule)
-  .catch((err) => console.error(err));
+bootstrap().catch((err) => console.error(err));

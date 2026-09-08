@@ -2,7 +2,7 @@
   <h1>Cuisine</h1>
   <resto-kds-grid
     [tickets]="tickets"
-    (advanceTicket)="onAdvance($event)"
-    (toggleItemPrepared)="onToggleItem($event)">
+    (advanceTicket)="onAdvance($any($event))"
+    (toggleItemPrepared)="onToggleItem($any($event))">
   </resto-kds-grid>
 </div>

@@ -32,7 +32,10 @@ export class KdsScreenPage {
   async markTicketReady(orderNum: string) {
     const ticket = await this.waitForOrderTicket(orderNum);
     const readyBtn = ticket.locator('#btn-ticket-ready');
+    // SENT_TO_KITCHEN → PREPARING, then PREPARING → READY
     await readyBtn.click();
-    await expect(ticket).not.toBeVisible();
+    await expect(readyBtn).toContainText(/PRÊT|PRET/i, { timeout: 10000 });
+    await readyBtn.click();
+    await expect(ticket).not.toBeVisible({ timeout: 10000 });
   }
 }

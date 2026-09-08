@@ -57,7 +57,8 @@ export class KdsGridComponent implements OnInit, OnDestroy {
   }
 
   advance(ticket: KdsTicket): void {
-    this.advanceTicket.emit({ ticketId: ticket.id, nextStatus: 'READY' });
+    const nextStatus = ticket.status === 'SENT_TO_KITCHEN' ? 'PREPARING' : 'READY';
+    this.advanceTicket.emit({ ticketId: ticket.id, nextStatus });
   }
 
   toggleItem(ticket: KdsTicket, itemIndex: number): void {

@@ -13,6 +13,7 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
   let storeId: string;
   let productId: string;
   let waiterUserId: string;
+  let ownerUserId: string;
   let orderNumber: string;
   let ownerToken: string;
 
@@ -70,9 +71,36 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
       expect(storeRes.status()).toBe(200);
       storeId = (await storeRes.json()).data.id;
 
-      const boundToken = await request.post(`${backendApiUrl}/api/v1/test/token`, {
+      // Bind store context before mutating tenant resources (matches companion bootstrap)
+      const storeBoundToken = await request.post(`${backendApiUrl}/api/v1/test/token`, {
         data: { roles: ['OWNER'], organizationId: orgId, storeId },
       });
+      expect(storeBoundToken.status()).toBe(200);
+      ownerToken = (await storeBoundToken.json()).data.accessToken;
+      headers = { Authorization: `Bearer ${ownerToken}` };
+
+      // Persist a real OWNER user so audit_logs.user_id FK succeeds on catalog/order mutations
+      const ownerUserRes = await request.post(`${backendApiUrl}/api/v1/users`, {
+        headers,
+        data: {
+          email: `owner-${runId}@bistrogourmet.fr`,
+          firstName: 'Olivier',
+          lastName: 'Owner',
+        },
+      });
+      expect(ownerUserRes.status()).toBe(200);
+      ownerUserId = (await ownerUserRes.json()).data.id as string;
+
+      const membershipRes = await request.post(`${backendApiUrl}/api/v1/memberships`, {
+        headers,
+        data: { userId: ownerUserId, role: 'OWNER', storeIds: [storeId] },
+      });
+      expect(membershipRes.status()).toBe(200);
+
+      const boundToken = await request.post(`${backendApiUrl}/api/v1/test/token`, {
+        data: { roles: ['OWNER'], organizationId: orgId, storeId, userId: ownerUserId },
+      });
+      expect(boundToken.status()).toBe(200);
       ownerToken = (await boundToken.json()).data.accessToken;
       headers = { Authorization: `Bearer ${ownerToken}` };
 
@@ -98,6 +126,11 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
       const activateRes = await request.post(
         `${backendApiUrl}/api/v1/auth/activate?token=${tokenMatch![1]}`
       );
+      if (activateRes.status() !== 200) {
+        throw new Error(
+          `Activation failed (${activateRes.status()}): ${await activateRes.text()}`
+        );
+      }
       expect(activateRes.status()).toBe(200);
     });
 
@@ -152,18 +185,14 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
           data: { priceOverride: 15.5, available: true },
         }
       );
+      if (overrideRes.status() !== 200) {
+        throw new Error(`Store override failed (${overrideRes.status()}): ${await overrideRes.text()}`);
+      }
       expect(overrideRes.status()).toBe(200);
 
-      // Prefer API override assertion; UI override remains covered when admin token/session present
+      // Prefer API override assertion; UI override after origin navigation (localStorage needs a real origin)
       if (ownerToken) {
-        await adminPage.page.evaluate(
-          ([token, org, store]) => {
-            localStorage.setItem('access_token', token as string);
-            localStorage.setItem('organization_id', org as string);
-            localStorage.setItem('store_id', store as string);
-          },
-          [ownerToken, orgId, storeId]
-        );
+        await adminPage.injectSession(ownerToken, orgId, storeId, ownerUserId);
         await adminPage.setStorePriceOverride('Burger Signature', '15.50');
       }
 
@@ -201,6 +230,7 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
     });
 
     await test.step('Stage 3: POS PIN, table, modifiers, idempotent order', async () => {
+      await posPage.gotoPos();
       await posPage.page.evaluate(
         ([org, store, staff]) => {
           localStorage.setItem('organization_id', org as string);
@@ -209,6 +239,7 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
         },
         [orgId, storeId, [{ id: waiterUserId, name: 'Wendy Waiter' }]]
       );
+      await posPage.page.reload();
 
       await posPage.authenticateWithPin('1234', 'Wendy Waiter');
       await posPage.selectTable('Table 05');
@@ -219,6 +250,7 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
     });
 
     await test.step('Stage 4: KDS realtime ticket → READY', async () => {
+      await kdsPage.page.goto('/kds');
       await kdsPage.page.evaluate(
         ([token, org, store]) => {
           localStorage.setItem('access_token', token as string);
@@ -235,15 +267,14 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
 
     await test.step('Stage 5: Deliver, pay, dashboard (no receipt V2)', async () => {
       await posPage.deliverAndPayOrder(orderNumber, `client-${runId}@gmail.com`);
-      await adminPage.page.evaluate(
-        ([token, org, store]) => {
-          localStorage.setItem('access_token', token as string);
-          localStorage.setItem('organization_id', org as string);
-          localStorage.setItem('store_id', store as string);
-        },
-        [ownerToken, orgId, storeId]
+      // Declared revenue is payment amount (TTC): 15.50 override + 10% tax = 17.05
+      await adminPage.verifyDashboardMetricsExact(
+        ownerToken,
+        orgId,
+        storeId,
+        '17.05',
+        1
       );
-      await adminPage.verifyDashboardMetrics('15.50', 1);
     });
   });
 });

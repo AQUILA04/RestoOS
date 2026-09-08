@@ -1,5 +1,6 @@
 package com.resto.tenant.service;
 
+import com.resto.core.security.TenantContext;
 import com.resto.tenant.domain.Membership;
 import com.resto.tenant.domain.MembershipStore;
 import com.resto.tenant.domain.User;
@@ -8,6 +9,8 @@ import com.resto.tenant.repository.MembershipStoreRepository;
 import com.resto.tenant.repository.UserRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -34,6 +37,9 @@ public class AuthService {
     private final SecretKey jwtSecret;
     private final long stationTtlMinutes;
     private final String audience;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     /** Simple in-memory rate limit: userId → attempts in window */
     private final ConcurrentHashMap<UUID, AttemptWindow> pinAttempts = new ConcurrentHashMap<>();
@@ -65,7 +71,17 @@ public class AuthService {
         if (rawPin == null || !rawPin.matches("\\d{4}")) {
             throw new IllegalArgumentException("PIN must be exactly 4 digits");
         }
+        if (organizationId == null) {
+            throw new IllegalArgumentException("organizationId is required for PIN login");
+        }
         checkRateLimit(userId);
+
+        // PIN login is unauthenticated: bind RLS from the station/org payload before membership reads.
+        TenantContext.setOrgId(organizationId);
+        if (storeId != null) {
+            TenantContext.setStoreId(storeId);
+        }
+        applyRlsSession(organizationId, storeId);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
@@ -79,7 +95,7 @@ public class AuthService {
         }
 
         Membership membership = membershipRepository.findByUserId(userId).stream()
-                .filter(m -> organizationId == null || organizationId.equals(m.getOrganizationId()))
+                .filter(m -> organizationId.equals(m.getOrganizationId()))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("No membership for user"));
 
@@ -119,6 +135,17 @@ public class AuthService {
                 "storeId", resolvedStoreId != null ? resolvedStoreId.toString() : "",
                 "roles", List.of(role)
         );
+    }
+
+    private void applyRlsSession(UUID organizationId, UUID storeId) {
+        entityManager.createNativeQuery("SELECT set_config('app.current_org_id', :orgId, true)")
+                .setParameter("orgId", organizationId.toString())
+                .getSingleResult();
+        if (storeId != null) {
+            entityManager.createNativeQuery("SELECT set_config('app.current_store_id', :storeId, true)")
+                    .setParameter("storeId", storeId.toString())
+                    .getSingleResult();
+        }
     }
 
     @Transactional

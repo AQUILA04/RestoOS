@@ -198,6 +198,10 @@
                         <include>**/*IntegrationTest.java</include>
                         <include>**/*SmokeTest.java</include>
                     </includes>
+                    <excludes>
+                        <!-- Executed by surefire as an H2 smoke contract test -->
+                        <exclude>**/ApiContractSmokeIT.java</exclude>
+                    </excludes>
                 </configuration>
                 <executions>
                     <execution>

@@ -25,7 +25,7 @@ public class PaymentController {
     }
 
     @PostMapping("/api/v1/orders/{id}/payment/mark-paid")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER', 'CASHIER')")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER', 'CASHIER', 'WAITER')")
     public Response<Payment> markPaid(
             @PathVariable("id") UUID orderId,
             @RequestHeader("Idempotency-Key") String idempotencyKey,
@@ -63,7 +63,7 @@ public class PaymentController {
 
     /** Legacy path kept for compatibility */
     @PostMapping("/api/v1/payments")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER', 'CASHIER')")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER', 'CASHIER', 'WAITER')")
     public Response<Payment> recordPayment(
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
             @RequestBody MarkPaidRequest request) {

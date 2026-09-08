@@ -14,5 +14,6 @@
     <include file="db/changelog/changes/007-cancellation-schema.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/changes/008-golden-path-schema.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/changes/009-invitation-tokens.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changes/010-invitation-rls-activate.sql" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>

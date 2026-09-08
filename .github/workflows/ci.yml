@@ -48,19 +48,18 @@ jobs:
       - name: Start containers
         run: docker compose -f docker-compose.test.yml up -d --wait
       - name: Failsafe IT
+        # Skip surefire (already green in unit-tests). Do not inject SPRING_DATASOURCE_*:
+        # H2 @ActiveProfiles("test") ITs must keep H2; Postgres is covered by e2e-tests.
         run: |
           cd backend
-          mvn -B verify -DskipTests=false
+          mvn -B verify -DskipTests
         env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/restoos_test_db
-          SPRING_DATASOURCE_USERNAME: restoos_app
-          SPRING_DATASOURCE_PASSWORD: restoos_app_pass
-          SPRING_LIQUIBASE_USER: restoos_admin
-          SPRING_LIQUIBASE_PASSWORD: restoos_password
           RESTOOS_JWT_SECRET: e2e-secret-key-which-is-long-enough-123456
           SPRING_MAIL_HOST: localhost
           SPRING_MAIL_PORT: 1025
-          SPRING_REDIS_HOST: localhost      - if: always()
+          SPRING_REDIS_HOST: localhost
+      - name: Stop containers
+        if: always()
         run: docker compose -f docker-compose.test.yml down -v
       - uses: actions/upload-artifact@v4
         if: always()
@@ -69,7 +68,6 @@ jobs:
           path: backend/target/failsafe-reports/
           retention-days: 7
           if-no-files-found: warn
-
   frontend-build:
     name: 3. Frontend Build
     runs-on: ubuntu-latest
@@ -145,10 +143,12 @@ jobs:
         run: |
           cd frontend
           npm run build -- --configuration=development
-          npx http-server dist/restoos-shell/browser -p 4200 -c-1 > frontend.log 2>&1 &
+          # serve -s provides SPA fallback so /admin/catalog and /pos resolve to index.html
+          npx --yes serve@14.2.4 -s dist/restoos-shell/browser -l 4200 > frontend.log 2>&1 &
           for i in $(seq 1 30); do
-            if curl -sf http://localhost:4200 > /dev/null; then
-              echo "Frontend UP"
+            CODE=$(curl -sf -o /tmp/spa-catalog.html -w '%{http_code}' http://localhost:4200/admin/catalog || true)
+            if [ "$CODE" = "200" ] && grep -q 'resto-root' /tmp/spa-catalog.html; then
+              echo "Frontend UP (SPA deep link OK)"
               exit 0
             fi
             sleep 2
