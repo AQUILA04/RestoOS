@@ -1,0 +1,12 @@
+<div class="stock-86-grid">
+  <div 
+    *ngFor="let p of products" 
+    class="product-card" 
+    [class.is-86]="p.is86"
+    (click)="toggle(p)">
+    <div class="product-name">{{ p.name }}</div>
+    <div class="status-badge" [class.badge-epuise]="p.is86">
+      {{ p.is86 ? '🔴 ÉPUISÉ' : '🟢 DISPONIBLE' }}
+    </div>
+  </div>
+</div>
