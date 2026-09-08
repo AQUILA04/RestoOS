@@ -2,7 +2,7 @@
 title: 'Story 2.1: Central Category, Product & Modifier Catalogue APIs'
 type: 'feature'
 created: '2026-09-08'
-status: 'in-progress'
+status: 'verified'
 baseline_commit: '30d41ba'
 route: 'dispatch'
 review_loop_iteration: 0
