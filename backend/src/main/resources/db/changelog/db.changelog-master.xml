@@ -10,5 +10,6 @@
     <include file="db/changelog/changes/003-store-catalog-schema.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/changes/004-floor-plan-schema.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/changes/005-order-schema.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changes/006-payment-audit-schema.sql" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>
