@@ -75,10 +75,22 @@ test.describe('Companion — TAKEAWAY lifecycle & cancel', () => {
       productPrice: 8,
     });
 
+    const managerUserRes = await request.post(`${backendApiUrl}/api/v1/users`, {
+      headers: authHeaders(tenant.ownerToken),
+      data: {
+        email: `manager-${runId}@companion.test`,
+        firstName: 'Mgr',
+        lastName: `${runId}`,
+      },
+    });
+    expect(managerUserRes.status()).toBe(200);
+    const managerUserId = (await managerUserRes.json()).data.id as string;
+
     const { accessToken: managerToken } = await mintToken(request, backendApiUrl, {
       roles: ['STORE_MANAGER'],
       organizationId: tenant.orgId,
       storeId: tenant.storeId,
+      userId: managerUserId,
     });
 
     const order = await createTakeawayOrder(request, backendApiUrl, managerToken, {

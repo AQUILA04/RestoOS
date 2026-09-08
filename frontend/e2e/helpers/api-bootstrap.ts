@@ -7,6 +7,7 @@ export type BootstrapTenant = {
   storeId: string;
   storeIdB?: string;
   ownerToken: string;
+  ownerUserId: string;
   categoryId: string;
   productId: string;
   productName: string;
@@ -92,6 +93,25 @@ export async function bootstrapTenant(
     storeId,
   }));
 
+  // Persist a real user so audit_logs.user_id FK succeeds on mutating flows
+  const userRes = await request.post(`${backendApiUrl}/api/v1/users`, {
+    headers: authHeaders(ownerToken),
+    data: {
+      email: `owner-${runId}@companion.test`,
+      firstName: 'Owner',
+      lastName: `${runId}`,
+    },
+  });
+  expect(userRes.status()).toBe(200);
+  const ownerUserId = (await userRes.json()).data.id as string;
+
+  ({ accessToken: ownerToken } = await mintToken(request, backendApiUrl, {
+    roles: ['OWNER'],
+    organizationId: orgId,
+    storeId,
+    userId: ownerUserId,
+  }));
+
   let storeIdB: string | undefined;
   if (options?.secondStore) {
     const storeBRes = await request.post(`${backendApiUrl}/api/v1/stores`, {
@@ -133,6 +153,7 @@ export async function bootstrapTenant(
     storeId,
     storeIdB,
     ownerToken,
+    ownerUserId,
     categoryId,
     productId,
     productName,
