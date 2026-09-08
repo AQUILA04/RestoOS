@@ -1,0 +1,30 @@
+.resto-btn {
+  min-height: var(--touch-target-min);
+  padding: 0 20px;
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.resto-btn-primary {
+  background-color: var(--color-primary-flame);
+  color: #FFFFFF;
+}
+
+.resto-btn-primary:hover:not(:disabled) {
+  background-color: var(--color-primary-flame-hover);
+}
+
+.resto-btn-danger {
+  background-color: var(--color-status-occupied);
+  color: #FFFFFF;
+}
+
+.resto-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

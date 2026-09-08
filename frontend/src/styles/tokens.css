@@ -1,0 +1,33 @@
+:root {
+  /* Color Palette - UX-DR1 */
+  --color-primary-flame: #D84315;
+  --color-primary-flame-hover: #BF360C;
+  --color-kds-obsidian: #121214;
+  --color-kds-card-bg: #1E1E22;
+  --color-light-surface: #F8F9FA;
+  --color-light-border: #E0E0E0;
+
+  /* Table & Order Status Colors */
+  --color-status-available: #2E7D32;
+  --color-status-occupied: #C62828;
+  --color-status-reserved: #0277BD;
+  --color-status-preparing: #F57C00;
+
+  /* Typography Pairing */
+  --font-display: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Touch Targets & Spacing */
+  --touch-target-min: 48px;
+  --touch-target-large: 64px;
+  --pos-sidebar-width: 220px;
+  --pos-cart-width: 380px;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-light-surface);
+  margin: 0;
+  padding: 0;
+}
