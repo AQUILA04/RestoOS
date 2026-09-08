@@ -50,18 +50,15 @@ jobs:
       - name: Failsafe IT
         run: |
           cd backend
-          mvn -B verify -DskipTests=false
+          # Skip surefire (already green in unit-tests). Failsafe only.
+          mvn -B verify -DskipTests
         env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/restoos_test_db
-          SPRING_DATASOURCE_USERNAME: restoos_app
-          SPRING_DATASOURCE_PASSWORD: restoos_app_pass
-          SPRING_LIQUIBASE_USER: restoos_admin
-          SPRING_LIQUIBASE_PASSWORD: restoos_password
           RESTOOS_JWT_SECRET: e2e-secret-key-which-is-long-enough-123456
           SPRING_MAIL_HOST: localhost
           SPRING_MAIL_PORT: 1025
           SPRING_REDIS_HOST: localhost
-      - if: always()
+          # Do not set SPRING_DATASOURCE_* here: H2 @ActiveProfiles("test") ITs must keep H2.
+          # Postgres app-role path is exercised by the e2e-tests job.      - if: always()
         run: docker compose -f docker-compose.test.yml down -v
       - uses: actions/upload-artifact@v4
         if: always()

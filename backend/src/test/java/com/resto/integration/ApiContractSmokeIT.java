@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-class ApiContractSmokeIT {
+class ApiContractSmokeIT extends AbstractH2SpringBootTest {
 
     private static final String SECRET = "test-secret-key-which-is-long-enough-123456";
 
