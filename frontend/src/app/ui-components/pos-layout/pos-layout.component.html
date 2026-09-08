@@ -1,0 +1,52 @@
+<div class="pos-layout-container">
+  <!-- Column 1: Categories 220px -->
+  <div class="column-categories">
+    <div 
+      *ngFor="let c of categories" 
+      class="category-card" 
+      [class.active]="c.id === activeCategoryId"
+      (click)="selectCategory(c.id)">
+      {{ c.name }}
+    </div>
+  </div>
+
+  <!-- Column 2: Product Grid Flex -->
+  <div class="column-products">
+    <div class="products-grid">
+      <div 
+        *ngFor="let p of products" 
+        class="product-card" 
+        [class.is-86]="p.is86"
+        (click)="selectProduct(p)">
+        <div class="product-title">{{ p.name }}</div>
+        <div class="product-price">{{ p.price | currency:'EUR' }}</div>
+        <div *ngIf="p.is86" class="badge-86">🔴 ÉPUISÉ</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Column 3: Active Cart 380px -->
+  <div class="column-cart">
+    <div class="cart-header">
+      <h2>Commande Active</h2>
+    </div>
+    <div class="cart-items-list">
+      <div *ngFor="let item of cartItems" class="cart-item-row">
+        <div class="item-info">
+          <div class="item-name">{{ item.quantity }}x {{ item.name }}</div>
+          <div *ngIf="item.modifiers.length" class="item-mods">{{ item.modifiers.join(', ') }}</div>
+        </div>
+        <div class="item-total">{{ (item.unitPrice * item.quantity) | currency:'EUR' }}</div>
+      </div>
+    </div>
+    <div class="cart-footer">
+      <div class="cart-total-row">
+        <span>TOTAL</span>
+        <span class="total-amount">{{ cartTotal | currency:'EUR' }}</span>
+      </div>
+      <button class="checkout-btn" [disabled]="!cartItems.length" (click)="onCheckout.emit()">
+        ENVOYER EN CUISINE ➔
+      </button>
+    </div>
+  </div>
+</div>
