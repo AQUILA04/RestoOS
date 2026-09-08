@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, tap, of, catchError, throwError } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { StoreContextService } from './store-context.service';
 import { ApiResponse } from './api.service';
@@ -24,49 +24,47 @@ export class AuthService {
     roles?: string[];
     authenticated?: boolean;
   }> {
+    const storeId = this.storeContext.storeId || localStorage.getItem('store_id') || '';
+    const organizationId =
+      this.storeContext.organizationId || localStorage.getItem('organization_id') || '';
+
     return this.http
-      .post<ApiResponse<any>>(`${environment.apiUrl}/api/v1/auth/pin-login`, { userId, pin })
+      .post<ApiResponse<any>>(`${environment.apiUrl}/api/v1/auth/pin-login`, {
+        userId,
+        pin,
+        storeId: storeId || undefined,
+        organizationId: organizationId || undefined,
+      })
       .pipe(
         map((r) => r.data),
         tap((data) => {
           if (data && data.authenticated === false) {
             throw new Error('PIN invalide');
           }
-          const token = data?.accessToken || data?.token || localStorage.getItem('access_token') || undefined;
+          if (!data?.accessToken && !data?.token) {
+            throw new Error('PIN invalide');
+          }
+          const token = data.accessToken || data.token;
           this.storeContext.setSession({
             accessToken: token,
             userId: data?.userId || userId,
-            organizationId: data?.organizationId || this.storeContext.organizationId || '',
-            storeId: data?.storeId || this.storeContext.storeId || '',
+            organizationId: data?.organizationId || organizationId,
+            storeId: data?.storeId || storeId,
             roles: data?.roles || [],
           });
-        }),
-        catchError((err) => {
-          // Station unlock fallback for e2e / backends that only return authenticated:true
-          if (err?.message === 'PIN invalide') {
-            return throwError(() => err);
-          }
-          this.storeContext.setSession({
-            userId,
-            organizationId: this.storeContext.organizationId || localStorage.getItem('organization_id') || '',
-            storeId: this.storeContext.storeId || localStorage.getItem('store_id') || '',
-            roles: [],
-          });
-          return of({ userId, authenticated: true });
         }),
       );
   }
 
-  setOidcToken(token: string): void {
-    localStorage.setItem('access_token', token);
+  activate(token: string): Observable<{ activated: boolean; userId?: string; email?: string }> {
+    return this.http
+      .get<ApiResponse<any>>(`${environment.apiUrl}/api/v1/auth/activate`, {
+        params: { token },
+      })
+      .pipe(map((r) => r.data));
   }
 
-  unlockStation(userId: string): void {
-    this.storeContext.setSession({
-      userId,
-      organizationId: this.storeContext.organizationId || '',
-      storeId: this.storeContext.storeId || '',
-      roles: [],
-    });
+  setOidcToken(token: string): void {
+    localStorage.setItem('access_token', token);
   }
 }

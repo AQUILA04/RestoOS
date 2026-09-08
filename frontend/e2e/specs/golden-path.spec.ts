@@ -121,7 +121,13 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
 
       const groupRes = await request.post(`${backendApiUrl}/api/v1/catalog/modifier-groups`, {
         headers,
-        data: { name: 'Cuisson', required: true, minSelection: 1, maxSelection: 1 },
+        data: {
+          name: 'Cuisson',
+          required: true,
+          minSelection: 1,
+          maxSelection: 1,
+          productId,
+        },
       });
       expect(groupRes.status()).toBe(200);
       const groupId = (await groupRes.json()).data.id;

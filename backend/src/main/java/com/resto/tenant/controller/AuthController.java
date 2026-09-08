@@ -3,6 +3,7 @@ package com.resto.tenant.controller;
 import com.resto.core.response.Response;
 import com.resto.core.security.TenantContext;
 import com.resto.tenant.service.AuthService;
+import com.resto.tenant.service.InvitationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -15,9 +16,23 @@ import java.util.UUID;
 public class AuthController {
 
     private final AuthService authService;
+    private final InvitationService invitationService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, InvitationService invitationService) {
         this.authService = authService;
+        this.invitationService = invitationService;
+    }
+
+    @RequestMapping(value = "/activate", method = {RequestMethod.GET, RequestMethod.POST})
+    public Response<Map<String, Object>> activate(@RequestParam("token") String token) {
+        Map<String, Object> result = invitationService.activate(token);
+        return Response.<Map<String, Object>>builder()
+                .status(HttpStatus.OK)
+                .statusCode(HttpStatus.OK.value())
+                .message("default.message.success")
+                .service("RESTO-OS")
+                .data(result)
+                .build();
     }
 
     @PostMapping("/pin-login")

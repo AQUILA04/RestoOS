@@ -1,9 +1,17 @@
 package com.resto.catalog.service;
 
 import com.resto.audit.service.AuditService;
+import com.resto.catalog.domain.ModifierGroup;
+import com.resto.catalog.domain.ModifierOption;
 import com.resto.catalog.domain.Product;
+import com.resto.catalog.domain.ProductModifierGroup;
 import com.resto.catalog.domain.StoreProduct;
+import com.resto.catalog.dto.ResolvedModifierGroupDto;
+import com.resto.catalog.dto.ResolvedModifierOptionDto;
 import com.resto.catalog.dto.ResolvedProductDto;
+import com.resto.catalog.repository.ModifierGroupRepository;
+import com.resto.catalog.repository.ModifierOptionRepository;
+import com.resto.catalog.repository.ProductModifierGroupRepository;
 import com.resto.catalog.repository.ProductRepository;
 import com.resto.catalog.repository.StoreProductRepository;
 import com.resto.core.security.TenantContext;
@@ -15,6 +23,9 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -27,15 +38,24 @@ public class StoreCatalogService {
 
     private final ProductRepository productRepository;
     private final StoreProductRepository storeProductRepository;
+    private final ProductModifierGroupRepository productModifierGroupRepository;
+    private final ModifierGroupRepository modifierGroupRepository;
+    private final ModifierOptionRepository modifierOptionRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final AuditService auditService;
 
     public StoreCatalogService(ProductRepository productRepository,
                                StoreProductRepository storeProductRepository,
+                               ProductModifierGroupRepository productModifierGroupRepository,
+                               ModifierGroupRepository modifierGroupRepository,
+                               ModifierOptionRepository modifierOptionRepository,
                                SimpMessagingTemplate messagingTemplate,
                                AuditService auditService) {
         this.productRepository = productRepository;
         this.storeProductRepository = storeProductRepository;
+        this.productModifierGroupRepository = productModifierGroupRepository;
+        this.modifierGroupRepository = modifierGroupRepository;
+        this.modifierOptionRepository = modifierOptionRepository;
         this.messagingTemplate = messagingTemplate;
         this.auditService = auditService;
     }
@@ -104,6 +124,8 @@ public class StoreCatalogService {
         Map<UUID, StoreProduct> overrideMap = storeOverrides.stream()
                 .collect(Collectors.toMap(StoreProduct::getProductId, Function.identity()));
 
+        Map<UUID, List<ResolvedModifierGroupDto>> modifiersByProduct = loadModifierGroupsByProduct(organizationId);
+
         List<ResolvedProductDto> result = new ArrayList<>();
         for (Product product : products) {
             StoreProduct override = overrideMap.get(product.getId());
@@ -125,9 +147,72 @@ public class StoreCatalogService {
                     .imageUrl(product.getImageUrl())
                     .is86(!storeAvailable)
                     .available(isAvailable)
+                    .modifierGroups(modifiersByProduct.getOrDefault(product.getId(), List.of()))
                     .build());
         }
         return result;
+    }
+
+    /**
+     * Loads ProductModifierGroup links, ModifierGroup, and ModifierOption rows for the org,
+     * grouped by product id in display order.
+     */
+    private Map<UUID, List<ResolvedModifierGroupDto>> loadModifierGroupsByProduct(UUID organizationId) {
+        List<ProductModifierGroup> links = productModifierGroupRepository.findByOrganizationId(organizationId);
+        if (links.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<UUID> groupIds = links.stream()
+                .map(ProductModifierGroup::getModifierGroupId)
+                .distinct()
+                .toList();
+
+        Map<UUID, ModifierGroup> groupsById = modifierGroupRepository.findAllById(groupIds).stream()
+                .collect(Collectors.toMap(ModifierGroup::getId, Function.identity()));
+
+        Map<UUID, List<ModifierOption>> optionsByGroupId = modifierOptionRepository
+                .findByModifierGroupIdInOrderByDisplayOrderAsc(groupIds)
+                .stream()
+                .collect(Collectors.groupingBy(ModifierOption::getModifierGroupId));
+
+        Map<UUID, List<ResolvedModifierGroupDto>> byProduct = new HashMap<>();
+        Map<UUID, List<ProductModifierGroup>> linksByProduct = links.stream()
+                .collect(Collectors.groupingBy(ProductModifierGroup::getProductId));
+
+        for (Map.Entry<UUID, List<ProductModifierGroup>> entry : linksByProduct.entrySet()) {
+            List<ProductModifierGroup> productLinks = entry.getValue().stream()
+                    .sorted(Comparator.comparing(l -> l.getDisplayOrder() != null ? l.getDisplayOrder() : 0))
+                    .toList();
+
+            List<ResolvedModifierGroupDto> resolvedGroups = new ArrayList<>();
+            for (ProductModifierGroup link : productLinks) {
+                ModifierGroup group = groupsById.get(link.getModifierGroupId());
+                if (group == null) {
+                    continue;
+                }
+                List<ResolvedModifierOptionDto> options = optionsByGroupId
+                        .getOrDefault(group.getId(), List.of())
+                        .stream()
+                        .map(opt -> ResolvedModifierOptionDto.builder()
+                                .id(opt.getId())
+                                .name(opt.getName())
+                                .priceDelta(opt.getPriceDelta())
+                                .build())
+                        .toList();
+
+                resolvedGroups.add(ResolvedModifierGroupDto.builder()
+                        .id(group.getId())
+                        .name(group.getName())
+                        .required(group.getRequired())
+                        .minSelection(group.getMinSelection())
+                        .maxSelection(group.getMaxSelection())
+                        .options(options)
+                        .build());
+            }
+            byProduct.put(entry.getKey(), resolvedGroups);
+        }
+        return byProduct;
     }
 
     private void afterCommit(Runnable action) {

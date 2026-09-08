@@ -40,7 +40,7 @@ public class SecurityConfig implements WebMvcConfigurer {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/auth/pin-login").permitAll()
+                .requestMatchers("/api/v1/auth/pin-login", "/api/v1/auth/activate").permitAll()
                 .requestMatchers("/actuator/health", "/actuator/info", "/error").permitAll()
                 .requestMatchers("/ws/**").permitAll()
                 .anyRequest().authenticated()

@@ -108,10 +108,7 @@ export class PosPageComponent implements OnInit {
         this.loadOperationalData();
       },
       error: () => {
-        this.auth.unlockStation(event.userId);
-        this.authenticated = true;
-        this.activeTab = 'floor';
-        this.loadOperationalData();
+        this.errorMessage = 'PIN invalide';
       },
     });
   }

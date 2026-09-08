@@ -14,6 +14,7 @@ import { PosOrderPageComponent } from './pages/pos/pos-order-page.component';
 import { KdsPageComponent } from './pages/kds/kds-page.component';
 import { AdminCatalogPageComponent } from './pages/admin/admin-catalog-page.component';
 import { AdminDashboardPageComponent } from './pages/admin/admin-dashboard-page.component';
+import { ActivatePageComponent } from './pages/activate/activate-page.component';
 
 @NgModule({
   declarations: [
@@ -23,6 +24,7 @@ import { AdminDashboardPageComponent } from './pages/admin/admin-dashboard-page.
     KdsPageComponent,
     AdminCatalogPageComponent,
     AdminDashboardPageComponent,
+    ActivatePageComponent,
   ],
   imports: [
     BrowserModule,

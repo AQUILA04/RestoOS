@@ -47,9 +47,14 @@ public class FloorPlanController {
                                                  @RequestBody CreateTableRequest request) {
         UUID organizationId = resolveOrg(request.getOrganizationId());
         UUID zoneId = request.getZoneId();
-        if (zoneId == null && request.getZone() != null) {
-            Zone zone = floorPlanService.findOrCreateZone(organizationId, storeId, request.getZone());
+        // Accept zone name (e.g. golden path: { zone: "Salle", name: "Table 05", capacity: 4 })
+        // and auto-create the zone when it does not exist yet.
+        if (zoneId == null && request.getZone() != null && !request.getZone().isBlank()) {
+            Zone zone = floorPlanService.findOrCreateZone(organizationId, storeId, request.getZone().trim());
             zoneId = zone.getId();
+        }
+        if (zoneId == null) {
+            throw new IllegalArgumentException("zoneId or zone name is required");
         }
         String tableNumber = request.getTableNumber() != null ? request.getTableNumber() : request.getName();
         RestaurantTable table = floorPlanService.createTable(
