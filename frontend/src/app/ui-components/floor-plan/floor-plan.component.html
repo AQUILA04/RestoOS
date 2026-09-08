@@ -1,0 +1,26 @@
+<div class="floor-plan-container">
+  <div class="zone-tabs">
+    <button 
+      *ngFor="let z of zones" 
+      class="zone-tab" 
+      [class.active]="z.id === activeZoneId"
+      (click)="selectZone(z.id)">
+      {{ z.name }}
+    </button>
+  </div>
+
+  <div class="tables-grid">
+    <div 
+      *ngFor="let t of filteredTables" 
+      class="table-node" 
+      [class.status-available]="t.status === 'AVAILABLE'"
+      [class.status-occupied]="t.status === 'OCCUPIED'"
+      [class.status-reserved]="t.status === 'RESERVED'"
+      [class.status-out-of-service]="t.status === 'OUT_OF_SERVICE'"
+      (click)="selectTable(t)">
+      <div class="table-number">T-{{ t.tableNumber }}</div>
+      <div class="table-capacity">👥 {{ t.capacity }}</div>
+      <div class="table-status-label">{{ t.status }}</div>
+    </div>
+  </div>
+</div>

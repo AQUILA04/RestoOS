@@ -1,0 +1,97 @@
+.floor-plan-container {
+  padding: 16px;
+  background-color: var(--color-light-surface);
+}
+
+.zone-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.zone-tab {
+  padding: 10px 24px;
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid var(--color-light-border);
+  background-color: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.zone-tab.active {
+  background-color: var(--color-primary-flame);
+  color: #FFFFFF;
+  border-color: var(--color-primary-flame);
+}
+
+.tables-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 20px;
+}
+
+.table-node {
+  width: 100px;
+  height: 100px;
+  border-radius: 12px;
+  background-color: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 3px solid var(--color-light-border);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.table-node:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* UX-DR5: 3px status borders and colors */
+.table-node.status-available {
+  border-color: #2E7D32; /* Available Green */
+}
+
+.table-node.status-occupied {
+  border-color: #C62828; /* Occupied Ruby Red */
+  background-color: #FFEBEE;
+}
+
+.table-node.status-reserved {
+  border-color: #0277BD; /* Reserved Blue */
+  background-color: #E1F5FE;
+}
+
+.table-node.status-out-of-service {
+  border-color: #757575;
+  background-color: #EEEEEE;
+  opacity: 0.6;
+}
+
+.table-number {
+  font-family: var(--font-display);
+  font-weight: bold;
+  font-size: 18px;
+  color: #222222;
+}
+
+.table-capacity {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: #666666;
+  margin-top: 4px;
+}
+
+.table-status-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  margin-top: 4px;
+  text-transform: uppercase;
+  font-weight: bold;
+}
