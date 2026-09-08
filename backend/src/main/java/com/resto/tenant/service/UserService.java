@@ -41,6 +41,20 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    /**
+     * Finds an existing user by email or creates a placeholder user record.
+     * Used by the invite flow to resolve an email to a User ID before Keycloak onboarding.
+     */
+    public User findOrCreateUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseGet(() -> {
+                    User user = User.builder()
+                            .email(email)
+                            .build();
+                    return userRepository.save(user);
+                });
+    }
+
     @Transactional(readOnly = true)
     public User getUserById(UUID id) {
         return userRepository.findById(id)

@@ -37,6 +37,15 @@ public class FloorPlanService {
         return zoneRepository.findByStoreIdOrderByDisplayOrderAsc(storeId);
     }
 
+    /**
+     * Finds an existing zone by name within a store, or creates one if it does not exist.
+     * Used by the E2E-friendly table endpoint to avoid requiring a separate zone creation step.
+     */
+    public Zone findOrCreateZone(UUID organizationId, UUID storeId, String zoneName) {
+        return zoneRepository.findByStoreIdAndName(storeId, zoneName)
+                .orElseGet(() -> createZone(organizationId, storeId, zoneName, 0));
+    }
+
     public RestaurantTable createTable(UUID organizationId, UUID storeId, UUID zoneId, String tableNumber, Integer capacity, Integer posX, Integer posY, String shape) {
         if (!zoneRepository.existsById(zoneId)) {
             throw new IllegalArgumentException("Zone not found: " + zoneId);

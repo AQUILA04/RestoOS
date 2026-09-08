@@ -75,6 +75,50 @@ public class FloorPlanController {
                 .build();
     }
 
+    /**
+     * E2E-friendly endpoint: POST /api/v1/stores/{storeId}/tables
+     * Payload: { zone: "Salle", name: "Table 05", capacity: 4 }
+     * organizationId sourced from X-Tenant-ID header.
+     * Auto-creates the zone by name if it does not already exist.
+     */
+    @PostMapping("/api/v1/stores/{storeId}/tables")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER')")
+    public Response<RestaurantTable> createTableForStore(
+            @PathVariable("storeId") UUID storeId,
+            @RequestHeader(value = "X-Tenant-ID", required = false) UUID tenantId,
+            @RequestBody CreateTableRequest request) {
+
+        UUID organizationId = tenantId != null ? tenantId : request.getOrganizationId();
+
+        // Resolve or auto-create zone by name when zoneId is not supplied
+        UUID zoneId = request.getZoneId();
+        if (zoneId == null && request.getZone() != null) {
+            Zone zone = floorPlanService.findOrCreateZone(organizationId, storeId, request.getZone());
+            zoneId = zone.getId();
+        }
+
+        // 'name' in E2E payload maps to tableNumber
+        String tableNumber = request.getTableNumber() != null ? request.getTableNumber() : request.getName();
+
+        RestaurantTable table = floorPlanService.createTable(
+                organizationId,
+                storeId,
+                zoneId,
+                tableNumber,
+                request.getCapacity(),
+                request.getPosX(),
+                request.getPosY(),
+                request.getShape()
+        );
+        return Response.<RestaurantTable>builder()
+                .status(HttpStatus.OK)
+                .statusCode(HttpStatus.OK.value())
+                .message("default.message.success")
+                .service("RESTO-OS")
+                .data(table)
+                .build();
+    }
+
     @GetMapping("/tables")
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER', 'WAITER', 'CASHIER')")
     public Response<List<RestaurantTable>> getTablesByStore(@RequestParam("storeId") UUID storeId) {
@@ -123,6 +167,8 @@ public class FloorPlanController {
         private UUID storeId;
         private UUID zoneId;
         private String tableNumber;
+        private String name;      // E2E alias for tableNumber
+        private String zone;      // E2E zone name string (auto-resolved to zoneId)
         private Integer capacity;
         private Integer posX;
         private Integer posY;
@@ -136,6 +182,10 @@ public class FloorPlanController {
         public void setZoneId(UUID zoneId) { this.zoneId = zoneId; }
         public String getTableNumber() { return tableNumber; }
         public void setTableNumber(String tableNumber) { this.tableNumber = tableNumber; }
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public String getZone() { return zone; }
+        public void setZone(String zone) { this.zone = zone; }
         public Integer getCapacity() { return capacity; }
         public void setCapacity(Integer capacity) { this.capacity = capacity; }
         public Integer getPosX() { return posX; }
