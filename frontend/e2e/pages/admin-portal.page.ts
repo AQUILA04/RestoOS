@@ -62,7 +62,9 @@ export class AdminPortalPage {
 
   async setStorePriceOverride(productName: string, newPrice: string) {
     await this.gotoCatalogManager();
-    await this.page.locator(`tr:has-text("${productName}") #edit-price-btn`).click();
+    const row = this.page.locator(`tr:has-text("${productName}")`);
+    await expect(row).toBeVisible({ timeout: 10000 });
+    await row.locator('#edit-price-btn').click();
     await this.storePriceOverrideInput.fill(newPrice);
     await this.savePriceOverrideBtn.click();
     await expect(this.toastMessage).toContainText('Prix local mis à jour');
