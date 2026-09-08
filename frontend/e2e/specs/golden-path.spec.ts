@@ -70,6 +70,14 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
       expect(storeRes.status()).toBe(200);
       storeId = (await storeRes.json()).data.id;
 
+      // Bind store context before mutating tenant resources (matches companion bootstrap)
+      const storeBoundToken = await request.post(`${backendApiUrl}/api/v1/test/token`, {
+        data: { roles: ['OWNER'], organizationId: orgId, storeId },
+      });
+      expect(storeBoundToken.status()).toBe(200);
+      ownerToken = (await storeBoundToken.json()).data.accessToken;
+      headers = { Authorization: `Bearer ${ownerToken}` };
+
       // Persist a real OWNER user so audit_logs.user_id FK succeeds on catalog/order mutations
       const ownerUserRes = await request.post(`${backendApiUrl}/api/v1/users`, {
         headers,
@@ -82,14 +90,16 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
       expect(ownerUserRes.status()).toBe(200);
       const ownerUserId = (await ownerUserRes.json()).data.id as string;
 
-      await request.post(`${backendApiUrl}/api/v1/memberships`, {
+      const membershipRes = await request.post(`${backendApiUrl}/api/v1/memberships`, {
         headers,
         data: { userId: ownerUserId, role: 'OWNER', storeIds: [storeId] },
       });
+      expect(membershipRes.status()).toBe(200);
 
       const boundToken = await request.post(`${backendApiUrl}/api/v1/test/token`, {
         data: { roles: ['OWNER'], organizationId: orgId, storeId, userId: ownerUserId },
       });
+      expect(boundToken.status()).toBe(200);
       ownerToken = (await boundToken.json()).data.accessToken;
       headers = { Authorization: `Bearer ${ownerToken}` };
 
