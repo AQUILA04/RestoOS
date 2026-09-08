@@ -16,10 +16,10 @@ test.describe('Companion — offline queue & kitchen snapshot recovery', () => {
 
   test('IndexedDB offline queue + navigator.onLine stub; kitchen GET recovers READY', async ({
     request,
-    page,
     backendApiUrl,
     posPage,
   }) => {
+    const page = posPage.page;
     const tenant = await bootstrapTenant(request, backendApiUrl, {
       runId,
       orgPrefix: 'Offline Org',
@@ -28,8 +28,8 @@ test.describe('Companion — offline queue & kitchen snapshot recovery', () => {
     });
 
     await test.step('Offline queue: stub offline, write IndexedDB, assert pending', async () => {
-      await posPage.page.goto('/pos');
-      await posPage.page.evaluate(
+      await page.goto('/pos');
+      await page.evaluate(
         ([token, org, store]) => {
           localStorage.setItem('access_token', token as string);
           localStorage.setItem('organization_id', org as string);
