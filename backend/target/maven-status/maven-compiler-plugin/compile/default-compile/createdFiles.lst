@@ -90,6 +90,7 @@ com\resto\floorplan\domain\Zone.class
 com\resto\payment\controller\PaymentController$RecordPaymentRequest.class
 com\resto\floorplan\controller\FloorPlanController.class
 com\resto\tenant\repository\MembershipStoreRepository.class
+com\resto\core\idempotency\IdempotencyInterceptor$1.class
 com\resto\catalog\domain\Product$ProductBuilder.class
 com\resto\audit\domain\AuditLog.class
 com\resto\catalog\repository\ModifierOptionRepository.class

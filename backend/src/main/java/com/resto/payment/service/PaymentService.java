@@ -32,6 +32,10 @@ public class PaymentService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
 
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Payment amount must be greater than zero");
+        }
+
         if ("CANCELLED".equals(order.getStatus())) {
             throw new IllegalStateException("Cannot record payment for CANCELLED order: " + orderId);
         }
@@ -46,7 +50,16 @@ public class PaymentService {
                 .build();
         Payment savedPayment = paymentRepository.save(payment);
 
-        order.setPaymentStatus("PAID");
+        BigDecimal totalPaid = paymentRepository.findByOrderId(orderId).stream()
+                .map(Payment::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (order.getTotalAmount() == null || totalPaid.compareTo(order.getTotalAmount()) >= 0) {
+            order.setPaymentStatus("PAID");
+        } else {
+            order.setPaymentStatus("PARTIALLY_PAID");
+        }
+
         if ("READY".equals(order.getStatus())) {
             order.setStatus("DELIVERED");
         }

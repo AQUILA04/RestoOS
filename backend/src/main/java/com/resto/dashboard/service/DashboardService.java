@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,8 +37,14 @@ public class DashboardService {
         List<Payment> payments = paymentRepository.findByStoreId(storeId);
         List<RestaurantTable> tables = tableRepository.findByStoreId(storeId);
 
-        long todaysOrdersCount = orders.size();
+        OffsetDateTime startOfDay = OffsetDateTime.now().truncatedTo(ChronoUnit.DAYS);
+
+        long todaysOrdersCount = orders.stream()
+                .filter(o -> o.getCreatedAt() != null && !o.getCreatedAt().isBefore(startOfDay))
+                .count();
+
         BigDecimal declaredRevenue = payments.stream()
+                .filter(p -> p.getCreatedAt() != null && !p.getCreatedAt().isBefore(startOfDay))
                 .map(Payment::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 

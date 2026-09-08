@@ -481,3 +481,19 @@ So that store operations can be monitored in real time.
 **When** a manager views the store summary page
 **Then** real-time KPI cards display Today's Orders count, Declared Revenue (€), Unpaid Orders count, Preparing/Ready counts, and Occupied Tables count.
 **And** metrics update dynamically with under 500ms query latency.
+
+### Review Findings
+
+- [x] [Review][Patch] Persistence Layer Choice for POS Offline Queue (localStorage) — `frontend/src/app/core/services/offline-queue.service.ts:14`
+- [x] [Review][Patch] PostgreSQL RLS Context & Session Leak Fix — `backend/src/main/java/com/resto/core/security/RlsAspect.java:24`
+- [x] [Review][Patch] Idempotency Interceptor Cache & Memory Eviction Fix — `backend/src/main/java/com/resto/core/idempotency/IdempotencyInterceptor.java:22`
+- [x] [Review][Patch] Monetary Tax Calculation Arithmetic Exception Fix — `backend/src/main/java/com/resto/order/service/OrderService.java:107`
+- [x] [Review][Patch] Order Payment Amount Validation & Status Transition Guard — `backend/src/main/java/com/resto/payment/service/PaymentService.java:49`
+- [x] [Review][Patch] Dashboard Historical Data Performance & Today's Metric Filter Fix — `backend/src/main/java/com/resto/dashboard/service/DashboardService.java:34`
+- [x] [Review][Patch] Order Cancellation Immutable Audit Log Record Creation — `backend/src/main/java/com/resto/order/service/OrderService.java:132`
+- [x] [Review][Patch] Null Modifier Option Price Delta Guard — `backend/src/main/java/com/resto/order/service/OrderService.java:100`
+
+### Rejected
+- Low/Cosmetic: PIN Lockscreen 4-digit formatting — client-side validation suffices for POS UI layer.
+
+

@@ -21,10 +21,14 @@ public class RlsAspect {
         UUID storeId = TenantContext.getStoreId();
 
         if (orgId != null) {
-            entityManager.createNativeQuery("SET LOCAL app.current_org_id = '" + orgId + "'").executeUpdate();
+            entityManager.createNativeQuery("SELECT set_config('app.current_org_id', :orgId, true)")
+                    .setParameter("orgId", orgId.toString())
+                    .getSingleResult();
         }
         if (storeId != null) {
-            entityManager.createNativeQuery("SET LOCAL app.current_store_id = '" + storeId + "'").executeUpdate();
+            entityManager.createNativeQuery("SELECT set_config('app.current_store_id', :storeId, true)")
+                    .setParameter("storeId", storeId.toString())
+                    .getSingleResult();
         }
     }
 }

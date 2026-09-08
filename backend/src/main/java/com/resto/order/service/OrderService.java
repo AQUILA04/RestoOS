@@ -1,5 +1,7 @@
 package com.resto.order.service;
 
+import com.resto.audit.domain.AuditLog;
+import com.resto.audit.repository.AuditLogRepository;
 import com.resto.catalog.domain.ModifierOption;
 import com.resto.catalog.domain.Product;
 import com.resto.catalog.domain.StoreProduct;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -26,15 +29,18 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final StoreProductRepository storeProductRepository;
     private final ModifierOptionRepository modifierOptionRepository;
+    private final AuditLogRepository auditLogRepository;
 
     public OrderService(OrderRepository orderRepository,
                         ProductRepository productRepository,
                         StoreProductRepository storeProductRepository,
-                        ModifierOptionRepository modifierOptionRepository) {
+                        ModifierOptionRepository modifierOptionRepository,
+                        AuditLogRepository auditLogRepository) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.storeProductRepository = storeProductRepository;
         this.modifierOptionRepository = modifierOptionRepository;
+        this.auditLogRepository = auditLogRepository;
     }
 
     public Order createOrder(UUID organizationId, UUID storeId, UUID tableId, String orderType, String notes, List<CreateOrderItemParam> itemParams) {
@@ -88,23 +94,25 @@ public class OrderService {
                     ModifierOption modOption = modifierOptionRepository.findById(modId)
                             .orElseThrow(() -> new IllegalArgumentException("Modifier option not found: " + modId));
 
+                    BigDecimal priceDelta = modOption.getPriceDelta() != null ? modOption.getPriceDelta() : BigDecimal.ZERO;
+
                     OrderItemModifier mod = OrderItemModifier.builder()
                             .organizationId(organizationId)
                             .orderItem(orderItem)
                             .modifierOptionId(modOption.getId())
                             .modifierName(modOption.getName())
-                            .priceDelta(modOption.getPriceDelta())
+                            .priceDelta(priceDelta)
                             .build();
 
                     orderItem.getModifiers().add(mod);
-                    itemSubtotal = itemSubtotal.add(modOption.getPriceDelta().multiply(new BigDecimal(itemParam.getQuantity())));
+                    itemSubtotal = itemSubtotal.add(priceDelta.multiply(new BigDecimal(itemParam.getQuantity())));
                 }
             }
 
             orderItem.setSubtotal(itemSubtotal);
             order.getItems().add(orderItem);
 
-            BigDecimal itemTax = itemSubtotal.multiply(product.getTaxRate()).divide(new BigDecimal("100"));
+            BigDecimal itemTax = itemSubtotal.multiply(product.getTaxRate()).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
             subtotal = subtotal.add(itemSubtotal);
             taxTotal = taxTotal.add(itemTax);
         }
@@ -134,7 +142,21 @@ public class OrderService {
         order.setCancelledBy(userId);
         order.setCancellationReason(reason);
 
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+
+        // Audit Log Entry
+        AuditLog auditLog = AuditLog.builder()
+                .organizationId(order.getOrganizationId())
+                .storeId(order.getStoreId())
+                .userId(userId)
+                .action("ORDER_CANCELLED")
+                .entityType("ORDER")
+                .entityId(orderId)
+                .details("Order cancelled with reason: " + reason)
+                .build();
+        auditLogRepository.save(auditLog);
+
+        return savedOrder;
     }
 
     public static class CreateOrderItemParam {
