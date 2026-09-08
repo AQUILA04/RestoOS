@@ -189,16 +189,9 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
       }
       expect(overrideRes.status()).toBe(200);
 
-      // Prefer API override assertion; UI override remains covered when admin token/session present
+      // Prefer API override assertion; UI override after origin navigation (localStorage needs a real origin)
       if (ownerToken) {
-        await adminPage.page.evaluate(
-          ([token, org, store]) => {
-            localStorage.setItem('access_token', token as string);
-            localStorage.setItem('organization_id', org as string);
-            localStorage.setItem('store_id', store as string);
-          },
-          [ownerToken, orgId, storeId]
-        );
+        await adminPage.injectSession(ownerToken, orgId, storeId);
         await adminPage.setStorePriceOverride('Burger Signature', '15.50');
       }
 
@@ -236,6 +229,7 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
     });
 
     await test.step('Stage 3: POS PIN, table, modifiers, idempotent order', async () => {
+      await posPage.gotoPos();
       await posPage.page.evaluate(
         ([org, store, staff]) => {
           localStorage.setItem('organization_id', org as string);
@@ -244,6 +238,7 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
         },
         [orgId, storeId, [{ id: waiterUserId, name: 'Wendy Waiter' }]]
       );
+      await posPage.page.reload();
 
       await posPage.authenticateWithPin('1234', 'Wendy Waiter');
       await posPage.selectTable('Table 05');
@@ -254,6 +249,7 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
     });
 
     await test.step('Stage 4: KDS realtime ticket → READY', async () => {
+      await kdsPage.page.goto('/kds');
       await kdsPage.page.evaluate(
         ([token, org, store]) => {
           localStorage.setItem('access_token', token as string);
@@ -270,15 +266,13 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
 
     await test.step('Stage 5: Deliver, pay, dashboard (no receipt V2)', async () => {
       await posPage.deliverAndPayOrder(orderNumber, `client-${runId}@gmail.com`);
-      await adminPage.page.evaluate(
-        ([token, org, store]) => {
-          localStorage.setItem('access_token', token as string);
-          localStorage.setItem('organization_id', org as string);
-          localStorage.setItem('store_id', store as string);
-        },
-        [ownerToken, orgId, storeId]
+      await adminPage.verifyDashboardMetricsExact(
+        ownerToken,
+        orgId,
+        storeId,
+        '15.50',
+        1
       );
-      await adminPage.verifyDashboardMetrics('15.50', 1);
     });
   });
 });
