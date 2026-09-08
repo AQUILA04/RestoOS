@@ -121,6 +121,22 @@ public class OrderService {
         return orderRepository.findByStoreIdOrderByCreatedAtDesc(storeId);
     }
 
+    public Order cancelOrder(UUID orderId, UUID userId, String reason) {
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("Cancellation reason is required");
+        }
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
+
+        order.setStatus("CANCELLED");
+        order.setCancelledAt(java.time.OffsetDateTime.now());
+        order.setCancelledBy(userId);
+        order.setCancellationReason(reason);
+
+        return orderRepository.save(order);
+    }
+
     public static class CreateOrderItemParam {
         private UUID productId;
         private Integer quantity;

@@ -54,6 +54,26 @@ public class OrderController {
                 .build();
     }
 
+    @PostMapping("/{id}/cancel")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER', 'CASHIER')")
+    public Response<Order> cancelOrder(@PathVariable("id") UUID orderId,
+                                       @RequestBody CancelOrderRequest request) {
+        Order order = orderService.cancelOrder(orderId, request.getUserId(), request.getReason());
+        return Response.<Order>builder()
+                .status(HttpStatus.OK)
+                .statusCode(HttpStatus.OK.value())
+                .message("default.message.success")
+                .service("RESTO-OS")
+                .data(order)
+                .build();
+    }
+
+    @Data
+    public static class CancelOrderRequest {
+        private UUID userId;
+        private String reason;
+    }
+
     @Data
     public static class CreateOrderRequest {
         private UUID organizationId;
