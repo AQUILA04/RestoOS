@@ -1,0 +1,133 @@
+.kds-obsidian-surface {
+  background-color: var(--color-kds-obsidian);
+  min-height: 100vh;
+  padding: 20px;
+  color: #FFFFFF;
+}
+
+.kds-cards-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+/* UX-DR4: 320px width obsidian card */
+.kds-card {
+  width: 320px;
+  background-color: var(--color-kds-card-bg);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  transition: transform 0.15s ease;
+}
+
+.kds-card:hover {
+  transform: translateY(-3px);
+}
+
+.card-header {
+  padding: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ticket-number {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.order-type-badge {
+  font-family: var(--font-body);
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.15);
+  font-weight: 600;
+}
+
+/* UX-DR4: 3-tier timer escalation */
+.timer-badge {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.timer-badge.tier-green {
+  background-color: #2E7D32;
+  color: #FFFFFF;
+}
+
+.timer-badge.tier-amber {
+  background-color: #F57C00;
+  color: #FFFFFF;
+}
+
+.timer-badge.tier-crimson {
+  background-color: #C62828;
+  color: #FFFFFF;
+  animation: pulse-crimson 1s infinite alternate;
+}
+
+@keyframes pulse-crimson {
+  from { opacity: 1; }
+  to { opacity: 0.6; }
+}
+
+.card-body {
+  padding: 16px;
+  flex: 1;
+}
+
+.ticket-item-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  font-size: 16px;
+}
+
+.item-qty {
+  font-family: var(--font-mono);
+  font-weight: bold;
+  color: var(--color-primary-flame);
+}
+
+.item-name {
+  font-family: var(--font-body);
+  font-weight: 600;
+}
+
+.item-mods {
+  font-size: 13px;
+  color: #AAAAAA;
+}
+
+.card-footer {
+  padding: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.2);
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.status-btn {
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: bold;
+  padding: 10px;
+  border-radius: 6px;
+  background-color: var(--color-primary-flame);
+}
+
+.status-btn.status-prep {
+  background-color: #2E7D32;
+}

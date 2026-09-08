@@ -1,0 +1,31 @@
+<div class="kds-obsidian-surface">
+  <div class="kds-cards-grid">
+    <div *ngFor="let t of tickets" class="kds-card" (click)="advance(t)">
+      <div class="card-header">
+        <div class="ticket-number">#{{ t.orderNumber }}</div>
+        <div class="order-type-badge">{{ t.orderType }}</div>
+        <div class="timer-badge" [ngClass]="getTimerTier(t.createdAt)">
+          ⏱️ {{ getElapsedMinutes(t.createdAt) }}m
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div *ngFor="let item of t.items" class="ticket-item-row">
+          <div class="item-qty">{{ item.quantity }}x</div>
+          <div class="item-details">
+            <div class="item-name">{{ item.name }}</div>
+            <div *ngIf="item.modifiers?.length" class="item-mods">
+              {{ item.modifiers?.join(', ') }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <div class="status-btn" [class.status-prep]="t.status === 'PREPARING'">
+          {{ t.status === 'SENT_TO_KITCHEN' ? 'COMMANDER EN PREPA ➔' : 'MARQUER PRÊT ➔' }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
