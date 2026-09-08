@@ -1,0 +1,27 @@
+<div class="lockscreen-container">
+  <div class="user-cards">
+    <div 
+      *ngFor="let u of users" 
+      class="user-card" 
+      [class.active]="u.id === selectedUserId"
+      (click)="selectUser(u.id)">
+      <div class="avatar">{{ u.name.substring(0, 2).toUpperCase() }}</div>
+      <div class="user-name">{{ u.name }}</div>
+    </div>
+  </div>
+
+  <div class="numpad-container" *ngIf="selectedUserId">
+    <div class="pin-display">
+      <span *ngFor="let i of [0, 1, 2, 3]" class="pin-dot" [class.filled]="enteredPin.length > i"></span>
+    </div>
+
+    <div class="numpad-grid">
+      <button *ngFor="let digit of ['1','2','3','4','5','6','7','8','9']" class="pin-button" (click)="pressDigit(digit)">
+        {{ digit }}
+      </button>
+      <button class="pin-button action" (click)="clearPin()">C</button>
+      <button class="pin-button" (click)="pressDigit('0')">0</button>
+      <button class="pin-button action" (click)="submitPin()">✓</button>
+    </div>
+  </div>
+</div>

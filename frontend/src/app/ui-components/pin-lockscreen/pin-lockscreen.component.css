@@ -1,0 +1,101 @@
+.lockscreen-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: var(--color-kds-obsidian);
+  color: #FFFFFF;
+}
+
+.user-cards {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.user-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--color-kds-card-bg);
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.user-card.active {
+  border-color: var(--color-primary-flame);
+  transform: scale(1.05);
+}
+
+.avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--color-primary-flame);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.user-name {
+  margin-top: 8px;
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+
+.pin-display {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  justify-content: center;
+}
+
+.pin-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--color-primary-flame);
+}
+
+.pin-dot.filled {
+  background-color: var(--color-primary-flame);
+}
+
+.numpad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.pin-button {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--color-kds-card-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.pin-button:active {
+  background: var(--color-primary-flame);
+}
+
+.pin-button.action {
+  font-size: 20px;
+  color: #999;
+}
