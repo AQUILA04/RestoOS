@@ -12,7 +12,6 @@ import com.resto.core.security.TenantContext;
 import com.resto.floorplan.domain.RestaurantTable;
 import com.resto.floorplan.repository.RestaurantTableRepository;
 import com.resto.order.domain.Order;
-import com.resto.order.domain.OrderCounter;
 import com.resto.order.domain.OrderItem;
 import com.resto.order.domain.OrderItemModifier;
 import com.resto.order.domain.OrderStateMachine;
@@ -259,17 +258,10 @@ public class OrderService {
     }
 
     private int nextOrderNumber(UUID organizationId, UUID storeId) {
-        OrderCounter counter = orderCounterRepository.findByStoreIdForUpdate(storeId)
-                .orElseGet(() -> {
-                    OrderCounter c = new OrderCounter();
-                    c.setStoreId(storeId);
-                    c.setOrganizationId(organizationId);
-                    c.setLastOrderNumber(100);
-                    return c;
-                });
-        int next = counter.getLastOrderNumber() + 1;
-        counter.setLastOrderNumber(next);
-        orderCounterRepository.save(counter);
+        Integer next = orderCounterRepository.allocateNextOrderNumber(storeId, organizationId);
+        if (next == null) {
+            throw new IllegalStateException("Failed to allocate order number for store " + storeId);
+        }
         return next;
     }
 
