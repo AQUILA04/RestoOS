@@ -1,20 +1,24 @@
 package com.resto.floorplan.controller;
 
 import com.resto.core.response.Response;
+import com.resto.core.security.JwtAuth;
+import com.resto.core.security.TenantContext;
 import com.resto.floorplan.domain.RestaurantTable;
 import com.resto.floorplan.domain.Zone;
 import com.resto.floorplan.service.FloorPlanService;
-import lombok.Data;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/floor-plan")
+@RequestMapping("/api/v1/stores/{storeId}")
 public class FloorPlanController {
+
+    private static final Set<String> TABLE_STATUSES = Set.of("AVAILABLE", "OCCUPIED", "RESERVED", "OUT_OF_SERVICE");
 
     private final FloorPlanService floorPlanService;
 
@@ -24,138 +28,84 @@ public class FloorPlanController {
 
     @PostMapping("/zones")
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER')")
-    public Response<Zone> createZone(@RequestBody CreateZoneRequest request) {
-        Zone zone = floorPlanService.createZone(
-                request.getOrganizationId(),
-                request.getStoreId(),
-                request.getName(),
-                request.getDisplayOrder()
-        );
-        return Response.<Zone>builder()
-                .status(HttpStatus.OK)
-                .statusCode(HttpStatus.OK.value())
-                .message("default.message.success")
-                .service("RESTO-OS")
-                .data(zone)
-                .build();
+    public Response<Zone> createZone(@PathVariable("storeId") UUID storeId,
+                                     @RequestBody CreateZoneRequest request) {
+        UUID organizationId = resolveOrg(request.getOrganizationId());
+        Zone zone = floorPlanService.createZone(organizationId, storeId, request.getName(), request.getDisplayOrder());
+        return ok(zone);
     }
 
     @GetMapping("/zones")
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER', 'WAITER', 'CASHIER')")
-    public Response<List<Zone>> getZonesByStore(@RequestParam("storeId") UUID storeId) {
-        List<Zone> zones = floorPlanService.getZonesByStore(storeId);
-        return Response.<List<Zone>>builder()
-                .status(HttpStatus.OK)
-                .statusCode(HttpStatus.OK.value())
-                .message("default.message.success")
-                .service("RESTO-OS")
-                .data(zones)
-                .build();
+    public Response<List<Zone>> getZones(@PathVariable("storeId") UUID storeId) {
+        return ok(floorPlanService.getZonesByStore(storeId));
     }
 
     @PostMapping("/tables")
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER')")
-    public Response<RestaurantTable> createTable(@RequestBody CreateTableRequest request) {
-        RestaurantTable table = floorPlanService.createTable(
-                request.getOrganizationId(),
-                request.getStoreId(),
-                request.getZoneId(),
-                request.getTableNumber(),
-                request.getCapacity(),
-                request.getPosX(),
-                request.getPosY(),
-                request.getShape()
-        );
-        return Response.<RestaurantTable>builder()
-                .status(HttpStatus.OK)
-                .statusCode(HttpStatus.OK.value())
-                .message("default.message.success")
-                .service("RESTO-OS")
-                .data(table)
-                .build();
-    }
-
-    /**
-     * E2E-friendly endpoint: POST /api/v1/stores/{storeId}/tables
-     * Payload: { zone: "Salle", name: "Table 05", capacity: 4 }
-     * organizationId sourced from X-Tenant-ID header.
-     * Auto-creates the zone by name if it does not already exist.
-     */
-    @PostMapping("/api/v1/stores/{storeId}/tables")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER')")
-    public Response<RestaurantTable> createTableForStore(
-            @PathVariable("storeId") UUID storeId,
-            @RequestHeader(value = "X-Tenant-ID", required = false) UUID tenantId,
-            @RequestBody CreateTableRequest request) {
-
-        UUID organizationId = tenantId != null ? tenantId : request.getOrganizationId();
-
-        // Resolve or auto-create zone by name when zoneId is not supplied
+    public Response<RestaurantTable> createTable(@PathVariable("storeId") UUID storeId,
+                                                 @RequestBody CreateTableRequest request) {
+        UUID organizationId = resolveOrg(request.getOrganizationId());
         UUID zoneId = request.getZoneId();
         if (zoneId == null && request.getZone() != null) {
             Zone zone = floorPlanService.findOrCreateZone(organizationId, storeId, request.getZone());
             zoneId = zone.getId();
         }
-
-        // 'name' in E2E payload maps to tableNumber
         String tableNumber = request.getTableNumber() != null ? request.getTableNumber() : request.getName();
-
         RestaurantTable table = floorPlanService.createTable(
-                organizationId,
-                storeId,
-                zoneId,
-                tableNumber,
-                request.getCapacity(),
-                request.getPosX(),
-                request.getPosY(),
-                request.getShape()
+                organizationId, storeId, zoneId, tableNumber,
+                request.getCapacity(), request.getPosX(), request.getPosY(), request.getShape()
         );
-        return Response.<RestaurantTable>builder()
-                .status(HttpStatus.OK)
-                .statusCode(HttpStatus.OK.value())
-                .message("default.message.success")
-                .service("RESTO-OS")
-                .data(table)
-                .build();
+        return ok(table);
     }
 
     @GetMapping("/tables")
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER', 'WAITER', 'CASHIER')")
-    public Response<List<RestaurantTable>> getTablesByStore(@RequestParam("storeId") UUID storeId) {
-        List<RestaurantTable> tables = floorPlanService.getTablesByStore(storeId);
-        return Response.<List<RestaurantTable>>builder()
-                .status(HttpStatus.OK)
-                .statusCode(HttpStatus.OK.value())
-                .message("default.message.success")
-                .service("RESTO-OS")
-                .data(tables)
-                .build();
+    public Response<List<RestaurantTable>> getTables(@PathVariable("storeId") UUID storeId) {
+        return ok(floorPlanService.getTablesByStore(storeId));
     }
 
     @PatchMapping("/tables/{tableId}/status")
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER', 'WAITER', 'CASHIER')")
-    public Response<RestaurantTable> updateTableStatus(@PathVariable("tableId") UUID tableId,
-                                                        @RequestBody UpdateStatusRequest request) {
-        RestaurantTable table = floorPlanService.updateTableStatus(tableId, request.getStatus());
-        return Response.<RestaurantTable>builder()
+    public Response<RestaurantTable> updateTableStatus(@PathVariable("storeId") UUID storeId,
+                                                       @PathVariable("tableId") UUID tableId,
+                                                       @RequestBody UpdateStatusRequest request) {
+        if (request.getStatus() == null || !TABLE_STATUSES.contains(request.getStatus())) {
+            throw new IllegalArgumentException("Invalid table status: " + request.getStatus());
+        }
+        return ok(floorPlanService.updateTableStatus(tableId, request.getStatus()));
+    }
+
+    private UUID resolveOrg(UUID requestOrg) {
+        if (TenantContext.getOrgId() != null) {
+            return TenantContext.getOrgId();
+        }
+        try {
+            return JwtAuth.organizationId();
+        } catch (Exception e) {
+            if (requestOrg != null) {
+                return requestOrg;
+            }
+            throw new IllegalStateException("organization_id required");
+        }
+    }
+
+    private <T> Response<T> ok(T data) {
+        return Response.<T>builder()
                 .status(HttpStatus.OK)
                 .statusCode(HttpStatus.OK.value())
                 .message("default.message.success")
                 .service("RESTO-OS")
-                .data(table)
+                .data(data)
                 .build();
     }
 
     public static class CreateZoneRequest {
         private UUID organizationId;
-        private UUID storeId;
         private String name;
         private Integer displayOrder;
-
         public UUID getOrganizationId() { return organizationId; }
         public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }
-        public UUID getStoreId() { return storeId; }
-        public void setStoreId(UUID storeId) { this.storeId = storeId; }
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
         public Integer getDisplayOrder() { return displayOrder; }
@@ -164,20 +114,16 @@ public class FloorPlanController {
 
     public static class CreateTableRequest {
         private UUID organizationId;
-        private UUID storeId;
         private UUID zoneId;
         private String tableNumber;
-        private String name;      // E2E alias for tableNumber
-        private String zone;      // E2E zone name string (auto-resolved to zoneId)
+        private String name;
+        private String zone;
         private Integer capacity;
         private Integer posX;
         private Integer posY;
         private String shape;
-
         public UUID getOrganizationId() { return organizationId; }
         public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }
-        public UUID getStoreId() { return storeId; }
-        public void setStoreId(UUID storeId) { this.storeId = storeId; }
         public UUID getZoneId() { return zoneId; }
         public void setZoneId(UUID zoneId) { this.zoneId = zoneId; }
         public String getTableNumber() { return tableNumber; }
@@ -198,7 +144,6 @@ public class FloorPlanController {
 
     public static class UpdateStatusRequest {
         private String status;
-
         public String getStatus() { return status; }
         public void setStatus(String status) { this.status = status; }
     }

@@ -1,19 +1,26 @@
 import { test, expect } from '../fixtures/test-fixtures';
 
-test.describe('RestoOS — Golden Path Full Lifecycle E2E Suite', () => {
-  const orgName = `Gourmet Bistro ${Date.now()}`;
-  const managerEmail = `manager-${Date.now()}@bistrogourmet.fr`;
-  const clientEmail = `client-${Date.now()}@gmail.com`;
+/**
+ * Golden Path — production-realistic acceptance.
+ * Requires: backend (profile e2e), Keycloak or HMAC station tokens, Mailpit, Redis, Postgres app role.
+ * Digital receipt email is V2 and intentionally not asserted.
+ */
+test.describe('RestoOS — Golden Path Full Lifecycle', () => {
+  const runId = Date.now();
+  const orgName = `Gourmet Bistro ${runId}`;
+  const managerEmail = `manager-${runId}@bistrogourmet.fr`;
   let orgId: string;
   let storeId: string;
+  let productId: string;
+  let waiterUserId: string;
   let orderNumber: string;
+  let ownerToken: string;
 
   test.beforeEach(async ({ mailpit }) => {
-    // Ensure clean mailpit state before execution
     await mailpit.deleteAllMessages();
   });
 
-  test('GP-01 to GP-05: Complete Golden Path Lifecycle', async ({
+  test('GP: DINE_IN lifecycle with Keycloak/HMAC auth', async ({
     request,
     mailpit,
     adminPage,
@@ -21,41 +28,64 @@ test.describe('RestoOS — Golden Path Full Lifecycle E2E Suite', () => {
     kdsPage,
     backendApiUrl,
   }) => {
-    // =========================================================================
-    // STAGE 1: Provisioning Organisation, Store & Verification Email Mailpit
-    // =========================================================================
-    await test.step('Stage 1: Organisation creation & Mailpit invitation assertion', async () => {
-      // 1. Create Organization
+    await test.step('Stage 0: Obtain owner token', async () => {
+      if (process.env['E2E_OWNER_TOKEN']) {
+        ownerToken = process.env['E2E_OWNER_TOKEN'];
+        return;
+      }
+      const tokenRes = await request.post(`${backendApiUrl}/api/v1/test/token`, {
+        data: { roles: ['OWNER'] },
+      });
+      expect(tokenRes.status()).toBe(200);
+      ownerToken = (await tokenRes.json()).data.accessToken;
+      expect(ownerToken).toBeTruthy();
+    });
+
+    await test.step('Stage 1: Organisation, store & invitation email', async () => {
+      let headers: Record<string, string> = { Authorization: `Bearer ${ownerToken}` };
+
       const orgRes = await request.post(`${backendApiUrl}/api/v1/organizations`, {
-        data: { name: orgName, country: 'FR', currency: 'EUR' },
+        headers,
+        data: { name: orgName, code: `ORG-${runId}` },
       });
       expect(orgRes.status()).toBe(200);
-      const orgData = await orgRes.json();
-      orgId = orgData.data.id;
-      expect(orgId).toBeDefined();
+      orgId = (await orgRes.json()).data.id;
 
-      // 2. Create Store
+      // Re-mint owner token bound to organization
+      const tokenRes = await request.post(`${backendApiUrl}/api/v1/test/token`, {
+        data: { roles: ['OWNER'], organizationId: orgId },
+      });
+      ownerToken = (await tokenRes.json()).data.accessToken;
+      headers = { Authorization: `Bearer ${ownerToken}` };
+
       const storeRes = await request.post(`${backendApiUrl}/api/v1/stores`, {
-        headers: { 'X-Tenant-ID': orgId },
-        data: { name: 'Opera Store', city: 'Paris', timezone: 'Europe/Paris' },
+        headers,
+        data: {
+          name: 'Opera Store',
+          code: `ST-${runId}`,
+          timezone: 'Europe/Paris',
+          currency: 'EUR',
+        },
       });
       expect(storeRes.status()).toBe(200);
-      const storeData = await storeRes.json();
-      storeId = storeData.data.id;
-      expect(storeId).toBeDefined();
+      storeId = (await storeRes.json()).data.id;
 
-      // 3. Invite Manager (Triggers Email via SMTP Mailpit)
+      const boundToken = await request.post(`${backendApiUrl}/api/v1/test/token`, {
+        data: { roles: ['OWNER'], organizationId: orgId, storeId },
+      });
+      ownerToken = (await boundToken.json()).data.accessToken;
+      headers = { Authorization: `Bearer ${ownerToken}` };
+
       const inviteRes = await request.post(`${backendApiUrl}/api/v1/memberships/invite`, {
-        headers: { 'X-Tenant-ID': orgId },
+        headers,
         data: {
           email: managerEmail,
           role: 'STORE_MANAGER',
-          storeId: storeId,
+          storeId,
         },
       });
       expect(inviteRes.status()).toBe(200);
 
-      // 4. Assert Mailpit intercepted invitation email
       const inviteEmail = await mailpit.waitForEmail(
         managerEmail,
         'Invitation à rejoindre RestoOS'
@@ -64,84 +94,134 @@ test.describe('RestoOS — Golden Path Full Lifecycle E2E Suite', () => {
       expect(inviteEmail.HTML).toContain('Activer mon compte');
     });
 
-    // =========================================================================
-    // STAGE 2: Catalogue Setup, Price Overrides & Floor Plan Configuration
-    // =========================================================================
-    await test.step('Stage 2: Operational catalog, store price override & table setup', async () => {
-      // 1. Create Category
+    await test.step('Stage 2: Catalogue, modifiers, override, table, PIN', async () => {
+      const headers: Record<string, string> = ownerToken
+        ? { Authorization: `Bearer ${ownerToken}` }
+        : {};
+
       const catRes = await request.post(`${backendApiUrl}/api/v1/categories`, {
-        headers: { 'X-Tenant-ID': orgId },
+        headers,
         data: { name: 'Burgers', sortOrder: 1 },
       });
+      expect(catRes.status()).toBe(200);
       const catId = (await catRes.json()).data.id;
 
-      // 2. Create Product (Base Price 14.00 €)
       const prodRes = await request.post(`${backendApiUrl}/api/v1/products`, {
-        headers: { 'X-Tenant-ID': orgId },
+        headers,
         data: {
           categoryId: catId,
           name: 'Burger Signature',
           basePrice: 14.0,
+          taxRate: 10,
           active: true,
         },
       });
-      const prodId = (await prodRes.json()).data.id;
+      expect(prodRes.status()).toBe(200);
+      productId = (await prodRes.json()).data.id;
 
-      // 3. Store Price Override (15.50 €)
-      await adminPage.setStorePriceOverride('Burger Signature', '15.50');
+      const groupRes = await request.post(`${backendApiUrl}/api/v1/catalog/modifier-groups`, {
+        headers,
+        data: { name: 'Cuisson', required: true, minSelection: 1, maxSelection: 1 },
+      });
+      expect(groupRes.status()).toBe(200);
+      const groupId = (await groupRes.json()).data.id;
 
-      // 4. Create Zone & Table 05
+      const optRes = await request.post(`${backendApiUrl}/api/v1/catalog/modifier-options`, {
+        headers,
+        data: { modifierGroupId: groupId, name: 'A point', priceDelta: 0 },
+      });
+      expect(optRes.status()).toBe(200);
+
+      const overrideRes = await request.put(
+        `${backendApiUrl}/api/v1/stores/${storeId}/products/${productId}`,
+        {
+          headers,
+          data: { priceOverride: 15.5, available: true },
+        }
+      );
+      expect(overrideRes.status()).toBe(200);
+
+      // Prefer API override assertion; UI override remains covered when admin token/session present
+      if (ownerToken) {
+        await adminPage.page.evaluate(
+          ([token, org, store]) => {
+            localStorage.setItem('access_token', token as string);
+            localStorage.setItem('organization_id', org as string);
+            localStorage.setItem('store_id', store as string);
+          },
+          [ownerToken, orgId, storeId]
+        );
+        await adminPage.setStorePriceOverride('Burger Signature', '15.50');
+      }
+
       const tableRes = await request.post(`${backendApiUrl}/api/v1/stores/${storeId}/tables`, {
-        headers: { 'X-Tenant-ID': orgId },
+        headers,
         data: { zone: 'Salle', name: 'Table 05', capacity: 4 },
       });
       expect(tableRes.status()).toBe(200);
+
+      const waiterRes = await request.post(`${backendApiUrl}/api/v1/users`, {
+        headers,
+        data: {
+          email: `waiter-${runId}@bistrogourmet.fr`,
+          firstName: 'Wendy',
+          lastName: 'Waiter',
+        },
+      });
+      expect(waiterRes.status()).toBe(200);
+      waiterUserId = (await waiterRes.json()).data.id;
+
+      await request.post(`${backendApiUrl}/api/v1/memberships`, {
+        headers,
+        data: {
+          userId: waiterUserId,
+          role: 'WAITER',
+          storeIds: [storeId],
+        },
+      });
+
+      const pinRes = await request.post(`${backendApiUrl}/api/v1/auth/set-pin`, {
+        headers,
+        data: { userId: waiterUserId, pin: '1234' },
+      });
+      expect(pinRes.status()).toBe(200);
     });
 
-    // =========================================================================
-    // STAGE 3: POS Touch Terminal & Order Idempotency Assembly
-    // =========================================================================
-    await test.step('Stage 3: Waiter PIN Auth, Table Selection & POS Order Submission', async () => {
-      // 1. PIN Lockscreen Authentication (PIN: 1234)
-      await posPage.authenticateWithPin('1234');
+    await test.step('Stage 3: POS PIN, table, modifiers, idempotent order', async () => {
+      await posPage.page.evaluate(
+        ([org, store, staff]) => {
+          localStorage.setItem('organization_id', org as string);
+          localStorage.setItem('store_id', store as string);
+          localStorage.setItem('pos_staff', JSON.stringify(staff));
+        },
+        [orgId, storeId, [{ id: waiterUserId, name: 'Wendy Waiter' }]]
+      );
 
-      // 2. Select Table 05 on Floor Plan
+      await posPage.authenticateWithPin('1234', 'Wendy Waiter');
       await posPage.selectTable('Table 05');
-
-      // 3. Add Product with Required Modifier "A point"
       await posPage.addProductWithModifier('Burger Signature', 'A point');
-
-      // 4. Submit Order (Backend price recalculation to 15.50 € + Idempotency check)
       orderNumber = await posPage.submitOrder();
-      expect(orderNumber).toBeDefined();
+      expect(orderNumber).toMatch(/#\d+/);
+      expect(orderNumber).not.toBe('#1001');
     });
 
-    // =========================================================================
-    // STAGE 4: Real-Time KDS STOMP Dispatcher & Kitchen Progression
-    // =========================================================================
-    await test.step('Stage 4: Real-time KDS STOMP ticket receipt & preparation state', async () => {
+    await test.step('Stage 4: KDS realtime ticket → READY', async () => {
+      await kdsPage.page.evaluate(
+        ([token, org, store]) => {
+          if (token) localStorage.setItem('access_token', token as string);
+          localStorage.setItem('organization_id', org as string);
+          localStorage.setItem('store_id', store as string);
+        },
+        [await posPage.page.evaluate(() => localStorage.getItem('access_token')), orgId, storeId]
+      );
       await kdsPage.gotoKds();
       await kdsPage.waitForOrderTicket(orderNumber);
       await kdsPage.strikeThroughLineItem(orderNumber, 'Burger Signature');
       await kdsPage.markTicketReady(orderNumber);
     });
 
-    // =========================================================================
-    // STAGE 5: Order Delivery, Declarative Payment, Mailpit Digital Receipt & Audit
-    // =========================================================================
-    await test.step('Stage 5: Order delivery, payment mark-paid & Mailpit receipt assertion', async () => {
-      // 1. Deliver & Mark Paid (Cash 15.50 €)
-      await posPage.deliverAndPayOrder(orderNumber, clientEmail);
-
-      // 2. Assert Mailpit received digital email receipt
-      const receiptEmail = await mailpit.waitForEmail(
-        clientEmail,
-        'Votre Reçu RestoOS'
-      );
-      expect(receiptEmail.Subject).toContain('Votre Reçu RestoOS');
-      expect(receiptEmail.HTML).toContain('15.50');
-
-      // 3. Verify Operational KPI Dashboard Metrics
+    await test.step('Stage 5: Deliver, pay, dashboard (no receipt V2)', async () => {
+      await posPage.deliverAndPayOrder(orderNumber, `client-${runId}@gmail.com`);
       await adminPage.verifyDashboardMetrics('15.50', 1);
     });
   });

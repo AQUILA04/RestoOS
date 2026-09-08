@@ -1,0 +1,50 @@
+<div *ngIf="!authenticated">
+  <resto-pin-lockscreen [users]="staff" (onLoginSuccess)="onPinLogin($event)"></resto-pin-lockscreen>
+  <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
+</div>
+
+<div *ngIf="authenticated" class="pos-shell">
+  <resto-offline-status [isOnline]="isOnline" [pendingCount]="pendingCount"></resto-offline-status>
+  <div class="pos-tabs">
+    <button type="button" id="tab-floor-plan" [class.active]="activeTab === 'floor'" (click)="activeTab = 'floor'">Plan de salle</button>
+    <button type="button" id="tab-pos-catalog" [class.active]="activeTab === 'catalog'" (click)="activeTab = 'catalog'">Catalogue</button>
+  </div>
+
+  <div *ngIf="activeTab === 'floor'">
+    <resto-floor-plan
+      [zones]="zones"
+      [tables]="tables"
+      [activeZoneId]="activeZoneId"
+      (onZoneSelect)="activeZoneId = $event"
+      (onTableSelect)="selectTable($event)">
+    </resto-floor-plan>
+  </div>
+
+  <div *ngIf="activeTab === 'catalog'">
+    <p *ngIf="selectedTable">Table {{ selectedTable.name || selectedTable.tableNumber }}</p>
+    <resto-pos-layout
+      [categories]="categories"
+      [products]="products"
+      [cartItems]="cartItems"
+      [activeCategoryId]="activeCategoryId"
+      (onCategorySelect)="onCategorySelect($event)"
+      (onProductSelect)="onProductSelect($event)"
+      (onCheckout)="submitOrder()">
+    </resto-pos-layout>
+  </div>
+
+  <div class="order-feedback" *ngIf="orderNumberDisplay">
+    <span id="order-number-display">{{ orderNumberDisplay }}</span>
+    <span class="order-status-badge">{{ orderStatus }}</span>
+  </div>
+
+  <resto-modifier-modal
+    [isOpen]="modifierOpen"
+    [productName]="modifierProductName"
+    [modifierGroups]="modifierGroups"
+    (onConfirm)="onModifiersConfirmed($event)"
+    (onClose)="modifierOpen = false">
+  </resto-modifier-modal>
+
+  <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
+</div>

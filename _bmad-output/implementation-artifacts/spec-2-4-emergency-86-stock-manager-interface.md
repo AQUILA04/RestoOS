@@ -2,7 +2,7 @@
 title: 'Story 2.3: Emergency "86" Stock Manager Interface & Real-time WebSocket Broadcast'
 type: 'feature'
 created: '2026-09-08'
-status: 'done'
+status: 'in-progress'
 baseline_commit: 'c509b81'
 route: 'dispatch'
 review_loop_iteration: 0

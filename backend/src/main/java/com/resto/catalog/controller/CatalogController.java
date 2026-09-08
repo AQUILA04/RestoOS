@@ -4,9 +4,11 @@ import com.resto.catalog.domain.Category;
 import com.resto.catalog.domain.ModifierGroup;
 import com.resto.catalog.domain.ModifierOption;
 import com.resto.catalog.domain.Product;
+import com.resto.catalog.domain.ProductModifierGroup;
 import com.resto.catalog.service.CatalogService;
 import com.resto.core.response.Response;
-import lombok.Data;
+import com.resto.core.security.JwtAuth;
+import com.resto.core.security.TenantContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -26,107 +28,124 @@ public class CatalogController {
 
     @PostMapping({"/api/v1/categories", "/api/v1/catalog/categories"})
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
-    public Response<Category> createCategory(
-            @RequestHeader(value = "X-Tenant-ID", required = false) UUID tenantId,
-            @RequestBody CreateCategoryRequest request) {
-        UUID organizationId = tenantId != null ? tenantId : request.getOrganizationId();
-        // Support both sortOrder (E2E) and displayOrder (internal)
+    public Response<Category> createCategory(@RequestBody CreateCategoryRequest request) {
+        UUID organizationId = resolveOrg(request.getOrganizationId());
         Integer order = request.getSortOrder() != null ? request.getSortOrder() : request.getDisplayOrder();
-        Category category = catalogService.createCategory(organizationId, request.getName(), order);
-        return Response.<Category>builder()
-                .status(HttpStatus.OK)
-                .statusCode(HttpStatus.OK.value())
-                .message("default.message.success")
-                .service("RESTO-OS")
-                .data(category)
-                .build();
+        return ok(catalogService.createCategory(organizationId, request.getName(), order));
+    }
+
+    @PutMapping({"/api/v1/categories/{id}", "/api/v1/catalog/categories/{id}"})
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    public Response<Category> updateCategory(@PathVariable("id") UUID id, @RequestBody CreateCategoryRequest request) {
+        return ok(catalogService.updateCategory(id, request.getName(),
+                request.getSortOrder() != null ? request.getSortOrder() : request.getDisplayOrder(),
+                request.getActive()));
+    }
+
+    @DeleteMapping({"/api/v1/categories/{id}", "/api/v1/catalog/categories/{id}"})
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    public Response<String> deleteCategory(@PathVariable("id") UUID id) {
+        catalogService.deleteCategory(id);
+        return ok("deleted");
     }
 
     @GetMapping({"/api/v1/categories", "/api/v1/catalog/categories"})
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER', 'CASHIER', 'WAITER')")
-    public Response<List<Category>> getCategories(@RequestParam("organizationId") UUID organizationId) {
-        List<Category> categories = catalogService.getCategoriesByOrg(organizationId);
-        return Response.<List<Category>>builder()
-                .status(HttpStatus.OK)
-                .statusCode(HttpStatus.OK.value())
-                .message("default.message.success")
-                .service("RESTO-OS")
-                .data(categories)
-                .build();
+    public Response<List<Category>> getCategories(
+            @RequestParam(value = "organizationId", required = false) UUID organizationId) {
+        UUID orgId = organizationId != null ? organizationId : resolveOrg(null);
+        return ok(catalogService.getCategoriesByOrg(orgId));
     }
 
     @PostMapping({"/api/v1/products", "/api/v1/catalog/products"})
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
-    public Response<Product> createProduct(
-            @RequestHeader(value = "X-Tenant-ID", required = false) UUID tenantId,
-            @RequestBody CreateProductRequest request) {
-        UUID organizationId = tenantId != null ? tenantId : request.getOrganizationId();
-        Product product = catalogService.createProduct(
-                organizationId,
-                request.getCategoryId(),
-                request.getName(),
-                request.getDescription(),
-                request.getBasePrice(),
-                request.getTaxRate(),
-                request.getImageUrl()
-        );
-        return Response.<Product>builder()
-                .status(HttpStatus.OK)
-                .statusCode(HttpStatus.OK.value())
-                .message("default.message.success")
-                .service("RESTO-OS")
-                .data(product)
-                .build();
+    public Response<Product> createProduct(@RequestBody CreateProductRequest request) {
+        UUID organizationId = resolveOrg(request.getOrganizationId());
+        return ok(catalogService.createProduct(
+                organizationId, request.getCategoryId(), request.getName(), request.getDescription(),
+                request.getBasePrice(), request.getTaxRate(), request.getImageUrl()
+        ));
+    }
+
+    @PutMapping({"/api/v1/products/{id}", "/api/v1/catalog/products/{id}"})
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    public Response<Product> updateProduct(@PathVariable("id") UUID id, @RequestBody CreateProductRequest request) {
+        return ok(catalogService.updateProduct(id, request.getCategoryId(), request.getName(),
+                request.getDescription(), request.getBasePrice(), request.getTaxRate(),
+                request.getImageUrl(), request.getActive()));
+    }
+
+    @DeleteMapping({"/api/v1/products/{id}", "/api/v1/catalog/products/{id}"})
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    public Response<String> deleteProduct(@PathVariable("id") UUID id) {
+        catalogService.deleteProduct(id);
+        return ok("deleted");
     }
 
     @GetMapping({"/api/v1/products", "/api/v1/catalog/products"})
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER', 'CASHIER', 'WAITER')")
     public Response<List<Product>> getProductsByCategory(@RequestParam("categoryId") UUID categoryId) {
-        List<Product> products = catalogService.getProductsByCategory(categoryId);
-        return Response.<List<Product>>builder()
-                .status(HttpStatus.OK)
-                .statusCode(HttpStatus.OK.value())
-                .message("default.message.success")
-                .service("RESTO-OS")
-                .data(products)
-                .build();
+        return ok(catalogService.getProductsByCategory(categoryId));
     }
 
-    @PostMapping({"/api/v1/catalog/modifier-groups"})
+    @PostMapping({"/api/v1/modifier-groups", "/api/v1/catalog/modifier-groups"})
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     public Response<ModifierGroup> createModifierGroup(@RequestBody CreateModifierGroupRequest request) {
+        UUID organizationId = resolveOrg(request.getOrganizationId());
         ModifierGroup group = catalogService.createModifierGroup(
-                request.getOrganizationId(),
-                request.getName(),
-                request.getMinSelection(),
-                request.getMaxSelection(),
-                request.getRequired()
+                organizationId, request.getName(), request.getMinSelection(),
+                request.getMaxSelection(), request.getRequired()
         );
-        return Response.<ModifierGroup>builder()
-                .status(HttpStatus.OK)
-                .statusCode(HttpStatus.OK.value())
-                .message("default.message.success")
-                .service("RESTO-OS")
-                .data(group)
-                .build();
+        if (request.getProductId() != null) {
+            catalogService.linkModifierGroupToProduct(organizationId, request.getProductId(),
+                    group.getId(), 0);
+        }
+        return ok(group);
     }
 
-    @PostMapping({"/api/v1/catalog/modifier-options"})
+    @GetMapping({"/api/v1/modifier-groups", "/api/v1/catalog/modifier-groups"})
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    public Response<List<ModifierGroup>> getModifierGroups(
+            @RequestParam(value = "organizationId", required = false) UUID organizationId) {
+        return ok(catalogService.getModifierGroups(resolveOrg(organizationId)));
+    }
+
+    @PostMapping({"/api/v1/products/{productId}/modifier-groups/{groupId}",
+            "/api/v1/catalog/products/{productId}/modifier-groups/{groupId}"})
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    public Response<ProductModifierGroup> linkModifier(@PathVariable UUID productId,
+                                                      @PathVariable UUID groupId) {
+        UUID orgId = resolveOrg(null);
+        return ok(catalogService.linkModifierGroupToProduct(orgId, productId, groupId, 0));
+    }
+
+    @PostMapping({"/api/v1/modifier-options", "/api/v1/catalog/modifier-options"})
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     public Response<ModifierOption> addModifierOption(@RequestBody AddModifierOptionRequest request) {
-        ModifierOption option = catalogService.addModifierOption(
-                request.getOrganizationId(),
-                request.getModifierGroupId(),
-                request.getName(),
-                request.getPriceDelta(),
-                request.getDisplayOrder()
-        );
-        return Response.<ModifierOption>builder()
+        UUID organizationId = resolveOrg(request.getOrganizationId());
+        return ok(catalogService.addModifierOption(
+                organizationId, request.getModifierGroupId(), request.getName(),
+                request.getPriceDelta(), request.getDisplayOrder()
+        ));
+    }
+
+    private UUID resolveOrg(UUID requestOrg) {
+        if (TenantContext.getOrgId() != null) return TenantContext.getOrgId();
+        try {
+            return JwtAuth.organizationId();
+        } catch (Exception e) {
+            if (requestOrg != null) return requestOrg;
+            throw new IllegalStateException("organization_id required");
+        }
+    }
+
+    private <T> Response<T> ok(T data) {
+        return Response.<T>builder()
                 .status(HttpStatus.OK)
                 .statusCode(HttpStatus.OK.value())
                 .message("default.message.success")
                 .service("RESTO-OS")
-                .data(option)
+                .data(data)
                 .build();
     }
 
@@ -134,8 +153,8 @@ public class CatalogController {
         private UUID organizationId;
         private String name;
         private Integer displayOrder;
-        private Integer sortOrder;  // E2E alias for displayOrder
-
+        private Integer sortOrder;
+        private Boolean active;
         public UUID getOrganizationId() { return organizationId; }
         public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }
         public String getName() { return name; }
@@ -144,6 +163,8 @@ public class CatalogController {
         public void setDisplayOrder(Integer displayOrder) { this.displayOrder = displayOrder; }
         public Integer getSortOrder() { return sortOrder; }
         public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
+        public Boolean getActive() { return active; }
+        public void setActive(Boolean active) { this.active = active; }
     }
 
     public static class CreateProductRequest {
@@ -154,8 +175,7 @@ public class CatalogController {
         private BigDecimal basePrice;
         private BigDecimal taxRate;
         private String imageUrl;
-        private Boolean active;  // accepted from E2E payload, ignored (products always active on creation)
-
+        private Boolean active;
         public UUID getOrganizationId() { return organizationId; }
         public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }
         public UUID getCategoryId() { return categoryId; }
@@ -176,13 +196,15 @@ public class CatalogController {
 
     public static class CreateModifierGroupRequest {
         private UUID organizationId;
+        private UUID productId;
         private String name;
         private Integer minSelection;
         private Integer maxSelection;
         private Boolean required;
-
         public UUID getOrganizationId() { return organizationId; }
         public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }
+        public UUID getProductId() { return productId; }
+        public void setProductId(UUID productId) { this.productId = productId; }
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
         public Integer getMinSelection() { return minSelection; }
@@ -199,7 +221,6 @@ public class CatalogController {
         private String name;
         private BigDecimal priceDelta;
         private Integer displayOrder;
-
         public UUID getOrganizationId() { return organizationId; }
         public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }
         public UUID getModifierGroupId() { return modifierGroupId; }

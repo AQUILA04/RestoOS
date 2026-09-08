@@ -2,7 +2,7 @@
 title: 'Story 3.1: Floor Plan Zone & Table Management APIs'
 type: 'feature'
 created: '2026-09-08'
-status: 'done'
+status: 'in-progress'
 baseline_commit: 'ef8f3bf'
 route: 'dispatch'
 review_loop_iteration: 0

@@ -1,5 +1,6 @@
 package com.resto.order.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,6 +25,7 @@ public class OrderItemModifier {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_item_id", nullable = false)
+    @JsonIgnore
     private OrderItem orderItem;
 
     @Column(name = "modifier_option_id", nullable = false)

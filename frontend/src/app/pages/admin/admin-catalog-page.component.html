@@ -1,0 +1,22 @@
+<div class="admin-catalog">
+  <h1>Catalogue magasin</h1>
+  <div class="toast-notification" *ngIf="toast">{{ toast }}</div>
+  <table>
+    <thead>
+      <tr><th>Produit</th><th>Prix</th><th></th></tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let p of products">
+        <td>{{ p.name }}</td>
+        <td>{{ (p.resolvedPrice ?? p.basePrice) | currency:'EUR' }}</td>
+        <td>
+          <button type="button" id="edit-price-btn" (click)="startEdit(p)">Modifier</button>
+          <ng-container *ngIf="editingProductId === p.id">
+            <input id="store-price-override" [(ngModel)]="overridePrice" />
+            <button type="button" id="save-override-btn" (click)="saveOverride(p)">Enregistrer</button>
+          </ng-container>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

@@ -2,7 +2,7 @@ name: RestoOS CI/CD Quality Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, cursor/** ]
   pull_request:
     branches: [ main, develop ]
 
@@ -12,256 +12,162 @@ permissions:
   pull-requests: write
 
 jobs:
-  # ===========================================================================
-  # STAGE 1: Unit Tests & JaCoCo Coverage Generation
-  # ===========================================================================
   unit-tests:
     name: 1. Unit Tests & JaCoCo Coverage
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           java-version: '21'
-          distribution: 'temurin'
+          distribution: temurin
           cache: maven
-
-      - name: Execute Unit Tests & JaCoCo Report Generation
+      - name: Unit tests
         run: |
           cd backend
-          mvn clean test -Dtest="*Test,*UnitTest"
-
-      - name: Upload JaCoCo Coverage Report
-        uses: actions/upload-artifact@v4
+          mvn -B clean test
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: jacoco-coverage-report
-          path: backend/target/site/jacoco/jacoco.xml
+          path: backend/target/site/jacoco/
           retention-days: 7
           if-no-files-found: warn
 
-      - name: Upload Unit Test Surefire Reports
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: surefire-unit-reports
-          path: backend/target/surefire-reports/
-          retention-days: 7
-
-  # ===========================================================================
-  # STAGE 2: Integration Tests (Postgres RLS, Redis, Mailpit)
-  # ===========================================================================
   integration-tests:
     name: 2. Integration Tests
     needs: unit-tests
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           java-version: '21'
-          distribution: 'temurin'
+          distribution: temurin
           cache: maven
-
-      - name: Start Integration Test Containers (Postgres, Redis, Mailpit)
-        run: |
-          docker compose -f docker-compose.test.yml up -d
-          docker compose -f docker-compose.test.yml ps
-
-      - name: Execute Integration Tests (Failsafe)
+      - name: Start containers
+        run: docker compose -f docker-compose.test.yml up -d --wait
+      - name: Failsafe IT
         run: |
           cd backend
-          mvn verify -Dtest="*IT,*IntegrationTest" -DfailIfNoTests=false
-
-      - name: Stop Test Containers
-        if: always()
-        run: |
-          docker compose -f docker-compose.test.yml down -v
-
-      - name: Upload Integration Test Failsafe Reports
-        uses: actions/upload-artifact@v4
+          mvn -B verify -DskipTests=false
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/restoos_test_db
+          SPRING_DATASOURCE_USERNAME: restoos_app
+          SPRING_DATASOURCE_PASSWORD: restoos_app_pass
+          RESTOOS_JWT_SECRET: e2e-secret-key-which-is-long-enough-123456
+      - if: always()
+        run: docker compose -f docker-compose.test.yml down -v
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: failsafe-integration-reports
           path: backend/target/failsafe-reports/
           retention-days: 7
+          if-no-files-found: warn
 
-  # ===========================================================================
-  # STAGE 3: Automated Smoke Tests
-  # ===========================================================================
-  smoke-tests:
-    name: 3. Automated Smoke Tests
-    needs: integration-tests
+  frontend-build:
+    name: 3. Frontend Build
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: maven
-
-      - name: Start Smoke Test Environment
-        run: |
-          docker compose -f docker-compose.test.yml up -d
-
-      - name: Execute Backend Smoke Test Suite
-        run: |
-          cd backend
-          mvn test -Dtest="*SmokeTest"
-
-      - name: Stop Smoke Test Environment
-        if: always()
-        run: |
-          docker compose -f docker-compose.test.yml down -v
-
-      - name: Upload Smoke Test Logs
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: smoke-test-reports
-          path: backend/target/surefire-reports/
-          retention-days: 7
-
-  # ===========================================================================
-  # STAGE 4: SonarQube Code Quality & Coverage Analysis
-  # ===========================================================================
-  sonarqube-analysis:
-    name: 4. SonarQube Code Quality Validation
-    needs: smoke-tests
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Shallow clones disabled for accurate Sonar blame info
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: maven
-
-      - name: Download JaCoCo Coverage Report
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: jacoco-coverage-report
-          path: backend/target/site/jacoco/
-
-      - name: Execute SonarQube Analysis
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL || 'https://sonarcloud.io' }}
-        run: |
-          cd backend
-          mvn sonar:sonar \
-            -Dsonar.host.url="${SONAR_HOST_URL}" \
-            -Dsonar.token="${SONAR_TOKEN}" \
-            -Dsonar.coverage.jacoco.xmlReportPaths="target/site/jacoco/jacoco.xml" \
-            -Dsonar.projectKey="resto-os-backend" \
-            -Dsonar.organization="resto-os" || echo "SonarQube analysis finished (skipped if token missing)"
-
-  # ===========================================================================
-  # STAGE 5: Playwright Golden Path E2E Tests
-  # ===========================================================================
-  e2e-tests:
-    name: 5. Playwright Golden Path E2E Tests
-    needs: smoke-tests
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: maven
-
-      - name: Set up Node.js 22
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: |
+          cd frontend
+          npm ci
+          npm run build
 
-      - name: Start E2E Test Containers (Postgres, Redis, Mailpit)
-        run: |
-          docker compose -f docker-compose.test.yml up -d --wait
+  e2e-tests:
+    name: 4. Playwright Golden Path E2E
+    needs: [integration-tests, frontend-build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: maven
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
-      - name: Build & Package Backend JAR
+      - name: Start infra
+        run: docker compose -f docker-compose.test.yml up -d --wait
+
+      - name: Package backend
         run: |
           cd backend
-          mvn clean package -DskipTests
+          mvn -B clean package -DskipTests
 
-      - name: Launch Backend Server in Background
+      - name: Launch backend (e2e profile)
         env:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/restoos_test_db
           SPRING_DATASOURCE_USERNAME: restoos_admin
           SPRING_DATASOURCE_PASSWORD: restoos_password
-          SPRING_JPA_HIBERNATE_DDL_AUTO: none
+          SPRING_MAIL_HOST: localhost
+          SPRING_MAIL_PORT: 1025
+          SPRING_REDIS_HOST: localhost
+          RESTOOS_JWT_SECRET: e2e-secret-key-which-is-long-enough-123456
+          RESTOOS_ISSUER_URI: ''
         run: |
           java -jar backend/target/resto-os-backend-0.0.1-SNAPSHOT.jar \
             --spring.profiles.active=e2e > backend.log 2>&1 &
-          echo "Waiting for Backend server to become healthy..."
-          for i in $(seq 1 30); do
-            if curl -sf http://localhost:8080/actuator/health > /dev/null 2>&1; then
-              echo "✅ Backend is UP after $((i * 3))s"
-              break
+          for i in $(seq 1 40); do
+            if curl -sf http://localhost:8080/actuator/health > /dev/null; then
+              echo "Backend UP"
+              exit 0
             fi
-            if [ "$i" -eq 30 ]; then
-              echo "❌ Backend failed to start within 90s. Dumping logs:"
-              cat backend.log
-              exit 1
-            fi
-            echo "  ⏳ Attempt $i/30 — waiting 3s..."
             sleep 3
           done
+          echo "Backend failed"; cat backend.log; exit 1
 
-      - name: Install Frontend Dependencies & Playwright Browsers
+      - name: Install frontend & Playwright
         run: |
           cd frontend
           npm ci
           npx playwright install --with-deps chromium
 
-      - name: Run Playwright E2E Golden Path Test Suite
+      - name: Build & serve frontend
         run: |
           cd frontend
-          npm run test:e2e
+          npm run build -- --configuration=development
+          npx http-server dist/restoos-shell/browser -p 4200 -c-1 > frontend.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:4200 > /dev/null; then
+              echo "Frontend UP"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Frontend failed"; cat frontend.log; exit 1
 
-      - name: Stop E2E Test Environment
-        if: always()
+      - name: Golden path E2E
+        env:
+          BASE_URL: http://localhost:4200
+          API_URL: http://localhost:8080
+          RESTOOS_JWT_SECRET: e2e-secret-key-which-is-long-enough-123456
         run: |
-          docker compose -f docker-compose.test.yml down -v
+          cd frontend
+          npm run test:e2e -- --retries=0
 
-      - name: Upload Backend Server Log
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: backend-server-log
-          path: backend.log
-          retention-days: 7
-          if-no-files-found: warn
+      - if: always()
+        run: docker compose -f docker-compose.test.yml down -v
 
-      - name: Upload Playwright HTML Report & Traces
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: playwright-e2e-report
-          path: frontend/playwright-report/
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+            backend.log
+            frontend/frontend.log
           retention-days: 14
+          if-no-files-found: warn

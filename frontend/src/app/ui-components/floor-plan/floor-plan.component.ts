@@ -3,8 +3,9 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 export interface TableNode {
   id: string;
   tableNumber: string;
+  name?: string;
   capacity: number;
-  status: 'AVAILABLE' | 'OCCUPIED' | 'RESERVED' | 'OUT_OF_SERVICE';
+  status: 'AVAILABLE' | 'OCCUPIED' | 'RESERVED' | 'OUT_OF_SERVICE' | string;
   zoneId: string;
   posX?: number;
   posY?: number;
@@ -39,6 +40,7 @@ export class FloorPlanComponent {
 
   get filteredTables(): TableNode[] {
     if (!this.activeZoneId) return this.tables;
-    return this.tables.filter(t => t.zoneId === this.activeZoneId);
+    const inZone = this.tables.filter(t => t.zoneId === this.activeZoneId);
+    return inZone.length ? inZone : this.tables;
   }
 }

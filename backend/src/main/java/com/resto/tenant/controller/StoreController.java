@@ -1,6 +1,8 @@
 package com.resto.tenant.controller;
 
 import com.resto.core.response.Response;
+import com.resto.core.security.JwtAuth;
+import com.resto.core.security.TenantContext;
 import com.resto.tenant.domain.Store;
 import com.resto.tenant.service.TenantService;
 import org.springframework.http.HttpStatus;
@@ -22,28 +24,25 @@ public class StoreController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
-    public Response<Store> createStore(
-            @RequestHeader(value = "X-Tenant-ID", required = false) UUID tenantId,
-            @RequestBody CreateStoreRequest request) {
+    public Response<Store> createStore(@RequestBody CreateStoreRequest request) {
+        UUID organizationId = TenantContext.getOrgId() != null
+                ? TenantContext.getOrgId()
+                : JwtAuth.organizationId();
 
-        // organizationId: prefer header (E2E pattern) over body field
-        UUID organizationId = tenantId != null ? tenantId : request.getOrganizationId();
-
-        // Derive a URL-safe code from the name when the caller omits it
         String code = (request.getCode() != null && !request.getCode().isBlank())
                 ? request.getCode()
                 : request.getName().toLowerCase()
                         .replaceAll("[^a-z0-9]+", "-")
                         .replaceAll("^-|-$", "")
-                        .substring(0, Math.min(request.getName().length(), 48))
+                        .substring(0, Math.min(Math.max(request.getName().length(), 1), 48))
                 + "-" + System.currentTimeMillis() % 10000;
 
         Store store = tenantService.createStore(
                 organizationId,
                 request.getName(),
                 code,
-                request.getTimezone(),
-                request.getCurrency()
+                request.getTimezone() != null ? request.getTimezone() : "UTC",
+                request.getCurrency() != null ? request.getCurrency() : "EUR"
         );
         return Response.<Store>builder()
                 .status(HttpStatus.OK)
@@ -56,8 +55,11 @@ public class StoreController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER')")
-    public Response<List<Store>> getStoresByOrg(@RequestParam("organizationId") UUID organizationId) {
-        List<Store> stores = tenantService.getStoresByOrganization(organizationId);
+    public Response<List<Store>> getStoresByOrg(
+            @RequestParam(value = "organizationId", required = false) UUID organizationId) {
+        UUID orgId = organizationId != null ? organizationId
+                : (TenantContext.getOrgId() != null ? TenantContext.getOrgId() : JwtAuth.organizationId());
+        List<Store> stores = tenantService.getStoresByOrganization(orgId);
         return Response.<List<Store>>builder()
                 .status(HttpStatus.OK)
                 .statusCode(HttpStatus.OK.value())
@@ -73,7 +75,7 @@ public class StoreController {
         private String code;
         private String timezone;
         private String currency;
-        private String city;  // accepted from E2E payload; no column yet
+        private String city;
 
         public UUID getOrganizationId() { return organizationId; }
         public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }
@@ -89,4 +91,3 @@ public class StoreController {
         public void setCity(String city) { this.city = city; }
     }
 }
-

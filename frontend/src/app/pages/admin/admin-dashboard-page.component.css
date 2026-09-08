@@ -1,0 +1,11 @@
+.dashboard { padding: 24px; background: #F8F9FA; min-height: 100vh; }
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; }
+.kpi {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  font-family: Outfit, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}

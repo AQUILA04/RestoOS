@@ -1,70 +1,53 @@
 package com.resto.catalog.controller;
 
-import com.resto.catalog.domain.Product;
-import com.resto.catalog.repository.ProductRepository;
+import com.resto.catalog.domain.StoreProduct;
+import com.resto.catalog.service.StoreCatalogService;
 import com.resto.core.response.Response;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.resto.core.security.JwtAuth;
+import com.resto.core.security.TenantContext;
 import org.springframework.http.HttpStatus;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Legacy 86 endpoint — delegates to store-local availability.
+ */
 @RestController
 @RequestMapping("/api/v1/catalog")
 public class Stock86Controller {
 
-    private final ProductRepository productRepository;
-    private final SimpMessagingTemplate messagingTemplate;
+    private final StoreCatalogService storeCatalogService;
 
-    public Stock86Controller(ProductRepository productRepository, SimpMessagingTemplate messagingTemplate) {
-        this.productRepository = productRepository;
-        this.messagingTemplate = messagingTemplate;
+    public Stock86Controller(StoreCatalogService storeCatalogService) {
+        this.storeCatalogService = storeCatalogService;
     }
 
     @PostMapping("/products/{productId}/86")
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER')")
-    public Response<Product> toggleStock86(@PathVariable("productId") UUID productId,
-                                          @RequestBody Toggle86Request request) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + productId));
-
-        product.setIs86(request.getIs86());
-        Product updatedProduct = productRepository.save(product);
-
-        // Broadcast real-time STOMP notification to /topic/store/{storeId}/pos
-        if (request.getStoreId() != null) {
-            String destination = "/topic/store/" + request.getStoreId() + "/pos";
-            messagingTemplate.convertAndSend(destination, Map.of(
-                    "type", "STOCK_86_TOGGLE",
-                    "productId", productId,
-                    "is86", request.getIs86()
-            ));
+    public Response<StoreProduct> toggleStock86(@PathVariable("productId") UUID productId,
+                                                @RequestBody Toggle86Request request) {
+        if (request.getStoreId() == null) {
+            throw new IllegalArgumentException("storeId is required for store-local 86");
         }
-
-        return Response.<Product>builder()
+        UUID organizationId = TenantContext.getOrgId() != null ? TenantContext.getOrgId() : JwtAuth.organizationId();
+        boolean available = !Boolean.TRUE.equals(request.getIs86());
+        StoreProduct updated = storeCatalogService.setAvailability(
+                organizationId, request.getStoreId(), productId, available
+        );
+        return Response.<StoreProduct>builder()
                 .status(HttpStatus.OK)
                 .statusCode(HttpStatus.OK.value())
                 .message("default.message.success")
                 .service("RESTO-OS")
-                .data(updatedProduct)
+                .data(updated)
                 .build();
     }
 
     public static class Toggle86Request {
         private UUID storeId;
         private Boolean is86;
-
-        public Toggle86Request() {}
-        public Toggle86Request(UUID storeId, Boolean is86) {
-            this.storeId = storeId;
-            this.is86 = is86;
-        }
-
         public UUID getStoreId() { return storeId; }
         public void setStoreId(UUID storeId) { this.storeId = storeId; }
         public Boolean getIs86() { return is86; }

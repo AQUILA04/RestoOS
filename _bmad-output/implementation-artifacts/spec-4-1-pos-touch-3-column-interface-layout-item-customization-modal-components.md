@@ -2,7 +2,7 @@
 title: 'Story 4.1: POS Touch 3-Column Interface Layout & Item Customization Modal Components'
 type: 'feature'
 created: '2026-09-08'
-status: 'done'
+status: 'in-progress'
 baseline_commit: '3bd680f'
 route: 'dispatch'
 review_loop_iteration: 0

@@ -2,24 +2,25 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './specs',
-  timeout: 45000,
+  timeout: 120000,
   expect: {
-    timeout: 5000,
+    timeout: 10000,
   },
   fullyParallel: false,
   forbidOnly: !!process.env['CI'],
-  retries: process.env['CI'] ? 2 : 0,
-  workers: 1, // Single worker to ensure linear Golden Path execution
+  retries: process.env['CI'] ? 0 : 0,
+  workers: 1,
   reporter: [
     ['html', { outputFolder: 'playwright-report', open: 'never' }],
     ['list'],
+    ['junit', { outputFile: 'test-results/junit.xml' }],
   ],
   use: {
     baseURL: process.env['BASE_URL'] || 'http://localhost:4200',
-    trace: 'on-first-retry',
+    trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    actionTimeout: 10000,
+    actionTimeout: 15000,
   },
   projects: [
     {

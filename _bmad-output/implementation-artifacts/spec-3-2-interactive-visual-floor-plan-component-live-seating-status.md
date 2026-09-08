@@ -2,7 +2,7 @@
 title: 'Story 3.2: Interactive Visual Floor Plan Component & Live Seating Status'
 type: 'feature'
 created: '2026-09-08'
-status: 'done'
+status: 'in-progress'
 baseline_commit: '2949086'
 route: 'dispatch'
 review_loop_iteration: 0

@@ -6,6 +6,7 @@ export interface CartItem {
   unitPrice: number;
   quantity: number;
   modifiers: string[];
+  modifierOptionIds?: string[];
 }
 
 @Component({
