@@ -53,15 +53,23 @@ public class AuthController {
                 .build();
     }
 
-    @Data
     public static class PinLoginRequest {
         private UUID userId;
         private String pin;
+
+        public UUID getUserId() { return userId; }
+        public void setUserId(UUID userId) { this.userId = userId; }
+        public String getPin() { return pin; }
+        public void setPin(String pin) { this.pin = pin; }
     }
 
-    @Data
     public static class SetPinRequest {
         private UUID userId;
         private String pin;
+
+        public UUID getUserId() { return userId; }
+        public void setUserId(UUID userId) { this.userId = userId; }
+        public String getPin() { return pin; }
+        public void setPin(String pin) { this.pin = pin; }
     }
 }

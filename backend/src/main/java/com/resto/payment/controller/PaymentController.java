@@ -41,7 +41,6 @@ public class PaymentController {
                 .build();
     }
 
-    @Data
     public static class RecordPaymentRequest {
         private UUID organizationId;
         private UUID storeId;
@@ -49,5 +48,18 @@ public class PaymentController {
         private UUID cashierUserId;
         private String paymentMethod;
         private BigDecimal amount;
+
+        public UUID getOrganizationId() { return organizationId; }
+        public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }
+        public UUID getStoreId() { return storeId; }
+        public void setStoreId(UUID storeId) { this.storeId = storeId; }
+        public UUID getOrderId() { return orderId; }
+        public void setOrderId(UUID orderId) { this.orderId = orderId; }
+        public UUID getCashierUserId() { return cashierUserId; }
+        public void setCashierUserId(UUID cashierUserId) { this.cashierUserId = cashierUserId; }
+        public String getPaymentMethod() { return paymentMethod; }
+        public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+        public BigDecimal getAmount() { return amount; }
+        public void setAmount(BigDecimal amount) { this.amount = amount; }
     }
 }

@@ -35,6 +35,19 @@ public class Organization {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
+    public Boolean getActive() { return active; }
+    public void setActive(Boolean active) { this.active = active; }
+    public OffsetDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
+    public OffsetDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }
+
     @PrePersist
     protected void onCreate() {
         createdAt = OffsetDateTime.now();
@@ -44,5 +57,36 @@ public class Organization {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = OffsetDateTime.now();
+    }
+
+    public static OrganizationBuilder builder() {
+        return new OrganizationBuilder();
+    }
+
+    public static class OrganizationBuilder {
+        private UUID id;
+        private String name;
+        private String code;
+        private Boolean active = true;
+        private OffsetDateTime createdAt;
+        private OffsetDateTime updatedAt;
+
+        public OrganizationBuilder id(UUID id) { this.id = id; return this; }
+        public OrganizationBuilder name(String name) { this.name = name; return this; }
+        public OrganizationBuilder code(String code) { this.code = code; return this; }
+        public OrganizationBuilder active(Boolean active) { this.active = active; return this; }
+        public OrganizationBuilder createdAt(OffsetDateTime createdAt) { this.createdAt = createdAt; return this; }
+        public OrganizationBuilder updatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
+
+        public Organization build() {
+            Organization o = new Organization();
+            o.setId(this.id);
+            o.setName(this.name);
+            o.setCode(this.code);
+            o.setActive(this.active != null ? this.active : true);
+            o.setCreatedAt(this.createdAt);
+            o.setUpdatedAt(this.updatedAt);
+            return o;
+        }
     }
 }

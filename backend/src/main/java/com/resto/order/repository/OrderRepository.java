@@ -1,4 +1,6 @@
-package com.resto.order.domain;
+package com.resto.order.repository;
+
+import com.resto.order.domain.Order;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

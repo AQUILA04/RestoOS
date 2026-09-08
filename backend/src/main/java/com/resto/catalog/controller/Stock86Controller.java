@@ -55,11 +55,19 @@ public class Stock86Controller {
                 .build();
     }
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
     public static class Toggle86Request {
         private UUID storeId;
         private Boolean is86;
+
+        public Toggle86Request() {}
+        public Toggle86Request(UUID storeId, Boolean is86) {
+            this.storeId = storeId;
+            this.is86 = is86;
+        }
+
+        public UUID getStoreId() { return storeId; }
+        public void setStoreId(UUID storeId) { this.storeId = storeId; }
+        public Boolean getIs86() { return is86; }
+        public void setIs86(Boolean is86) { this.is86 = is86; }
     }
 }

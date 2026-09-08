@@ -57,11 +57,19 @@ public class StoreCatalogController {
                 .build();
     }
 
-    @Data
     public static class StoreOverrideRequest {
         private UUID organizationId;
         private UUID productId;
         private BigDecimal overridePrice;
         private Boolean available;
+
+        public UUID getOrganizationId() { return organizationId; }
+        public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }
+        public UUID getProductId() { return productId; }
+        public void setProductId(UUID productId) { this.productId = productId; }
+        public BigDecimal getOverridePrice() { return overridePrice; }
+        public void setOverridePrice(BigDecimal overridePrice) { this.overridePrice = overridePrice; }
+        public Boolean getAvailable() { return available; }
+        public void setAvailable(Boolean available) { this.available = available; }
     }
 }

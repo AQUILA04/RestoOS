@@ -52,11 +52,19 @@ public class MembershipController {
                 .build();
     }
 
-    @Data
     public static class CreateMembershipRequest {
         private UUID organizationId;
         private UUID userId;
         private String role;
         private List<UUID> storeIds;
+
+        public UUID getOrganizationId() { return organizationId; }
+        public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }
+        public UUID getUserId() { return userId; }
+        public void setUserId(UUID userId) { this.userId = userId; }
+        public String getRole() { return role; }
+        public void setRole(String role) { this.role = role; }
+        public List<UUID> getStoreIds() { return storeIds; }
+        public void setStoreIds(List<UUID> storeIds) { this.storeIds = storeIds; }
     }
 }

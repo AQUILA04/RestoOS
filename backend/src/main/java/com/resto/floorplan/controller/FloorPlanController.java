@@ -102,15 +102,22 @@ public class FloorPlanController {
                 .build();
     }
 
-    @Data
     public static class CreateZoneRequest {
         private UUID organizationId;
         private UUID storeId;
         private String name;
         private Integer displayOrder;
+
+        public UUID getOrganizationId() { return organizationId; }
+        public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }
+        public UUID getStoreId() { return storeId; }
+        public void setStoreId(UUID storeId) { this.storeId = storeId; }
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public Integer getDisplayOrder() { return displayOrder; }
+        public void setDisplayOrder(Integer displayOrder) { this.displayOrder = displayOrder; }
     }
 
-    @Data
     public static class CreateTableRequest {
         private UUID organizationId;
         private UUID storeId;
@@ -120,10 +127,29 @@ public class FloorPlanController {
         private Integer posX;
         private Integer posY;
         private String shape;
+
+        public UUID getOrganizationId() { return organizationId; }
+        public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }
+        public UUID getStoreId() { return storeId; }
+        public void setStoreId(UUID storeId) { this.storeId = storeId; }
+        public UUID getZoneId() { return zoneId; }
+        public void setZoneId(UUID zoneId) { this.zoneId = zoneId; }
+        public String getTableNumber() { return tableNumber; }
+        public void setTableNumber(String tableNumber) { this.tableNumber = tableNumber; }
+        public Integer getCapacity() { return capacity; }
+        public void setCapacity(Integer capacity) { this.capacity = capacity; }
+        public Integer getPosX() { return posX; }
+        public void setPosX(Integer posX) { this.posX = posX; }
+        public Integer getPosY() { return posY; }
+        public void setPosY(Integer posY) { this.posY = posY; }
+        public String getShape() { return shape; }
+        public void setShape(String shape) { this.shape = shape; }
     }
 
-    @Data
     public static class UpdateStatusRequest {
         private String status;
+
+        public String getStatus() { return status; }
+        public void setStatus(String status) { this.status = status; }
     }
 }

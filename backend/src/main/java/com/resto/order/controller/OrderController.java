@@ -68,13 +68,16 @@ public class OrderController {
                 .build();
     }
 
-    @Data
     public static class CancelOrderRequest {
         private UUID userId;
         private String reason;
+
+        public UUID getUserId() { return userId; }
+        public void setUserId(UUID userId) { this.userId = userId; }
+        public String getReason() { return reason; }
+        public void setReason(String reason) { this.reason = reason; }
     }
 
-    @Data
     public static class CreateOrderRequest {
         private UUID organizationId;
         private UUID storeId;
@@ -82,5 +85,18 @@ public class OrderController {
         private String orderType;
         private String notes;
         private List<OrderService.CreateOrderItemParam> items;
+
+        public UUID getOrganizationId() { return organizationId; }
+        public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }
+        public UUID getStoreId() { return storeId; }
+        public void setStoreId(UUID storeId) { this.storeId = storeId; }
+        public UUID getTableId() { return tableId; }
+        public void setTableId(UUID tableId) { this.tableId = tableId; }
+        public String getOrderType() { return orderType; }
+        public void setOrderType(String orderType) { this.orderType = orderType; }
+        public String getNotes() { return notes; }
+        public void setNotes(String notes) { this.notes = notes; }
+        public List<OrderService.CreateOrderItemParam> getItems() { return items; }
+        public void setItems(List<OrderService.CreateOrderItemParam> items) { this.items = items; }
     }
 }

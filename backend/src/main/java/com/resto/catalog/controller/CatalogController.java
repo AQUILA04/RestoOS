@@ -123,14 +123,19 @@ public class CatalogController {
                 .build();
     }
 
-    @Data
     public static class CreateCategoryRequest {
         private UUID organizationId;
         private String name;
         private Integer displayOrder;
+
+        public UUID getOrganizationId() { return organizationId; }
+        public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public Integer getDisplayOrder() { return displayOrder; }
+        public void setDisplayOrder(Integer displayOrder) { this.displayOrder = displayOrder; }
     }
 
-    @Data
     public static class CreateProductRequest {
         private UUID organizationId;
         private UUID categoryId;
@@ -139,23 +144,58 @@ public class CatalogController {
         private BigDecimal basePrice;
         private BigDecimal taxRate;
         private String imageUrl;
+
+        public UUID getOrganizationId() { return organizationId; }
+        public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }
+        public UUID getCategoryId() { return categoryId; }
+        public void setCategoryId(UUID categoryId) { this.categoryId = categoryId; }
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public String getDescription() { return description; }
+        public void setDescription(String description) { this.description = description; }
+        public BigDecimal getBasePrice() { return basePrice; }
+        public void setBasePrice(BigDecimal basePrice) { this.basePrice = basePrice; }
+        public BigDecimal getTaxRate() { return taxRate; }
+        public void setTaxRate(BigDecimal taxRate) { this.taxRate = taxRate; }
+        public String getImageUrl() { return imageUrl; }
+        public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
     }
 
-    @Data
     public static class CreateModifierGroupRequest {
         private UUID organizationId;
         private String name;
         private Integer minSelection;
         private Integer maxSelection;
         private Boolean required;
+
+        public UUID getOrganizationId() { return organizationId; }
+        public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public Integer getMinSelection() { return minSelection; }
+        public void setMinSelection(Integer minSelection) { this.minSelection = minSelection; }
+        public Integer getMaxSelection() { return maxSelection; }
+        public void setMaxSelection(Integer maxSelection) { this.maxSelection = maxSelection; }
+        public Boolean getRequired() { return required; }
+        public void setRequired(Boolean required) { this.required = required; }
     }
 
-    @Data
     public static class AddModifierOptionRequest {
         private UUID organizationId;
         private UUID modifierGroupId;
         private String name;
         private BigDecimal priceDelta;
         private Integer displayOrder;
+
+        public UUID getOrganizationId() { return organizationId; }
+        public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }
+        public UUID getModifierGroupId() { return modifierGroupId; }
+        public void setModifierGroupId(UUID modifierGroupId) { this.modifierGroupId = modifierGroupId; }
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public BigDecimal getPriceDelta() { return priceDelta; }
+        public void setPriceDelta(BigDecimal priceDelta) { this.priceDelta = priceDelta; }
+        public Integer getDisplayOrder() { return displayOrder; }
+        public void setDisplayOrder(Integer displayOrder) { this.displayOrder = displayOrder; }
     }
 }
