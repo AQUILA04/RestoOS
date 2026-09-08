@@ -1,5 +1,6 @@
 package com.resto.tenant.service;
 
+import com.resto.core.security.TenantContext;
 import com.resto.tenant.domain.InvitationToken;
 import com.resto.tenant.domain.Membership;
 import com.resto.tenant.domain.User;
@@ -71,6 +72,9 @@ public class InvitationService {
         if (Boolean.TRUE.equals(invitation.getConsumed())) {
             throw new IllegalStateException("Invitation already consumed");
         }
+
+        // Bind RLS tenant context for any follow-on tenant-scoped writes
+        TenantContext.setOrgId(invitation.getOrganizationId());
 
         User user = userRepository.findById(invitation.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found for invitation"));

@@ -98,6 +98,11 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
       const activateRes = await request.post(
         `${backendApiUrl}/api/v1/auth/activate?token=${tokenMatch![1]}`
       );
+      if (activateRes.status() !== 200) {
+        throw new Error(
+          `Activation failed (${activateRes.status()}): ${await activateRes.text()}`
+        );
+      }
       expect(activateRes.status()).toBe(200);
     });
 
