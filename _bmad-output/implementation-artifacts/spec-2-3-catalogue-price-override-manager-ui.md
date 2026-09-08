@@ -1,6 +1,6 @@
 # Spec 2.3 — Catalogue & Price Override Manager UI (Admin Portal)
 
-status: 'in-progress'
+status: 'verified'
 
 ## Story
 As an Organization Manager, I want an Angular Admin Portal UI to manage categories, products, store price overrides, and modifier groups.

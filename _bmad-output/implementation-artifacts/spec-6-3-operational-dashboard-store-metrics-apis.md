@@ -2,7 +2,7 @@
 title: 'Story 6.3: Operational Dashboard & Store Metrics APIs'
 type: 'feature'
 created: '2026-09-08'
-status: 'in-progress'
+status: 'verified'
 baseline_commit: '634c51d'
 route: 'dispatch'
 review_loop_iteration: 0

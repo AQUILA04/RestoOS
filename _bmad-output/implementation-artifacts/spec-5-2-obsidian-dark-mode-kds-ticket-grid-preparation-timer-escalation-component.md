@@ -2,7 +2,7 @@
 title: 'Story 5.2: Obsidian Dark Mode KDS Ticket Grid & Preparation Timer Escalation Component'
 type: 'feature'
 created: '2026-09-08'
-status: 'in-progress'
+status: 'verified'
 baseline_commit: '239663a'
 route: 'dispatch'
 review_loop_iteration: 0

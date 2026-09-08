@@ -9,7 +9,6 @@ import com.resto.core.outbox.OutboxService;
 import com.resto.floorplan.domain.RestaurantTable;
 import com.resto.floorplan.repository.RestaurantTableRepository;
 import com.resto.order.domain.Order;
-import com.resto.order.domain.OrderCounter;
 import com.resto.order.repository.OrderCounterRepository;
 import com.resto.order.repository.OrderRepository;
 import com.resto.order.service.OrderService;
@@ -70,12 +69,7 @@ class OrderUnitTest {
         table.setStatus("AVAILABLE");
         when(tableRepository.findById(tableId)).thenReturn(Optional.of(table));
 
-        OrderCounter counter = new OrderCounter();
-        counter.setStoreId(storeId);
-        counter.setOrganizationId(orgId);
-        counter.setLastOrderNumber(100);
-        when(orderCounterRepository.findByStoreIdForUpdate(storeId)).thenReturn(Optional.of(counter));
-        when(orderCounterRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(orderCounterRepository.allocateNextOrderNumber(storeId, orgId)).thenReturn(101);
 
         Product product = Product.builder()
                 .id(productId)
@@ -137,12 +131,7 @@ class OrderUnitTest {
                 .storeId(storeId).productId(productId).organizationId(orgId).available(false).build();
         when(storeProductRepository.findByStoreIdAndProductId(storeId, productId)).thenReturn(Optional.of(sp));
 
-        OrderCounter counter = new OrderCounter();
-        counter.setStoreId(storeId);
-        counter.setOrganizationId(orgId);
-        counter.setLastOrderNumber(100);
-        when(orderCounterRepository.findByStoreIdForUpdate(storeId)).thenReturn(Optional.of(counter));
-        when(orderCounterRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(orderCounterRepository.allocateNextOrderNumber(storeId, orgId)).thenReturn(101);
 
         OrderService.CreateOrderItemParam item = new OrderService.CreateOrderItemParam();
         item.setProductId(productId);

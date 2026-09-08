@@ -2,7 +2,7 @@
 title: 'Story 1.5: Angular Nx Monorepo Shell & Shared Core Design Tokens Library'
 type: 'feature'
 created: '2026-09-08'
-status: 'in-progress'
+status: 'verified'
 baseline_commit: '0d64780'
 route: 'dispatch'
 review_loop_iteration: 0

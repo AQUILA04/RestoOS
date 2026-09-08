@@ -1,6 +1,6 @@
 # Spec 5.3 — Kitchen Ticket Workflow & Item Strike-Through
 
-status: 'in-progress'
+status: 'verified'
 
 ## Story
 As a Line Cook, I want single-tap ticket advancement and line-item strike-through coordinated across stations.

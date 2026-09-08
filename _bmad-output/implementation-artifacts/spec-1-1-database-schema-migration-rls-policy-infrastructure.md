@@ -2,7 +2,7 @@
 title: 'Story 1.1: Database Schema Migration & RLS Policy Infrastructure'
 type: 'feature'
 created: '2026-09-08'
-status: 'in-progress'
+status: 'verified'
 baseline_commit: 'e4e8f2c23aecc8c0d73328e41cf6d060cf4658c2'
 route: 'dispatch'
 review_loop_iteration: 0

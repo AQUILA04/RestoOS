@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset amelia:008-app-role-grants failOnError:false
+--changeset amelia:008-app-role-grants failOnError:false splitStatements:false
 --comment: Application DB role without BYPASSRLS / superuser. Run as migration owner (postgres).
 -- App connects as restoos_app; RLS policies remain enforced. Do NOT grant BYPASSRLS.
 DO $$
