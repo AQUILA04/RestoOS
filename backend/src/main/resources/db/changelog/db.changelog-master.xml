@@ -7,5 +7,6 @@
 
     <include file="db/changelog/changes/001-initial-schema.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/changes/002-catalog-schema.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changes/003-store-catalog-schema.sql" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>
