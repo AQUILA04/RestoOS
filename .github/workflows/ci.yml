@@ -202,7 +202,7 @@ jobs:
 
       - name: Start E2E Test Containers (Postgres, Redis, Mailpit)
         run: |
-          docker compose -f docker-compose.test.yml up -d
+          docker compose -f docker-compose.test.yml up -d --wait
 
       - name: Build & Package Backend JAR
         run: |
@@ -210,10 +210,27 @@ jobs:
           mvn clean package -DskipTests
 
       - name: Launch Backend Server in Background
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/restoos_test_db
+          SPRING_DATASOURCE_USERNAME: restoos_admin
+          SPRING_DATASOURCE_PASSWORD: restoos_password
+          SPRING_JPA_HIBERNATE_DDL_AUTO: none
         run: |
           java -jar backend/target/resto-os-backend-0.0.1-SNAPSHOT.jar > backend.log 2>&1 &
-          echo "Waiting for Backend server to start..."
-          sleep 10
+          echo "Waiting for Backend server to become healthy..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8080/actuator/health > /dev/null 2>&1; then
+              echo "✅ Backend is UP after $((i * 3))s"
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "❌ Backend failed to start within 90s. Dumping logs:"
+              cat backend.log
+              exit 1
+            fi
+            echo "  ⏳ Attempt $i/30 — waiting 3s..."
+            sleep 3
+          done
 
       - name: Install Frontend Dependencies & Playwright Browsers
         run: |
