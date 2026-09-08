@@ -4,6 +4,7 @@ import com.resto.audit.domain.AuditLog;
 import com.resto.audit.repository.AuditLogRepository;
 import com.resto.core.security.JwtAuth;
 import com.resto.core.security.TenantContext;
+import com.resto.tenant.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,18 +18,25 @@ import java.util.UUID;
 public class AuditService {
 
     private final AuditLogRepository auditLogRepository;
+    private final UserRepository userRepository;
 
-    public AuditService(AuditLogRepository auditLogRepository) {
+    public AuditService(AuditLogRepository auditLogRepository, UserRepository userRepository) {
         this.auditLogRepository = auditLogRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
     public AuditLog record(UUID organizationId, UUID storeId, UUID userId,
                            String action, String entityType, UUID entityId, String details) {
+        UUID safeUserId = userId;
+        if (safeUserId != null && !userRepository.existsById(safeUserId)) {
+            // HMAC/station tokens may carry a synthetic subject; keep the trail without breaking FK.
+            safeUserId = null;
+        }
         AuditLog log = AuditLog.builder()
                 .organizationId(organizationId)
                 .storeId(storeId)
-                .userId(userId)
+                .userId(safeUserId)
                 .action(action)
                 .entityType(entityType)
                 .entityId(entityId)

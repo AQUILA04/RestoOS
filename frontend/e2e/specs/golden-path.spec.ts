@@ -70,8 +70,25 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
       expect(storeRes.status()).toBe(200);
       storeId = (await storeRes.json()).data.id;
 
+      // Persist a real OWNER user so audit_logs.user_id FK succeeds on catalog/order mutations
+      const ownerUserRes = await request.post(`${backendApiUrl}/api/v1/users`, {
+        headers,
+        data: {
+          email: `owner-${runId}@bistrogourmet.fr`,
+          firstName: 'Olivier',
+          lastName: 'Owner',
+        },
+      });
+      expect(ownerUserRes.status()).toBe(200);
+      const ownerUserId = (await ownerUserRes.json()).data.id as string;
+
+      await request.post(`${backendApiUrl}/api/v1/memberships`, {
+        headers,
+        data: { userId: ownerUserId, role: 'OWNER', storeIds: [storeId] },
+      });
+
       const boundToken = await request.post(`${backendApiUrl}/api/v1/test/token`, {
-        data: { roles: ['OWNER'], organizationId: orgId, storeId },
+        data: { roles: ['OWNER'], organizationId: orgId, storeId, userId: ownerUserId },
       });
       ownerToken = (await boundToken.json()).data.accessToken;
       headers = { Authorization: `Bearer ${ownerToken}` };
@@ -157,6 +174,9 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
           data: { priceOverride: 15.5, available: true },
         }
       );
+      if (overrideRes.status() !== 200) {
+        throw new Error(`Store override failed (${overrideRes.status()}): ${await overrideRes.text()}`);
+      }
       expect(overrideRes.status()).toBe(200);
 
       // Prefer API override assertion; UI override remains covered when admin token/session present
