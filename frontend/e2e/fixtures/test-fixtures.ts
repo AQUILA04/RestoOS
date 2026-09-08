@@ -1,4 +1,4 @@
-import { test as base } from '@playwright/test';
+import { test as base, Browser, BrowserContext, Page } from '@playwright/test';
 import { MailpitClient } from '../helpers/mailpit.client';
 import { AdminPortalPage } from '../pages/admin-portal.page';
 import { PosTerminalPage } from '../pages/pos-terminal.page';
@@ -10,7 +10,16 @@ export type RestoFixtures = {
   posPage: PosTerminalPage;
   kdsPage: KdsScreenPage;
   backendApiUrl: string;
+  ownerContext: BrowserContext;
+  posContext: BrowserContext;
+  kdsContext: BrowserContext;
 };
+
+async function newRoleContext(browser: Browser): Promise<BrowserContext> {
+  return browser.newContext({
+    baseURL: process.env['BASE_URL'] || 'http://localhost:4200',
+  });
+}
 
 export const test = base.extend<RestoFixtures>({
   backendApiUrl: [process.env['API_URL'] || 'http://localhost:8080', { option: true }],
@@ -21,19 +30,37 @@ export const test = base.extend<RestoFixtures>({
     await use(mailpit);
   },
 
-  adminPage: async ({ page }, use) => {
-    const adminPage = new AdminPortalPage(page);
-    await use(adminPage);
+  ownerContext: async ({ browser }, use) => {
+    const ctx = await newRoleContext(browser);
+    await use(ctx);
+    await ctx.close();
   },
 
-  posPage: async ({ page }, use) => {
-    const posPage = new PosTerminalPage(page);
-    await use(posPage);
+  posContext: async ({ browser }, use) => {
+    const ctx = await newRoleContext(browser);
+    await use(ctx);
+    await ctx.close();
   },
 
-  kdsPage: async ({ page }, use) => {
-    const kdsPage = new KdsScreenPage(page);
-    await use(kdsPage);
+  kdsContext: async ({ browser }, use) => {
+    const ctx = await newRoleContext(browser);
+    await use(ctx);
+    await ctx.close();
+  },
+
+  adminPage: async ({ ownerContext }, use) => {
+    const page: Page = await ownerContext.newPage();
+    await use(new AdminPortalPage(page));
+  },
+
+  posPage: async ({ posContext }, use) => {
+    const page: Page = await posContext.newPage();
+    await use(new PosTerminalPage(page));
+  },
+
+  kdsPage: async ({ kdsContext }, use) => {
+    const page: Page = await kdsContext.newPage();
+    await use(new KdsScreenPage(page));
   },
 });
 

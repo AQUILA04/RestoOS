@@ -1,6 +1,10 @@
 spring:
   application:
     name: resto-os-backend
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/restoos_db}
     username: ${SPRING_DATASOURCE_USERNAME:restoos_app}
@@ -17,6 +21,116 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
     enabled: true
+    # Migrations need elevated privileges; runtime uses restoos_app (no BYPASSRLS).
+    user: ${SPRING_LIQUIBASE_USER:${LIQUIBASE_USER:restoos_admin}}
+    password: ${SPRING_LIQUIBASE_PASSWORD:${LIQUIBASE_PASSWORD:restoos_password}}
+  mail:
+    host: ${SPRING_MAIL_HOST:localhost}
+    port: ${SPRING_MAIL_PORT:1025}
+    properties:
+      mail.smtp.auth: false
+      mail.smtp.starttls.enable: false
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST:localhost}
+      port: ${SPRING_REDIS_PORT:6379}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI:${RESTOOS_ISSUER_URI:http://localhost:8081/realms/restoos}}
+          jwk-set-uri: ${JWT_JWK_SET_URI:}
+          audiences: ${JWT_AUDIENCE:${RESTOOS_AUDIENCE:restoos-api}}
 
 server:
   port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+restoos:
+  jwt:
+    secret: ${RESTOOS_JWT_SECRET:restoos-dev-hmac-secret-key-32chars-min}
+    station-ttl-minutes: ${RESTOOS_JWT_STATION_TTL:480}
+    audience: ${JWT_AUDIENCE:${RESTOOS_AUDIENCE:restoos-api}}
+  app:
+    activation-base-url: ${RESTOOS_ACTIVATION_BASE_URL:${RESTOOS_FRONTEND_BASE_URL:http://localhost:4200}/activate}
+  redis:
+    broker-enabled: ${RESTOOS_REDIS_BROKER:false}
+  outbox:
+    poll-ms: ${RESTOOS_OUTBOX_POLL_MS:500}
+  mail:
+    from: ${RESTOOS_MAIL_FROM:noreply@restoos.local}
+
+---
+# Profile: test — H2 in-memory, HS256 JWT, no Liquibase/RLS
+spring:
+  config:
+    activate:
+      on-profile: test
+  datasource:
+    url: jdbc:h2:mem:restoos;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  liquibase:
+    enabled: false
+  mail:
+    host: localhost
+    port: 1025
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ""
+
+restoos:
+  jwt:
+    secret: test-secret-key-which-is-long-enough-123456
+  redis:
+    broker-enabled: false
+
+management:
+  health:
+    mail:
+      enabled: false
+    redis:
+      enabled: false
+
+---
+# Profile: e2e — HS256 JWT (never permitAll). Wire Keycloak via JWT_ISSUER_URI when available.
+spring:
+  config:
+    activate:
+      on-profile: e2e
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+  mail:
+    host: ${SPRING_MAIL_HOST:localhost}
+    port: ${SPRING_MAIL_PORT:1025}
+  liquibase:
+    user: ${SPRING_LIQUIBASE_USER:restoos_admin}
+    password: ${SPRING_LIQUIBASE_PASSWORD:restoos_password}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI:}
+
+restoos:
+  jwt:
+    secret: ${RESTOOS_JWT_SECRET:test-secret-key-which-is-long-enough-123456}
+    audience: restoos-api
+  redis:
+    broker-enabled: ${RESTOOS_REDIS_BROKER:false}

@@ -1,0 +1,8 @@
+<div class="kds-page">
+  <h1>Cuisine</h1>
+  <resto-kds-grid
+    [tickets]="tickets"
+    (advanceTicket)="onAdvance($event)"
+    (toggleItemPrepared)="onToggleItem($event)">
+  </resto-kds-grid>
+</div>

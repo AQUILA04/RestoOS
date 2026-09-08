@@ -1,7 +1,6 @@
 package com.resto.order.domain;
 
 import jakarta.persistence.*;
-import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -11,11 +10,6 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "orders")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Order {
 
     @Id
@@ -35,27 +29,21 @@ public class Order {
     private Integer orderNumber;
 
     @Column(name = "order_type", nullable = false, length = 50)
-    @Builder.Default
     private String orderType = "DINE_IN";
 
     @Column(nullable = false, length = 50)
-    @Builder.Default
-    private String status = "CREATED"; // CREATED, SENT_TO_KITCHEN, PREPARING, READY, DELIVERED, CLOSED, CANCELLED
+    private String status = "CREATED";
 
     @Column(name = "payment_status", nullable = false, length = 50)
-    @Builder.Default
-    private String paymentStatus = "UNPAID"; // UNPAID, PAID
+    private String paymentStatus = "UNPAID";
 
     @Column(nullable = false, precision = 10, scale = 2)
-    @Builder.Default
     private BigDecimal subtotal = BigDecimal.ZERO;
 
     @Column(name = "tax_total", nullable = false, precision = 10, scale = 2)
-    @Builder.Default
     private BigDecimal taxTotal = BigDecimal.ZERO;
 
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
-    @Builder.Default
     private BigDecimal totalAmount = BigDecimal.ZERO;
 
     @Column
@@ -70,8 +58,11 @@ public class Order {
     @Column(name = "cancellation_reason")
     private String cancellationReason;
 
+    @Version
+    @Column(name = "version")
+    private Long version;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -110,6 +101,8 @@ public class Order {
     public void setCancelledBy(UUID cancelledBy) { this.cancelledBy = cancelledBy; }
     public String getCancellationReason() { return cancellationReason; }
     public void setCancellationReason(String cancellationReason) { this.cancellationReason = cancellationReason; }
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
     public List<OrderItem> getItems() { return items; }
     public void setItems(List<OrderItem> items) { this.items = items; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
@@ -148,6 +141,7 @@ public class Order {
         private OffsetDateTime cancelledAt;
         private UUID cancelledBy;
         private String cancellationReason;
+        private Long version;
         private List<OrderItem> items = new ArrayList<>();
         private OffsetDateTime createdAt;
         private OffsetDateTime updatedAt;
@@ -167,6 +161,7 @@ public class Order {
         public OrderBuilder cancelledAt(OffsetDateTime cancelledAt) { this.cancelledAt = cancelledAt; return this; }
         public OrderBuilder cancelledBy(UUID cancelledBy) { this.cancelledBy = cancelledBy; return this; }
         public OrderBuilder cancellationReason(String cancellationReason) { this.cancellationReason = cancellationReason; return this; }
+        public OrderBuilder version(Long version) { this.version = version; return this; }
         public OrderBuilder items(List<OrderItem> items) { this.items = items; return this; }
         public OrderBuilder createdAt(OffsetDateTime createdAt) { this.createdAt = createdAt; return this; }
         public OrderBuilder updatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
@@ -188,6 +183,7 @@ public class Order {
             order.setCancelledAt(this.cancelledAt);
             order.setCancelledBy(this.cancelledBy);
             order.setCancellationReason(this.cancellationReason);
+            order.setVersion(this.version);
             order.setItems(this.items != null ? this.items : new ArrayList<>());
             order.setCreatedAt(this.createdAt);
             order.setUpdatedAt(this.updatedAt);

@@ -2,7 +2,7 @@
 title: 'Story 6.2: Order Cancellation with Immutable Reason Audit Trail'
 type: 'feature'
 created: '2026-09-08'
-status: 'done'
+status: 'in-progress'
 baseline_commit: 'e47ae26'
 route: 'dispatch'
 review_loop_iteration: 0

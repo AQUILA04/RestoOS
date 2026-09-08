@@ -39,8 +39,13 @@ export class PosTerminalPage {
     await this.page.goto('/pos');
   }
 
-  async authenticateWithPin(pin: string) {
+  async authenticateWithPin(pin: string, userName?: string) {
     await this.gotoPos();
+    if (userName) {
+      await this.page.locator(`.user-card:has-text("${userName}")`).click();
+    } else {
+      await this.page.locator('.user-card').first().click();
+    }
     for (const digit of pin) {
       await this.page.locator(`.pin-button[data-digit="${digit}"]`).click();
     }
@@ -65,11 +70,15 @@ export class PosTerminalPage {
     await this.submitOrderBtn.click();
     await expect(this.orderStatusBadge).toContainText('EN CUISINE');
     const orderNum = await this.page.locator('#order-number-display').textContent();
-    return orderNum ? orderNum.trim() : '#1001';
+    if (!orderNum || !orderNum.trim()) {
+      throw new Error('Order number display missing after submit');
+    }
+    return orderNum.trim();
   }
 
   async deliverAndPayOrder(orderNum: string, clientEmail: string) {
-    await this.page.goto(`/pos/orders/${orderNum}`);
+    const numeric = String(orderNum).replace(/^#/, '');
+    await this.page.goto(`/pos/orders/${numeric}`);
     await this.markDeliveredBtn.click();
     await expect(this.orderStatusBadge).toContainText('LIVRÉ');
 

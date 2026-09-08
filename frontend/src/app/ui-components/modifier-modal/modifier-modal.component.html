@@ -1,33 +1,39 @@
-<div class="modal-overlay" *ngIf="isOpen">
+<div class="modal-overlay" *ngIf="isOpen" id="modifier-selection-modal" role="dialog" aria-modal="true">
   <div class="modal-content">
     <div class="modal-header">
       <h2>Personnaliser {{ productName }}</h2>
-      <button class="close-btn" (click)="closeModal()">✕</button>
+      <button type="button" class="close-btn" (click)="closeModal()" aria-label="Fermer">✕</button>
     </div>
 
     <div class="modal-body">
       <div *ngFor="let group of modifierGroups" class="modifier-group-section">
         <div class="group-title">
-          {{ group.name }} 
+          {{ group.name }}
           <span *ngIf="group.required" class="required-badge">* Requis</span>
         </div>
 
         <div class="options-grid">
-          <div 
-            *ngFor="let option of group.options" 
-            class="option-chip" 
+          <button
+            type="button"
+            *ngFor="let option of group.options"
+            class="option-chip modifier-option"
             [class.selected]="isOptionSelected(option.id)"
             (click)="toggleOption(option)">
             <span class="option-name">{{ option.name }}</span>
             <span *ngIf="option.priceDelta > 0" class="option-price">+{{ option.priceDelta | currency:'EUR' }}</span>
-          </div>
+          </button>
         </div>
       </div>
     </div>
 
     <div class="modal-footer">
-      <button class="confirm-btn" [disabled]="!isValid" (click)="confirmSelection()">
-        AJOUTER AU PANIER
+      <button
+        type="button"
+        class="confirm-btn"
+        id="modifier-confirm-btn"
+        [disabled]="!isValid"
+        (click)="confirmSelection()">
+        Valider
       </button>
     </div>
   </div>

@@ -47,6 +47,19 @@ export class AdminPortalPage {
     await this.page.goto('/admin/catalog');
   }
 
+  /** Seed JWT + tenant context used by admin dashboard / catalog pages. */
+  async injectSession(token: string, organizationId: string, storeId: string) {
+    await this.page.goto('/admin/dashboard');
+    await this.page.evaluate(
+      ([accessToken, org, store]) => {
+        localStorage.setItem('access_token', accessToken as string);
+        localStorage.setItem('organization_id', org as string);
+        localStorage.setItem('store_id', store as string);
+      },
+      [token, organizationId, storeId]
+    );
+  }
+
   async setStorePriceOverride(productName: string, newPrice: string) {
     await this.gotoCatalogManager();
     await this.page.locator(`tr:has-text("${productName}") #edit-price-btn`).click();
@@ -55,11 +68,27 @@ export class AdminPortalPage {
     await expect(this.toastMessage).toContainText('Prix local mis à jour');
   }
 
-  async verifyDashboardMetrics(expectedRevenue: string, minOrdersCount: number) {
+  async verifyDashboardMetrics(expectedRevenue: string, ordersCount: number) {
     await this.gotoDashboard();
     await expect(this.dashboardRevWidget).toContainText(expectedRevenue);
     const textCount = await this.dashboardOrdersWidget.textContent();
     const count = parseInt(textCount || '0', 10);
-    expect(count).toBeGreaterThanOrEqual(minOrdersCount);
+    expect(count).toBe(ordersCount);
+  }
+
+  /**
+   * Exact KPI assertions after session inject (no soft >= thresholds).
+   * Reloads dashboard so metrics fetch with the seeded store_id.
+   */
+  async verifyDashboardMetricsExact(
+    token: string,
+    organizationId: string,
+    storeId: string,
+    expectedRevenue: string,
+    ordersCount: number
+  ) {
+    await this.injectSession(token, organizationId, storeId);
+    await this.page.reload();
+    await this.verifyDashboardMetrics(expectedRevenue, ordersCount);
   }
 }

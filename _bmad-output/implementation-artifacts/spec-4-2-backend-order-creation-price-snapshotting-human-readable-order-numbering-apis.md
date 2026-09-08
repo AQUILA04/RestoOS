@@ -2,7 +2,7 @@
 title: 'Story 4.2: Backend Order Creation, Price Snapshotting & Human-Readable Order Numbering APIs'
 type: 'feature'
 created: '2026-09-08'
-status: 'done'
+status: 'in-progress'
 baseline_commit: '52459de'
 route: 'dispatch'
 review_loop_iteration: 0

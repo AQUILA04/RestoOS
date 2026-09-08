@@ -1,9 +1,11 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 
 export interface KdsTicketItem {
+  id?: string;
   name: string;
   quantity: number;
   modifiers?: string[];
+  prepared?: boolean;
 }
 
 export interface KdsTicket {
@@ -11,7 +13,7 @@ export interface KdsTicket {
   orderNumber: number;
   orderType: string;
   status: 'SENT_TO_KITCHEN' | 'PREPARING' | 'READY';
-  createdAt: string; // ISO date string
+  createdAt: string;
   items: KdsTicketItem[];
 }
 
@@ -23,15 +25,16 @@ export interface KdsTicket {
 })
 export class KdsGridComponent implements OnInit, OnDestroy {
   @Input() tickets: KdsTicket[] = [];
-  @Output() onAdvanceTicket = new EventEmitter<{ ticketId: string; nextStatus: string }>();
+  @Output() advanceTicket = new EventEmitter<{ ticketId: string; nextStatus: string }>();
+  @Output() toggleItemPrepared = new EventEmitter<{ ticketId: string; itemId?: string; itemIndex: number }>();
 
-  private timerInterval: any;
+  private timerInterval: ReturnType<typeof setInterval> | null = null;
   now: number = Date.now();
 
   ngOnInit(): void {
     this.timerInterval = setInterval(() => {
       this.now = Date.now();
-    }, 10000);
+    }, 1000);
   }
 
   ngOnDestroy(): void {
@@ -42,7 +45,8 @@ export class KdsGridComponent implements OnInit, OnDestroy {
 
   getElapsedMinutes(createdAtIso: string): number {
     const created = new Date(createdAtIso).getTime();
-    return Math.floor((this.now - created) / 60000);
+    if (Number.isNaN(created)) return 0;
+    return Math.max(0, Math.floor((this.now - created) / 60000));
   }
 
   getTimerTier(createdAtIso: string): 'tier-green' | 'tier-amber' | 'tier-crimson' {
@@ -53,10 +57,11 @@ export class KdsGridComponent implements OnInit, OnDestroy {
   }
 
   advance(ticket: KdsTicket): void {
-    let nextStatus = 'PREPARING';
-    if (ticket.status === 'PREPARING') {
-      nextStatus = 'READY';
-    }
-    this.onAdvanceTicket.emit({ ticketId: ticket.id, nextStatus });
+    this.advanceTicket.emit({ ticketId: ticket.id, nextStatus: 'READY' });
+  }
+
+  toggleItem(ticket: KdsTicket, itemIndex: number): void {
+    const item = ticket.items[itemIndex];
+    this.toggleItemPrepared.emit({ ticketId: ticket.id, itemId: item?.id, itemIndex });
   }
 }

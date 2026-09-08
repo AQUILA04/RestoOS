@@ -1,0 +1,11 @@
+<div class="dashboard">
+  <h1>Dashboard opérationnel</h1>
+  <div class="kpi-grid">
+    <div class="kpi" id="kpi-total-orders">{{ metrics.todaysOrdersCount }}</div>
+    <div class="kpi" id="kpi-declared-revenue">{{ metrics.declaredRevenue | number:'1.2-2' }}</div>
+    <div class="kpi">Impayées: {{ metrics.unpaidOrdersCount }}</div>
+    <div class="kpi">En prep: {{ metrics.preparingOrdersCount }}</div>
+    <div class="kpi">Prêtes: {{ metrics.readyOrdersCount }}</div>
+    <div class="kpi">Tables: {{ metrics.occupiedTablesCount }}</div>
+  </div>
+</div>

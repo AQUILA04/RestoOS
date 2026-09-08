@@ -42,10 +42,15 @@
     <div class="cart-footer">
       <div class="cart-total-row">
         <span>TOTAL</span>
-        <span class="total-amount">{{ cartTotal | currency:'EUR' }}</span>
+        <span class="total-amount" id="cart-total-amount">{{ cartTotal | currency:'EUR' }}</span>
       </div>
-      <button class="checkout-btn" [disabled]="!cartItems.length" (click)="onCheckout.emit()">
-        ENVOYER EN CUISINE ➔
+      <button
+        type="button"
+        class="checkout-btn"
+        id="submit-order-btn"
+        [disabled]="!cartItems.length"
+        (click)="checkout.emit()">
+        ENVOYER EN CUISINE
       </button>
     </div>
   </div>

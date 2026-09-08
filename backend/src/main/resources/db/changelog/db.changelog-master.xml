@@ -12,5 +12,7 @@
     <include file="db/changelog/changes/005-order-schema.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/changes/006-payment-audit-schema.sql" relativeToChangelogFile="false"/>
     <include file="db/changelog/changes/007-cancellation-schema.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changes/008-golden-path-schema.sql" relativeToChangelogFile="false"/>
+    <include file="db/changelog/changes/009-invitation-tokens.sql" relativeToChangelogFile="false"/>
 
 </databaseChangeLog>
