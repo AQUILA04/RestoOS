@@ -45,16 +45,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        // Prefer Redis STOMP relay in production multi-instance setups.
-        // When restoos.redis.broker-enabled=true, wire a StompBrokerRelay to Redis/Rabbit.
-        // For now enableSimpleBroker keeps single-node and test profiles working without Redis.
-        if (redisBrokerEnabled) {
-            // Placeholder for future: config.enableStompBrokerRelay("/topic").setRelayHost(...)
-            config.enableSimpleBroker("/topic");
-        } else {
-            config.enableSimpleBroker("/topic");
-        }
+        // Local simple broker always; multi-instance fan-out is handled by RedisStompConfig
+        // when restoos.redis.broker-enabled=true (pub/sub → SimpMessagingTemplate).
+        config.enableSimpleBroker("/topic");
         config.setApplicationDestinationPrefixes("/app");
+        if (redisBrokerEnabled) {
+            // Flag consumed by RedisStompConfig; keep simple broker for SockJS clients.
+        }
     }
 
     @Override

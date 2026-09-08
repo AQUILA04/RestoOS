@@ -103,6 +103,7 @@ public class PaymentService {
     }
 
     /** @deprecated use {@link #markPaid} */
+    @Deprecated
     public Payment recordPayment(UUID organizationId, UUID storeId, UUID orderId, UUID cashierUserId,
                                  String paymentMethod, BigDecimal amount) {
         return markPaid(organizationId, storeId, orderId, cashierUserId, paymentMethod, amount);

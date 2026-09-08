@@ -64,9 +64,7 @@ export class KdsPageComponent implements OnInit, OnDestroy {
       next: () => {
         this.tickets = this.tickets.filter((t) => t.id !== event.ticketId);
       },
-      error: () => {
-        this.tickets = this.tickets.filter((t) => t.id !== event.ticketId);
-      },
+      error: () => undefined,
     });
   }
 

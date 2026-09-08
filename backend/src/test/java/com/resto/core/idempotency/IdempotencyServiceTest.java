@@ -84,6 +84,64 @@ class IdempotencyServiceTest {
         assertFalse(service.isValidKeyFormat(null));
     }
 
+    @Test
+    @DisplayName("First call executes action and persists response for replay")
+    void firstCallPersists() {
+        UUID org = UUID.randomUUID();
+        when(repository.findByOrganizationIdAndEndpointAndKey(org, "POST /pay", "k-new"))
+                .thenReturn(Optional.empty());
+        when(repository.save(any(IdempotencyKey.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        AtomicInteger calls = new AtomicInteger();
+        String result = service.execute(org, null, "POST /pay", "k-new", MapReq.of("a"),
+                () -> { calls.incrementAndGet(); return "created"; }, String.class);
+
+        assertEquals("created", result);
+        assertEquals(1, calls.get());
+        verify(repository).save(argThat(key ->
+                "k-new".equals(key.getKey())
+                        && key.getResponseBody() != null
+                        && key.getResponseBody().contains("created")
+                        && Integer.valueOf(200).equals(key.getStatusCode())));
+    }
+
+    @Test
+    @DisplayName("Concurrent second lookup after first save replays without re-executing")
+    void concurrentReplayAfterFirstSave() throws Exception {
+        UUID org = UUID.randomUUID();
+        String endpoint = "POST /orders";
+        String key = "concurrent-1";
+        AtomicInteger calls = new AtomicInteger();
+        AtomicInteger finds = new AtomicInteger();
+
+        when(repository.findByOrganizationIdAndEndpointAndKey(org, endpoint, key)).thenAnswer(inv -> {
+            int n = finds.incrementAndGet();
+            if (n == 1) {
+                return Optional.empty();
+            }
+            IdempotencyKey stored = IdempotencyKey.builder()
+                    .organizationId(org)
+                    .endpoint(endpoint)
+                    .key(key)
+                    .requestHash(service.hashRequest(MapReq.of("same")))
+                    .responseBody(mapper.writeValueAsString("winner"))
+                    .statusCode(200)
+                    .build();
+            return Optional.of(stored);
+        });
+        when(repository.save(any(IdempotencyKey.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        String first = service.execute(org, null, endpoint, key, MapReq.of("same"),
+                () -> { calls.incrementAndGet(); return "winner"; }, String.class);
+        String second = service.execute(org, null, endpoint, key, MapReq.of("same"),
+                () -> { calls.incrementAndGet(); return "loser"; }, String.class);
+
+        assertEquals("winner", first);
+        assertEquals("winner", second);
+        assertEquals(1, calls.get());
+        verify(repository, times(1)).save(any(IdempotencyKey.class));
+    }
+
     static class MapReq {
         public String v;
         static MapReq of(String v) {

@@ -1,13 +1,10 @@
-
 backend/target/
 frontend/node_modules/
 frontend/dist/
 frontend/playwright-report/
 frontend/test-results/
-backend/target/
-frontend/node_modules/
-frontend/dist/
-frontend/playwright-report/
-frontend/test-results/
+frontend/e2e/playwright-report/
+frontend/e2e/test-results/
 frontend/.angular/
 *.log
+.DS_Store

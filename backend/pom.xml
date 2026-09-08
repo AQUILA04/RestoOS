@@ -179,9 +179,9 @@
                     <includes>
                         <include>**/*Test.java</include>
                         <include>**/*UnitTest.java</include>
+                        <include>**/ApiContractSmokeIT.java</include>
                     </includes>
                     <excludes>
-                        <exclude>**/*IT.java</exclude>
                         <exclude>**/*IntegrationTest.java</exclude>
                         <exclude>**/*SmokeTest.java</exclude>
                     </excludes>

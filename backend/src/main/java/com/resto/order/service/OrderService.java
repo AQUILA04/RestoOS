@@ -8,6 +8,7 @@ import com.resto.catalog.repository.ModifierOptionRepository;
 import com.resto.catalog.repository.ProductRepository;
 import com.resto.catalog.repository.StoreProductRepository;
 import com.resto.core.outbox.OutboxService;
+import com.resto.core.security.TenantContext;
 import com.resto.floorplan.domain.RestaurantTable;
 import com.resto.floorplan.repository.RestaurantTableRepository;
 import com.resto.order.domain.Order;
@@ -326,8 +327,13 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public Order getOrder(UUID orderId) {
-        return orderRepository.findById(orderId)
+        Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
+        UUID orgId = TenantContext.getOrgId();
+        if (orgId != null && !orgId.equals(order.getOrganizationId())) {
+            throw new IllegalArgumentException("Order not found: " + orderId);
+        }
+        return order;
     }
 
     public static class CreateOrderItemParam {

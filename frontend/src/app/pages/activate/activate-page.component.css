@@ -1,36 +1,23 @@
 .activate-page {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 2rem;
-  background: linear-gradient(160deg, #1a2332 0%, #2d3a4f 50%, #1a2332 100%);
-  color: #f5f7fa;
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  display: grid;
+  place-content: center;
+  gap: 12px;
+  background: linear-gradient(160deg, #e8f1f5 0%, #f7fafc 45%, #dfe9ef 100%);
+  font-family: "Source Sans 3", "Segoe UI", sans-serif;
+  color: #1a2b36;
   text-align: center;
+  padding: 24px;
 }
 
-.activate-page h1 {
+h1 {
+  font-family: "Fraunces", Georgia, serif;
   font-size: 2.5rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
   margin: 0;
+  letter-spacing: -0.02em;
 }
 
-.activate-page p {
+p {
   margin: 0;
-  font-size: 1.125rem;
-  max-width: 28rem;
-  line-height: 1.5;
-  opacity: 0.92;
-}
-
-.activate-page[data-status='success'] p {
-  color: #9be7b4;
-}
-
-.activate-page[data-status='error'] p {
-  color: #ffb4a8;
+  font-size: 1.1rem;
 }

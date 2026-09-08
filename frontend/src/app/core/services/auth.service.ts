@@ -37,7 +37,7 @@ export class AuthService {
       })
       .pipe(
         map((r) => r.data),
-        tap((data) => {
+        tap((data: any) => {
           if (data && data.authenticated === false) {
             throw new Error('PIN invalide');
           }

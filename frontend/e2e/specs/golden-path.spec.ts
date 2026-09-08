@@ -91,7 +91,14 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
         'Invitation à rejoindre RestoOS'
       );
       expect(inviteEmail.Subject).toContain('Invitation à rejoindre RestoOS');
-      expect(inviteEmail.HTML).toContain('Activer mon compte');
+      const html = inviteEmail.HTML || inviteEmail.Text || '';
+      expect(html).toContain('Activer mon compte');
+      const tokenMatch = html.match(/token=([a-f0-9-]{36})/i);
+      expect(tokenMatch).toBeTruthy();
+      const activateRes = await request.post(
+        `${backendApiUrl}/api/v1/auth/activate?token=${tokenMatch![1]}`
+      );
+      expect(activateRes.status()).toBe(200);
     });
 
     await test.step('Stage 2: Catalogue, modifiers, override, table, PIN', async () => {
@@ -121,13 +128,7 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
 
       const groupRes = await request.post(`${backendApiUrl}/api/v1/catalog/modifier-groups`, {
         headers,
-        data: {
-          name: 'Cuisson',
-          required: true,
-          minSelection: 1,
-          maxSelection: 1,
-          productId,
-        },
+        data: { name: 'Cuisson', required: true, minSelection: 1, maxSelection: 1 },
       });
       expect(groupRes.status()).toBe(200);
       const groupId = (await groupRes.json()).data.id;
@@ -137,6 +138,12 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
         data: { modifierGroupId: groupId, name: 'A point', priceDelta: 0 },
       });
       expect(optRes.status()).toBe(200);
+
+      const linkRes = await request.post(
+        `${backendApiUrl}/api/v1/products/${productId}/modifier-groups/${groupId}`,
+        { headers }
+      );
+      expect(linkRes.status()).toBe(200);
 
       const overrideRes = await request.put(
         `${backendApiUrl}/api/v1/stores/${storeId}/products/${productId}`,
@@ -214,11 +221,11 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
     await test.step('Stage 4: KDS realtime ticket → READY', async () => {
       await kdsPage.page.evaluate(
         ([token, org, store]) => {
-          if (token) localStorage.setItem('access_token', token as string);
+          localStorage.setItem('access_token', token as string);
           localStorage.setItem('organization_id', org as string);
           localStorage.setItem('store_id', store as string);
         },
-        [await posPage.page.evaluate(() => localStorage.getItem('access_token')), orgId, storeId]
+        [ownerToken, orgId, storeId]
       );
       await kdsPage.gotoKds();
       await kdsPage.waitForOrderTicket(orderNumber);
@@ -228,6 +235,14 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
 
     await test.step('Stage 5: Deliver, pay, dashboard (no receipt V2)', async () => {
       await posPage.deliverAndPayOrder(orderNumber, `client-${runId}@gmail.com`);
+      await adminPage.page.evaluate(
+        ([token, org, store]) => {
+          localStorage.setItem('access_token', token as string);
+          localStorage.setItem('organization_id', org as string);
+          localStorage.setItem('store_id', store as string);
+        },
+        [ownerToken, orgId, storeId]
+      );
       await adminPage.verifyDashboardMetrics('15.50', 1);
     });
   });

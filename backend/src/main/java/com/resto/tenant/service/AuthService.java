@@ -33,6 +33,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final SecretKey jwtSecret;
     private final long stationTtlMinutes;
+    private final String audience;
 
     /** Simple in-memory rate limit: userId → attempts in window */
     private final ConcurrentHashMap<UUID, AttemptWindow> pinAttempts = new ConcurrentHashMap<>();
@@ -42,7 +43,8 @@ public class AuthService {
                        MembershipStoreRepository membershipStoreRepository,
                        PasswordEncoder passwordEncoder,
                        @Value("${restoos.jwt.secret}") String secret,
-                       @Value("${restoos.jwt.station-ttl-minutes:480}") long stationTtlMinutes) {
+                       @Value("${restoos.jwt.station-ttl-minutes:480}") long stationTtlMinutes,
+                       @Value("${restoos.jwt.audience:restoos-api}") String audience) {
         this.userRepository = userRepository;
         this.membershipRepository = membershipRepository;
         this.membershipStoreRepository = membershipStoreRepository;
@@ -55,6 +57,7 @@ public class AuthService {
         }
         this.jwtSecret = Keys.hmacShaKeyFor(keyBytes);
         this.stationTtlMinutes = stationTtlMinutes;
+        this.audience = audience;
     }
 
     @Transactional(readOnly = true)
@@ -70,6 +73,9 @@ public class AuthService {
         if (user.getPinHash() == null || !passwordEncoder.matches(rawPin, user.getPinHash())) {
             recordFailure(userId);
             return Map.of("authenticated", false);
+        }
+        if (Boolean.FALSE.equals(user.getActive())) {
+            throw new IllegalStateException("User account is not activated");
         }
 
         Membership membership = membershipRepository.findByUserId(userId).stream()
@@ -98,6 +104,7 @@ public class AuthService {
                 .claim("organization_id", orgId.toString())
                 .claim("store_id", resolvedStoreId != null ? resolvedStoreId.toString() : null)
                 .claim("roles", List.of(role))
+                .audience().add(audience).and()
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(stationTtlMinutes, ChronoUnit.MINUTES)))
                 .signWith(jwtSecret)
@@ -126,6 +133,7 @@ public class AuthService {
     }
 
     /** @deprecated prefer pinLogin returning station JWT */
+    @Deprecated
     public boolean validatePin(UUID userId, String rawPin) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));

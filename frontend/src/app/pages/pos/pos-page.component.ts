@@ -7,21 +7,6 @@ import { CartItem } from '../../ui-components/pos-layout/pos-layout.component';
 import { TableNode, ZoneTab } from '../../ui-components/floor-plan/floor-plan.component';
 import { ModifierGroupItem, ModifierOptionItem } from '../../ui-components/modifier-modal/modifier-modal.component';
 
-const DEFAULT_MODIFIERS: ModifierGroupItem[] = [
-  {
-    id: 'default-cuisson',
-    name: 'Cuisson',
-    required: true,
-    minSelection: 1,
-    maxSelection: 1,
-    options: [
-      { id: 'mod-apoint', name: 'A point', priceDelta: 0 },
-      { id: 'mod-saignant', name: 'Saignant', priceDelta: 0 },
-      { id: 'mod-bien', name: 'Bien cuit', priceDelta: 0 },
-    ],
-  },
-];
-
 @Component({
   selector: 'resto-pos-page',
   templateUrl: './pos-page.component.html',
@@ -193,8 +178,23 @@ export class PosPageComponent implements OnInit {
   onProductSelect(product: any): void {
     this.pendingProduct = product;
     this.modifierProductName = product.name;
-    this.modifierGroups = product.modifierGroups?.length ? product.modifierGroups : DEFAULT_MODIFIERS;
-    this.modifierOpen = true;
+    this.modifierGroups = (product.modifierGroups || []).map((g: any) => ({
+      id: g.id,
+      name: g.name,
+      required: !!g.required,
+      minSelection: g.minSelection ?? 0,
+      maxSelection: g.maxSelection ?? 1,
+      options: (g.options || []).map((o: any) => ({
+        id: o.id,
+        name: o.name,
+        priceDelta: Number(o.priceDelta || 0),
+      })),
+    }));
+    if (this.modifierGroups.length) {
+      this.modifierOpen = true;
+    } else {
+      this.addToCart(product, []);
+    }
   }
 
   onModifiersConfirmed(options: ModifierOptionItem[]): void {
@@ -233,9 +233,7 @@ export class PosPageComponent implements OnInit {
       items: this.cartItems.map((item: any) => ({
         productId: item.productId,
         quantity: item.quantity,
-        modifierOptionIds: (item.modifierOptionIds || []).filter(
-          (id: string) => id && !id.startsWith('mod-'),
-        ),
+        modifierOptionIds: (item.modifierOptionIds || []).filter(Boolean),
       })),
     };
     const idempotencyKey = crypto.randomUUID();

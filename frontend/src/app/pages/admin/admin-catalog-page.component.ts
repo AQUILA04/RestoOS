@@ -43,9 +43,8 @@ export class AdminCatalogPageComponent implements OnInit {
         this.reload();
         setTimeout(() => (this.toast = ''), 2500);
       },
-      error: () => {
-        this.toast = 'Prix local mis à jour';
-        this.editingProductId = null;
+      error: (err) => {
+        this.toast = err?.error?.message || 'Échec de la mise à jour du prix';
         setTimeout(() => (this.toast = ''), 2500);
       },
     });

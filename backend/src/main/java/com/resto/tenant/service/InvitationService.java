@@ -98,7 +98,7 @@ public class InvitationService {
 
         try {
             MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
             helper.setFrom(mailFrom);
             helper.setTo(email);
             helper.setSubject("Invitation à rejoindre RestoOS");

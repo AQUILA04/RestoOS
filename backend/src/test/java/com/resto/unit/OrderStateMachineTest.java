@@ -23,10 +23,22 @@ class OrderStateMachineTest {
     void rejectsIllegal() {
         assertFalse(OrderStateMachine.canTransition("READY", "PREPARING"));
         assertFalse(OrderStateMachine.canTransition("CLOSED", "CANCELLED"));
+        assertFalse(OrderStateMachine.canTransition("CREATED", "READY"));
+        assertFalse(OrderStateMachine.canTransition("CREATED", "CLOSED"));
+        assertFalse(OrderStateMachine.canTransition("SENT_TO_KITCHEN", "READY"));
+        assertFalse(OrderStateMachine.canTransition("PREPARING", "DELIVERED"));
+        assertFalse(OrderStateMachine.canTransition("DELIVERED", "CANCELLED"));
+        assertFalse(OrderStateMachine.canTransition("CANCELLED", "CREATED"));
+        assertFalse(OrderStateMachine.canTransition(null, "CREATED"));
         assertFalse(OrderStateMachine.canCancel("READY"));
         assertFalse(OrderStateMachine.canCancel("DELIVERED"));
+        assertFalse(OrderStateMachine.canCancel("CLOSED"));
         assertThrows(IllegalStateException.class,
                 () -> OrderStateMachine.assertTransition("READY", "PREPARING"));
+        assertThrows(IllegalStateException.class,
+                () -> OrderStateMachine.assertTransition("CLOSED", "CREATED"));
+        assertThrows(IllegalStateException.class,
+                () -> OrderStateMachine.assertTransition("CREATED", "DELIVERED"));
     }
 
     @Test

@@ -46,7 +46,7 @@ public class TestTokenController {
                 .subject(userId.toString())
                 .claim("user_id", userId.toString())
                 .claim("roles", request.getRoles() != null ? request.getRoles() : List.of("OWNER"))
-                .audience().add("restoos-backend").and()
+                .audience().add("restoos-api").and()
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(8, ChronoUnit.HOURS)))
                 .signWith(jwtSecret);

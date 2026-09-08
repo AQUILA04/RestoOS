@@ -9,7 +9,7 @@ import { AuthService } from '../../core/services/auth.service';
   standalone: false,
 })
 export class ActivatePageComponent implements OnInit {
-  status: 'pending' | 'success' | 'error' = 'pending';
+  status: 'pending' | 'ok' | 'error' = 'pending';
   message = 'Activation en cours…';
 
   constructor(
@@ -21,17 +21,17 @@ export class ActivatePageComponent implements OnInit {
     const token = this.route.snapshot.queryParamMap.get('token');
     if (!token) {
       this.status = 'error';
-      this.message = 'Lien d’activation invalide (token manquant).';
+      this.message = 'Jeton d’activation manquant';
       return;
     }
     this.auth.activate(token).subscribe({
       next: () => {
-        this.status = 'success';
-        this.message = 'Votre compte a été activé. Vous pouvez vous connecter.';
+        this.status = 'ok';
+        this.message = 'Compte activé. Vous pouvez vous connecter.';
       },
-      error: () => {
+      error: (err) => {
         this.status = 'error';
-        this.message = 'Impossible d’activer le compte. Le lien est invalide ou déjà utilisé.';
+        this.message = err?.error?.message || 'Activation impossible';
       },
     });
   }

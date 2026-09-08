@@ -77,7 +77,8 @@ export class PosTerminalPage {
   }
 
   async deliverAndPayOrder(orderNum: string, clientEmail: string) {
-    await this.page.goto(`/pos/orders/${orderNum}`);
+    const numeric = String(orderNum).replace(/^#/, '');
+    await this.page.goto(`/pos/orders/${numeric}`);
     await this.markDeliveredBtn.click();
     await expect(this.orderStatusBadge).toContainText('LIVRÉ');
 

@@ -21,6 +21,9 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
     enabled: true
+    # Migrations need elevated privileges; runtime uses restoos_app (no BYPASSRLS).
+    user: ${SPRING_LIQUIBASE_USER:${LIQUIBASE_USER:restoos_admin}}
+    password: ${SPRING_LIQUIBASE_PASSWORD:${LIQUIBASE_PASSWORD:restoos_password}}
   mail:
     host: ${SPRING_MAIL_HOST:localhost}
     port: ${SPRING_MAIL_PORT:1025}
@@ -52,10 +55,13 @@ restoos:
   jwt:
     secret: ${RESTOOS_JWT_SECRET:restoos-dev-hmac-secret-key-32chars-min}
     station-ttl-minutes: ${RESTOOS_JWT_STATION_TTL:480}
+    audience: ${JWT_AUDIENCE:${RESTOOS_AUDIENCE:restoos-api}}
   app:
     activation-base-url: ${RESTOOS_ACTIVATION_BASE_URL:${RESTOOS_FRONTEND_BASE_URL:http://localhost:4200}/activate}
   redis:
     broker-enabled: ${RESTOOS_REDIS_BROKER:false}
+  outbox:
+    poll-ms: ${RESTOOS_OUTBOX_POLL_MS:500}
   mail:
     from: ${RESTOOS_MAIL_FROM:noreply@restoos.local}
 
@@ -93,6 +99,13 @@ restoos:
   redis:
     broker-enabled: false
 
+management:
+  health:
+    mail:
+      enabled: false
+    redis:
+      enabled: false
+
 ---
 # Profile: e2e — HS256 JWT (never permitAll). Wire Keycloak via JWT_ISSUER_URI when available.
 spring:
@@ -104,8 +117,11 @@ spring:
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
   mail:
-    host: mailpit
-    port: 1025
+    host: ${SPRING_MAIL_HOST:localhost}
+    port: ${SPRING_MAIL_PORT:1025}
+  liquibase:
+    user: ${SPRING_LIQUIBASE_USER:restoos_admin}
+    password: ${SPRING_LIQUIBASE_PASSWORD:restoos_password}
   security:
     oauth2:
       resourceserver:
@@ -115,5 +131,6 @@ spring:
 restoos:
   jwt:
     secret: ${RESTOOS_JWT_SECRET:test-secret-key-which-is-long-enough-123456}
+    audience: restoos-api
   redis:
-    broker-enabled: false
+    broker-enabled: ${RESTOOS_REDIS_BROKER:false}

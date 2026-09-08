@@ -37,9 +37,8 @@ export class PosOrderPageComponent implements OnInit {
         this.order = { ...this.order, ...order, status: order?.status || 'DELIVERED' };
         this.orderStatus = 'LIVRÉ';
       },
-      error: () => {
-        this.order = { ...this.order, status: 'DELIVERED' };
-        this.orderStatus = 'LIVRÉ';
+      error: (err) => {
+        this.errorMessage = err?.error?.message || 'Livraison impossible';
       },
     });
   }
@@ -58,9 +57,8 @@ export class PosOrderPageComponent implements OnInit {
           this.order = { ...this.order, ...(order.order || order), paymentStatus: 'PAID' };
           this.orderStatus = 'PAYÉ';
         },
-        error: () => {
-          this.order = { ...this.order, paymentStatus: 'PAID' };
-          this.orderStatus = 'PAYÉ';
+        error: (err) => {
+          this.errorMessage = err?.error?.message || 'Paiement impossible';
         },
       });
   }

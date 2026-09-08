@@ -55,8 +55,12 @@ jobs:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/restoos_test_db
           SPRING_DATASOURCE_USERNAME: restoos_app
           SPRING_DATASOURCE_PASSWORD: restoos_app_pass
+          SPRING_LIQUIBASE_USER: restoos_admin
+          SPRING_LIQUIBASE_PASSWORD: restoos_password
           RESTOOS_JWT_SECRET: e2e-secret-key-which-is-long-enough-123456
-      - if: always()
+          SPRING_MAIL_HOST: localhost
+          SPRING_MAIL_PORT: 1025
+          SPRING_REDIS_HOST: localhost      - if: always()
         run: docker compose -f docker-compose.test.yml down -v
       - uses: actions/upload-artifact@v4
         if: always()
@@ -109,13 +113,16 @@ jobs:
       - name: Launch backend (e2e profile)
         env:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/restoos_test_db
-          SPRING_DATASOURCE_USERNAME: restoos_admin
-          SPRING_DATASOURCE_PASSWORD: restoos_password
+          SPRING_DATASOURCE_USERNAME: restoos_app
+          SPRING_DATASOURCE_PASSWORD: restoos_app_pass
+          SPRING_LIQUIBASE_USER: restoos_admin
+          SPRING_LIQUIBASE_PASSWORD: restoos_password
           SPRING_MAIL_HOST: localhost
           SPRING_MAIL_PORT: 1025
           SPRING_REDIS_HOST: localhost
           RESTOOS_JWT_SECRET: e2e-secret-key-which-is-long-enough-123456
           RESTOOS_ISSUER_URI: ''
+          RESTOOS_FRONTEND_BASE_URL: http://localhost:4200
         run: |
           java -jar backend/target/resto-os-backend-0.0.1-SNAPSHOT.jar \
             --spring.profiles.active=e2e > backend.log 2>&1 &
