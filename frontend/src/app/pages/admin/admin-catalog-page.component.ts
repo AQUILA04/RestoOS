@@ -20,13 +20,25 @@ export class AdminCatalogPageComponent implements OnInit {
   }
 
   reload(): void {
-    const storeId = this.api.requireStoreId();
-    this.api.getResolvedProducts(storeId, this.api.requireOrgId()).subscribe((products) => {
-      this.products = (products || []).map((p) => ({
-        ...p,
-        id: p.productId || p.id,
-      }));
-    });
+    try {
+      const storeId = this.api.requireStoreId();
+      const orgId = this.api.requireOrgId();
+      this.api.getResolvedProducts(storeId, orgId).subscribe({
+        next: (products) => {
+          this.products = (products || []).map((p) => ({
+            ...p,
+            id: p.productId || p.id,
+          }));
+        },
+        error: () => {
+          this.products = [];
+          this.toast = 'Impossible de charger le catalogue';
+        },
+      });
+    } catch {
+      this.products = [];
+      this.toast = 'Contexte magasin manquant';
+    }
   }
 
   startEdit(product: any): void {

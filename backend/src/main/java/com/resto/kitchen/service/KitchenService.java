@@ -77,7 +77,24 @@ public class KitchenService {
 
     @Transactional(readOnly = true)
     public List<Order> getKitchenQueueForStore(UUID storeId) {
-        return orderRepository.findKitchenQueue(storeId, ACTIVE);
+        List<Order> queue = orderRepository.findKitchenQueue(storeId, ACTIVE);
+        // Initialize collections inside the transaction (avoid empty/lazy after commit under RLS).
+        queue.forEach(order -> {
+            if (order.getItems() != null) {
+                order.getItems().forEach(item -> {
+                    if (item.getModifiers() != null) {
+                        item.getModifiers().size();
+                    }
+                });
+            }
+        });
+        queue.sort((a, b) -> {
+            if (a.getCreatedAt() == null || b.getCreatedAt() == null) {
+                return 0;
+            }
+            return a.getCreatedAt().compareTo(b.getCreatedAt());
+        });
+        return queue;
     }
 
     private void broadcast(Order order, String type) {

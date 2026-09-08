@@ -20,7 +20,14 @@ export class AdminDashboardPageComponent implements OnInit {
   constructor(private readonly api: ApiService) {}
 
   ngOnInit(): void {
-    const storeId = this.api.requireStoreId();
-    this.api.getData<any>('/api/v1/dashboard/metrics', { storeId }).subscribe((m) => (this.metrics = m));
+    try {
+      const storeId = this.api.requireStoreId();
+      this.api.getData<any>('/api/v1/dashboard/metrics', { storeId }).subscribe({
+        next: (m) => (this.metrics = m || this.metrics),
+        error: () => undefined,
+      });
+    } catch {
+      // Session may be injected after first paint; metrics load on next navigation/reload.
+    }
   }
 }

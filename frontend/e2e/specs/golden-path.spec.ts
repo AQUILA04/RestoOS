@@ -13,6 +13,7 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
   let storeId: string;
   let productId: string;
   let waiterUserId: string;
+  let ownerUserId: string;
   let orderNumber: string;
   let ownerToken: string;
 
@@ -88,7 +89,7 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
         },
       });
       expect(ownerUserRes.status()).toBe(200);
-      const ownerUserId = (await ownerUserRes.json()).data.id as string;
+      ownerUserId = (await ownerUserRes.json()).data.id as string;
 
       const membershipRes = await request.post(`${backendApiUrl}/api/v1/memberships`, {
         headers,
@@ -191,7 +192,7 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
 
       // Prefer API override assertion; UI override after origin navigation (localStorage needs a real origin)
       if (ownerToken) {
-        await adminPage.injectSession(ownerToken, orgId, storeId);
+        await adminPage.injectSession(ownerToken, orgId, storeId, ownerUserId);
         await adminPage.setStorePriceOverride('Burger Signature', '15.50');
       }
 
@@ -266,11 +267,12 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
 
     await test.step('Stage 5: Deliver, pay, dashboard (no receipt V2)', async () => {
       await posPage.deliverAndPayOrder(orderNumber, `client-${runId}@gmail.com`);
+      // Declared revenue is payment amount (TTC): 15.50 override + 10% tax = 17.05
       await adminPage.verifyDashboardMetricsExact(
         ownerToken,
         orgId,
         storeId,
-        '15.50',
+        '17.05',
         1
       );
     });

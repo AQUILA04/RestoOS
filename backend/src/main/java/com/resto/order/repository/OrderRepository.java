@@ -15,7 +15,11 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     List<Order> findByStoreIdOrderByCreatedAtDesc(UUID storeId);
     List<Order> findByStoreIdAndStatus(UUID storeId, String status);
 
-    @Query("SELECT o FROM Order o WHERE o.storeId = :storeId AND o.status IN :statuses ORDER BY o.createdAt ASC")
+    @Query("""
+        SELECT DISTINCT o FROM Order o
+        LEFT JOIN FETCH o.items
+        WHERE o.storeId = :storeId AND o.status IN :statuses
+        """)
     List<Order> findKitchenQueue(@Param("storeId") UUID storeId, @Param("statuses") List<String> statuses);
 
     @Query("SELECT COUNT(o) FROM Order o WHERE o.storeId = :storeId AND o.tableId = :tableId AND o.status NOT IN ('CLOSED', 'CANCELLED')")

@@ -143,10 +143,12 @@ jobs:
         run: |
           cd frontend
           npm run build -- --configuration=development
-          npx http-server dist/restoos-shell/browser -p 4200 -c-1 > frontend.log 2>&1 &
+          # serve -s provides SPA fallback so /admin/catalog and /pos resolve to index.html
+          npx --yes serve@14.2.4 -s dist/restoos-shell/browser -l 4200 > frontend.log 2>&1 &
           for i in $(seq 1 30); do
-            if curl -sf http://localhost:4200 > /dev/null; then
-              echo "Frontend UP"
+            CODE=$(curl -sf -o /tmp/spa-catalog.html -w '%{http_code}' http://localhost:4200/admin/catalog || true)
+            if [ "$CODE" = "200" ] && grep -q 'resto-root' /tmp/spa-catalog.html; then
+              echo "Frontend UP (SPA deep link OK)"
               exit 0
             fi
             sleep 2

@@ -50,7 +50,8 @@ export class PosTerminalPage {
       await this.page.locator(`.pin-button[data-digit="${digit}"]`).click();
     }
     await expect(this.pinDisplay).toHaveText('••••');
-    await expect(this.floorPlanTab).toBeVisible({ timeout: 5000 });
+    // Wait for API-driven unlock (PIN login is async)
+    await expect(this.floorPlanTab).toBeVisible({ timeout: 15000 });
   }
 
   async selectTable(tableName: string) {
