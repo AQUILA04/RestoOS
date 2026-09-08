@@ -1,0 +1,8 @@
+<div class="offline-banner" *ngIf="!isOnline || pendingCount > 0" [class.offline]="!isOnline">
+  <div class="status-icon">{{ isOnline ? '🔄' : '⚡' }}</div>
+  <div class="status-message">
+    <span *ngIf="!isOnline">MODE HORS-LIGNE EN COURS</span>
+    <span *ngIf="isOnline">ENLIGNE</span>
+    <span *ngIf="pendingCount > 0"> — {{ pendingCount }} commande(s) en attente de synchro</span>
+  </div>
+</div>

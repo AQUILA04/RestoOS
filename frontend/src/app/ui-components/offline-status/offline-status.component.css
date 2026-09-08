@@ -1,0 +1,22 @@
+.offline-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background-color: #FFF3CD;
+  color: #856404;
+  border-bottom: 1px solid #FFEEBA;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.offline-banner.offline {
+  background-color: #F8D7DA;
+  color: #721C24;
+  border-color: #F5C6CB;
+}
+
+.status-icon {
+  font-size: 16px;
+}
