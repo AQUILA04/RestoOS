@@ -23,7 +23,16 @@ public class OrganizationController {
     @PostMapping
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     public Response<Organization> createOrganization(@RequestBody CreateOrgRequest request) {
-        Organization org = tenantService.createOrganization(request.getName(), request.getCode());
+        // Derive a URL-safe code from the name when the caller omits it
+        String code = (request.getCode() != null && !request.getCode().isBlank())
+                ? request.getCode()
+                : request.getName().toLowerCase()
+                        .replaceAll("[^a-z0-9]+", "-")
+                        .replaceAll("^-|-$", "")
+                        .substring(0, Math.min(request.getName().length(), 48))
+                + "-" + System.currentTimeMillis() % 10000;
+
+        Organization org = tenantService.createOrganization(request.getName(), code);
         return Response.<Organization>builder()
                 .status(HttpStatus.OK)
                 .statusCode(HttpStatus.OK.value())
@@ -49,10 +58,16 @@ public class OrganizationController {
     public static class CreateOrgRequest {
         private String name;
         private String code;
+        private String country;   // accepted from E2E payload, stored for future use
+        private String currency;  // accepted from E2E payload, stored for future use
 
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
         public String getCode() { return code; }
         public void setCode(String code) { this.code = code; }
+        public String getCountry() { return country; }
+        public void setCountry(String country) { this.country = country; }
+        public String getCurrency() { return currency; }
+        public void setCurrency(String currency) { this.currency = currency; }
     }
 }
