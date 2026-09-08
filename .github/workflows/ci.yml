@@ -216,7 +216,8 @@ jobs:
           SPRING_DATASOURCE_PASSWORD: restoos_password
           SPRING_JPA_HIBERNATE_DDL_AUTO: none
         run: |
-          java -jar backend/target/resto-os-backend-0.0.1-SNAPSHOT.jar > backend.log 2>&1 &
+          java -jar backend/target/resto-os-backend-0.0.1-SNAPSHOT.jar \
+            --spring.profiles.active=e2e > backend.log 2>&1 &
           echo "Waiting for Backend server to become healthy..."
           for i in $(seq 1 30); do
             if curl -sf http://localhost:8080/actuator/health > /dev/null 2>&1; then
