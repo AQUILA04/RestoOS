@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DashboardService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">resto-os-backend</a> &gt; <a href="index.source.html" class="el_package">com.resto.dashboard.service</a> &gt; <span class="el_source">DashboardService.java</span></div><h1>DashboardService.java</h1><pre class="source lang-java linenums">package com.resto.dashboard.service;
+
+import com.resto.dashboard.dto.DashboardMetricsDto;
+import com.resto.floorplan.domain.RestaurantTable;
+import com.resto.floorplan.repository.RestaurantTableRepository;
+import com.resto.order.domain.Order;
+import com.resto.order.repository.OrderRepository;
+import com.resto.payment.domain.Payment;
+import com.resto.payment.repository.PaymentRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+@Transactional(readOnly = true)
+public class DashboardService {
+
+    private final OrderRepository orderRepository;
+    private final PaymentRepository paymentRepository;
+    private final RestaurantTableRepository tableRepository;
+
+    public DashboardService(OrderRepository orderRepository,
+                            PaymentRepository paymentRepository,
+<span class="nc" id="L29">                            RestaurantTableRepository tableRepository) {</span>
+<span class="nc" id="L30">        this.orderRepository = orderRepository;</span>
+<span class="nc" id="L31">        this.paymentRepository = paymentRepository;</span>
+<span class="nc" id="L32">        this.tableRepository = tableRepository;</span>
+<span class="nc" id="L33">    }</span>
+
+    public DashboardMetricsDto getStoreMetrics(UUID storeId) {
+<span class="nc" id="L36">        List&lt;Order&gt; orders = orderRepository.findByStoreIdOrderByCreatedAtDesc(storeId);</span>
+<span class="nc" id="L37">        List&lt;Payment&gt; payments = paymentRepository.findByStoreId(storeId);</span>
+<span class="nc" id="L38">        List&lt;RestaurantTable&gt; tables = tableRepository.findByStoreId(storeId);</span>
+
+<span class="nc" id="L40">        OffsetDateTime startOfDay = OffsetDateTime.now().truncatedTo(ChronoUnit.DAYS);</span>
+
+<span class="nc" id="L42">        long todaysOrdersCount = orders.stream()</span>
+<span class="nc bnc" id="L43" title="All 4 branches missed.">                .filter(o -&gt; o.getCreatedAt() != null &amp;&amp; !o.getCreatedAt().isBefore(startOfDay))</span>
+<span class="nc" id="L44">                .count();</span>
+
+<span class="nc" id="L46">        BigDecimal declaredRevenue = payments.stream()</span>
+<span class="nc bnc" id="L47" title="All 4 branches missed.">                .filter(p -&gt; p.getCreatedAt() != null &amp;&amp; !p.getCreatedAt().isBefore(startOfDay))</span>
+<span class="nc" id="L48">                .map(Payment::getAmount)</span>
+<span class="nc" id="L49">                .reduce(BigDecimal.ZERO, BigDecimal::add);</span>
+
+<span class="nc" id="L51">        long unpaidOrdersCount = orders.stream()</span>
+<span class="nc" id="L52">                .filter(o -&gt; &quot;UNPAID&quot;.equalsIgnoreCase(o.getPaymentStatus()))</span>
+<span class="nc" id="L53">                .count();</span>
+
+<span class="nc" id="L55">        long preparingOrdersCount = orders.stream()</span>
+<span class="nc" id="L56">                .filter(o -&gt; &quot;PREPARING&quot;.equalsIgnoreCase(o.getStatus()))</span>
+<span class="nc" id="L57">                .count();</span>
+
+<span class="nc" id="L59">        long readyOrdersCount = orders.stream()</span>
+<span class="nc" id="L60">                .filter(o -&gt; &quot;READY&quot;.equalsIgnoreCase(o.getStatus()))</span>
+<span class="nc" id="L61">                .count();</span>
+
+<span class="nc" id="L63">        long occupiedTablesCount = tables.stream()</span>
+<span class="nc" id="L64">                .filter(t -&gt; &quot;OCCUPIED&quot;.equalsIgnoreCase(t.getStatus()))</span>
+<span class="nc" id="L65">                .count();</span>
+
+<span class="nc" id="L67">        return DashboardMetricsDto.builder()</span>
+<span class="nc" id="L68">                .todaysOrdersCount(todaysOrdersCount)</span>
+<span class="nc" id="L69">                .declaredRevenue(declaredRevenue)</span>
+<span class="nc" id="L70">                .unpaidOrdersCount(unpaidOrdersCount)</span>
+<span class="nc" id="L71">                .preparingOrdersCount(preparingOrdersCount)</span>
+<span class="nc" id="L72">                .readyOrdersCount(readyOrdersCount)</span>
+<span class="nc" id="L73">                .occupiedTablesCount(occupiedTablesCount)</span>
+<span class="nc" id="L74">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

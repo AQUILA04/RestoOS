@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DashboardMetricsDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">resto-os-backend</a> &gt; <a href="index.source.html" class="el_package">com.resto.dashboard.dto</a> &gt; <span class="el_source">DashboardMetricsDto.java</span></div><h1>DashboardMetricsDto.java</h1><pre class="source lang-java linenums">package com.resto.dashboard.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class DashboardMetricsDto {
+    private long todaysOrdersCount;
+    private BigDecimal declaredRevenue;
+    private long unpaidOrdersCount;
+    private long preparingOrdersCount;
+    private long readyOrdersCount;
+    private long occupiedTablesCount;
+
+<span class="nc" id="L22">    public long getTodaysOrdersCount() { return todaysOrdersCount; }</span>
+<span class="nc" id="L23">    public void setTodaysOrdersCount(long todaysOrdersCount) { this.todaysOrdersCount = todaysOrdersCount; }</span>
+<span class="nc" id="L24">    public BigDecimal getDeclaredRevenue() { return declaredRevenue; }</span>
+<span class="nc" id="L25">    public void setDeclaredRevenue(BigDecimal declaredRevenue) { this.declaredRevenue = declaredRevenue; }</span>
+<span class="nc" id="L26">    public long getUnpaidOrdersCount() { return unpaidOrdersCount; }</span>
+<span class="nc" id="L27">    public void setUnpaidOrdersCount(long unpaidOrdersCount) { this.unpaidOrdersCount = unpaidOrdersCount; }</span>
+<span class="nc" id="L28">    public long getPreparingOrdersCount() { return preparingOrdersCount; }</span>
+<span class="nc" id="L29">    public void setPreparingOrdersCount(long preparingOrdersCount) { this.preparingOrdersCount = preparingOrdersCount; }</span>
+<span class="nc" id="L30">    public long getReadyOrdersCount() { return readyOrdersCount; }</span>
+<span class="nc" id="L31">    public void setReadyOrdersCount(long readyOrdersCount) { this.readyOrdersCount = readyOrdersCount; }</span>
+<span class="nc" id="L32">    public long getOccupiedTablesCount() { return occupiedTablesCount; }</span>
+<span class="nc" id="L33">    public void setOccupiedTablesCount(long occupiedTablesCount) { this.occupiedTablesCount = occupiedTablesCount; }</span>
+
+<span class="nc" id="L35">    public static DashboardMetricsDtoBuilder builder() { return new DashboardMetricsDtoBuilder(); }</span>
+
+    public static class DashboardMetricsDtoBuilder {
+        private long todaysOrdersCount;
+        private BigDecimal declaredRevenue = BigDecimal.ZERO;
+        private long unpaidOrdersCount;
+        private long preparingOrdersCount;
+        private long readyOrdersCount;
+        private long occupiedTablesCount;
+
+<span class="nc" id="L45">        public DashboardMetricsDtoBuilder todaysOrdersCount(long todaysOrdersCount) { this.todaysOrdersCount = todaysOrdersCount; return this; }</span>
+<span class="nc" id="L46">        public DashboardMetricsDtoBuilder declaredRevenue(BigDecimal declaredRevenue) { this.declaredRevenue = declaredRevenue; return this; }</span>
+<span class="nc" id="L47">        public DashboardMetricsDtoBuilder unpaidOrdersCount(long unpaidOrdersCount) { this.unpaidOrdersCount = unpaidOrdersCount; return this; }</span>
+<span class="nc" id="L48">        public DashboardMetricsDtoBuilder preparingOrdersCount(long preparingOrdersCount) { this.preparingOrdersCount = preparingOrdersCount; return this; }</span>
+<span class="nc" id="L49">        public DashboardMetricsDtoBuilder readyOrdersCount(long readyOrdersCount) { this.readyOrdersCount = readyOrdersCount; return this; }</span>
+<span class="nc" id="L50">        public DashboardMetricsDtoBuilder occupiedTablesCount(long occupiedTablesCount) { this.occupiedTablesCount = occupiedTablesCount; return this; }</span>
+
+        public DashboardMetricsDto build() {
+<span class="nc" id="L53">            DashboardMetricsDto dto = new DashboardMetricsDto();</span>
+<span class="nc" id="L54">            dto.setTodaysOrdersCount(this.todaysOrdersCount);</span>
+<span class="nc bnc" id="L55" title="All 2 branches missed.">            dto.setDeclaredRevenue(this.declaredRevenue != null ? this.declaredRevenue : BigDecimal.ZERO);</span>
+<span class="nc" id="L56">            dto.setUnpaidOrdersCount(this.unpaidOrdersCount);</span>
+<span class="nc" id="L57">            dto.setPreparingOrdersCount(this.preparingOrdersCount);</span>
+<span class="nc" id="L58">            dto.setReadyOrdersCount(this.readyOrdersCount);</span>
+<span class="nc" id="L59">            dto.setOccupiedTablesCount(this.occupiedTablesCount);</span>
+<span class="nc" id="L60">            return dto;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

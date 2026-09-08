@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderItemModifier.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">resto-os-backend</a> &gt; <a href="index.source.html" class="el_package">com.resto.order.domain</a> &gt; <span class="el_source">OrderItemModifier.java</span></div><h1>OrderItemModifier.java</h1><pre class="source lang-java linenums">package com.resto.order.domain;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.math.BigDecimal;
+import java.util.UUID;
+
+@Entity
+@Table(name = &quot;order_item_modifiers&quot;)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class OrderItemModifier {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
+
+    @Column(name = &quot;organization_id&quot;, nullable = false)
+    private UUID organizationId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;order_item_id&quot;, nullable = false)
+    private OrderItem orderItem;
+
+    @Column(name = &quot;modifier_option_id&quot;, nullable = false)
+    private UUID modifierOptionId;
+
+    @Column(name = &quot;modifier_name&quot;, nullable = false)
+    private String modifierName;
+
+<span class="nc" id="L35">    public UUID getId() { return id; }</span>
+<span class="nc" id="L36">    public void setId(UUID id) { this.id = id; }</span>
+<span class="nc" id="L37">    public UUID getOrganizationId() { return organizationId; }</span>
+<span class="nc" id="L38">    public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }</span>
+<span class="nc" id="L39">    public OrderItem getOrderItem() { return orderItem; }</span>
+<span class="nc" id="L40">    public void setOrderItem(OrderItem orderItem) { this.orderItem = orderItem; }</span>
+<span class="nc" id="L41">    public UUID getModifierOptionId() { return modifierOptionId; }</span>
+<span class="nc" id="L42">    public void setModifierOptionId(UUID modifierOptionId) { this.modifierOptionId = modifierOptionId; }</span>
+<span class="nc" id="L43">    public String getModifierName() { return modifierName; }</span>
+<span class="nc" id="L44">    public void setModifierName(String modifierName) { this.modifierName = modifierName; }</span>
+    @Column(name = &quot;price_delta&quot;, nullable = false, precision = 10, scale = 2)
+    private BigDecimal priceDelta = BigDecimal.ZERO;
+
+<span class="nc" id="L48">    public BigDecimal getPriceDelta() { return priceDelta; }</span>
+<span class="nc" id="L49">    public void setPriceDelta(BigDecimal priceDelta) { this.priceDelta = priceDelta; }</span>
+
+    public static OrderItemModifierBuilder builder() {
+<span class="nc" id="L52">        return new OrderItemModifierBuilder();</span>
+    }
+
+    public static class OrderItemModifierBuilder {
+        private UUID id;
+        private UUID organizationId;
+        private OrderItem orderItem;
+        private UUID modifierOptionId;
+        private String modifierName;
+        private BigDecimal priceDelta = BigDecimal.ZERO;
+
+<span class="nc" id="L63">        public OrderItemModifierBuilder id(UUID id) { this.id = id; return this; }</span>
+<span class="nc" id="L64">        public OrderItemModifierBuilder organizationId(UUID organizationId) { this.organizationId = organizationId; return this; }</span>
+<span class="nc" id="L65">        public OrderItemModifierBuilder orderItem(OrderItem orderItem) { this.orderItem = orderItem; return this; }</span>
+<span class="nc" id="L66">        public OrderItemModifierBuilder modifierOptionId(UUID modifierOptionId) { this.modifierOptionId = modifierOptionId; return this; }</span>
+<span class="nc" id="L67">        public OrderItemModifierBuilder modifierName(String modifierName) { this.modifierName = modifierName; return this; }</span>
+<span class="nc" id="L68">        public OrderItemModifierBuilder priceDelta(BigDecimal priceDelta) { this.priceDelta = priceDelta; return this; }</span>
+
+        public OrderItemModifier build() {
+<span class="nc" id="L71">            OrderItemModifier mod = new OrderItemModifier();</span>
+<span class="nc" id="L72">            mod.setId(this.id);</span>
+<span class="nc" id="L73">            mod.setOrganizationId(this.organizationId);</span>
+<span class="nc" id="L74">            mod.setOrderItem(this.orderItem);</span>
+<span class="nc" id="L75">            mod.setModifierOptionId(this.modifierOptionId);</span>
+<span class="nc" id="L76">            mod.setModifierName(this.modifierName);</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">            mod.setPriceDelta(this.priceDelta != null ? this.priceDelta : BigDecimal.ZERO);</span>
+<span class="nc" id="L78">            return mod;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Product.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">resto-os-backend</a> &gt; <a href="index.source.html" class="el_package">com.resto.catalog.domain</a> &gt; <span class="el_source">Product.java</span></div><h1>Product.java</h1><pre class="source lang-java linenums">package com.resto.catalog.domain;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = &quot;products&quot;)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Product {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
+
+    @Column(name = &quot;organization_id&quot;, nullable = false)
+    private UUID organizationId;
+
+    @Column(name = &quot;category_id&quot;, nullable = false)
+    private UUID categoryId;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column
+    private String description;
+
+    @Column(name = &quot;base_price&quot;, nullable = false, precision = 10, scale = 2)
+    private BigDecimal basePrice;
+
+    @Column(name = &quot;tax_rate&quot;, nullable = false, precision = 5, scale = 2)
+    @Builder.Default
+    private BigDecimal taxRate = new BigDecimal(&quot;10.00&quot;);
+
+    @Column(name = &quot;image_url&quot;)
+    private String imageUrl;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean active = true;
+
+    @Column(name = &quot;is_86&quot;, nullable = false)
+    @Builder.Default
+    private Boolean is86 = false;
+
+    @Column(name = &quot;created_at&quot;, nullable = false, updatable = false)
+    private OffsetDateTime createdAt;
+
+    @Column(name = &quot;updated_at&quot;, nullable = false)
+    private OffsetDateTime updatedAt;
+
+<span class="nc" id="L59">    public UUID getId() { return id; }</span>
+<span class="nc" id="L60">    public void setId(UUID id) { this.id = id; }</span>
+<span class="nc" id="L61">    public UUID getOrganizationId() { return organizationId; }</span>
+<span class="nc" id="L62">    public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }</span>
+<span class="nc" id="L63">    public UUID getCategoryId() { return categoryId; }</span>
+<span class="nc" id="L64">    public void setCategoryId(UUID categoryId) { this.categoryId = categoryId; }</span>
+<span class="nc" id="L65">    public String getName() { return name; }</span>
+<span class="nc" id="L66">    public void setName(String name) { this.name = name; }</span>
+<span class="nc" id="L67">    public String getDescription() { return description; }</span>
+<span class="nc" id="L68">    public void setDescription(String description) { this.description = description; }</span>
+<span class="nc" id="L69">    public BigDecimal getBasePrice() { return basePrice; }</span>
+<span class="nc" id="L70">    public void setBasePrice(BigDecimal basePrice) { this.basePrice = basePrice; }</span>
+<span class="nc" id="L71">    public BigDecimal getTaxRate() { return taxRate; }</span>
+<span class="nc" id="L72">    public void setTaxRate(BigDecimal taxRate) { this.taxRate = taxRate; }</span>
+<span class="nc" id="L73">    public String getImageUrl() { return imageUrl; }</span>
+<span class="nc" id="L74">    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }</span>
+<span class="nc" id="L75">    public Boolean getActive() { return active; }</span>
+<span class="nc" id="L76">    public void setActive(Boolean active) { this.active = active; }</span>
+<span class="nc" id="L77">    public Boolean getIs86() { return is86; }</span>
+<span class="nc" id="L78">    public void setIs86(Boolean is86) { this.is86 = is86; }</span>
+<span class="nc" id="L79">    public OffsetDateTime getCreatedAt() { return createdAt; }</span>
+<span class="nc" id="L80">    public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }</span>
+<span class="nc" id="L81">    public OffsetDateTime getUpdatedAt() { return updatedAt; }</span>
+<span class="nc" id="L82">    public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }</span>
+
+    @PrePersist
+    protected void onCreate() {
+<span class="nc" id="L86">        createdAt = OffsetDateTime.now();</span>
+<span class="nc" id="L87">        updatedAt = OffsetDateTime.now();</span>
+<span class="nc" id="L88">    }</span>
+
+    @PreUpdate
+    protected void onUpdate() {
+<span class="nc" id="L92">        updatedAt = OffsetDateTime.now();</span>
+<span class="nc" id="L93">    }</span>
+
+    public static ProductBuilder builder() {
+<span class="nc" id="L96">        return new ProductBuilder();</span>
+    }
+
+    public static class ProductBuilder {
+        private UUID id;
+        private UUID organizationId;
+        private UUID categoryId;
+        private String name;
+        private String description;
+        private BigDecimal basePrice;
+        private BigDecimal taxRate = new BigDecimal(&quot;10.00&quot;);
+        private String imageUrl;
+        private Boolean active = true;
+        private Boolean is86 = false;
+        private OffsetDateTime createdAt;
+        private OffsetDateTime updatedAt;
+
+<span class="nc" id="L113">        public ProductBuilder id(UUID id) { this.id = id; return this; }</span>
+<span class="nc" id="L114">        public ProductBuilder organizationId(UUID organizationId) { this.organizationId = organizationId; return this; }</span>
+<span class="nc" id="L115">        public ProductBuilder categoryId(UUID categoryId) { this.categoryId = categoryId; return this; }</span>
+<span class="nc" id="L116">        public ProductBuilder name(String name) { this.name = name; return this; }</span>
+<span class="nc" id="L117">        public ProductBuilder description(String description) { this.description = description; return this; }</span>
+<span class="nc" id="L118">        public ProductBuilder basePrice(BigDecimal basePrice) { this.basePrice = basePrice; return this; }</span>
+<span class="nc" id="L119">        public ProductBuilder taxRate(BigDecimal taxRate) { this.taxRate = taxRate; return this; }</span>
+<span class="nc" id="L120">        public ProductBuilder imageUrl(String imageUrl) { this.imageUrl = imageUrl; return this; }</span>
+<span class="nc" id="L121">        public ProductBuilder active(Boolean active) { this.active = active; return this; }</span>
+<span class="nc" id="L122">        public ProductBuilder is86(Boolean is86) { this.is86 = is86; return this; }</span>
+<span class="nc" id="L123">        public ProductBuilder createdAt(OffsetDateTime createdAt) { this.createdAt = createdAt; return this; }</span>
+<span class="nc" id="L124">        public ProductBuilder updatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; return this; }</span>
+
+        public Product build() {
+<span class="nc" id="L127">            Product p = new Product();</span>
+<span class="nc" id="L128">            p.setId(this.id);</span>
+<span class="nc" id="L129">            p.setOrganizationId(this.organizationId);</span>
+<span class="nc" id="L130">            p.setCategoryId(this.categoryId);</span>
+<span class="nc" id="L131">            p.setName(this.name);</span>
+<span class="nc" id="L132">            p.setDescription(this.description);</span>
+<span class="nc" id="L133">            p.setBasePrice(this.basePrice);</span>
+<span class="nc bnc" id="L134" title="All 2 branches missed.">            p.setTaxRate(this.taxRate != null ? this.taxRate : new BigDecimal(&quot;10.00&quot;));</span>
+<span class="nc" id="L135">            p.setImageUrl(this.imageUrl);</span>
+<span class="nc bnc" id="L136" title="All 2 branches missed.">            p.setActive(this.active != null ? this.active : true);</span>
+<span class="nc bnc" id="L137" title="All 2 branches missed.">            p.setIs86(this.is86 != null ? this.is86 : false);</span>
+<span class="nc" id="L138">            p.setCreatedAt(this.createdAt);</span>
+<span class="nc" id="L139">            p.setUpdatedAt(this.updatedAt);</span>
+<span class="nc" id="L140">            return p;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

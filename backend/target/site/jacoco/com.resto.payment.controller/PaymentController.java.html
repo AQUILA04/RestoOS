@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PaymentController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">resto-os-backend</a> &gt; <a href="index.source.html" class="el_package">com.resto.payment.controller</a> &gt; <span class="el_source">PaymentController.java</span></div><h1>PaymentController.java</h1><pre class="source lang-java linenums">package com.resto.payment.controller;
+
+import com.resto.core.response.Response;
+import com.resto.payment.domain.Payment;
+import com.resto.payment.service.PaymentService;
+import lombok.Data;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.util.UUID;
+
+@RestController
+@RequestMapping(&quot;/api/v1/payments&quot;)
+public class PaymentController {
+
+    private final PaymentService paymentService;
+
+<span class="nc" id="L20">    public PaymentController(PaymentService paymentService) {</span>
+<span class="nc" id="L21">        this.paymentService = paymentService;</span>
+<span class="nc" id="L22">    }</span>
+
+    @PostMapping
+    @PreAuthorize(&quot;hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER', 'CASHIER')&quot;)
+    public Response&lt;Payment&gt; recordPayment(@RequestBody RecordPaymentRequest request) {
+<span class="nc" id="L27">        Payment payment = paymentService.recordPayment(</span>
+<span class="nc" id="L28">                request.getOrganizationId(),</span>
+<span class="nc" id="L29">                request.getStoreId(),</span>
+<span class="nc" id="L30">                request.getOrderId(),</span>
+<span class="nc" id="L31">                request.getCashierUserId(),</span>
+<span class="nc" id="L32">                request.getPaymentMethod(),</span>
+<span class="nc" id="L33">                request.getAmount()</span>
+        );
+<span class="nc" id="L35">        return Response.&lt;Payment&gt;builder()</span>
+<span class="nc" id="L36">                .status(HttpStatus.OK)</span>
+<span class="nc" id="L37">                .statusCode(HttpStatus.OK.value())</span>
+<span class="nc" id="L38">                .message(&quot;default.message.success&quot;)</span>
+<span class="nc" id="L39">                .service(&quot;RESTO-OS&quot;)</span>
+<span class="nc" id="L40">                .data(payment)</span>
+<span class="nc" id="L41">                .build();</span>
+    }
+
+<span class="nc" id="L44">    public static class RecordPaymentRequest {</span>
+        private UUID organizationId;
+        private UUID storeId;
+        private UUID orderId;
+        private UUID cashierUserId;
+        private String paymentMethod;
+        private BigDecimal amount;
+
+<span class="nc" id="L52">        public UUID getOrganizationId() { return organizationId; }</span>
+<span class="nc" id="L53">        public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }</span>
+<span class="nc" id="L54">        public UUID getStoreId() { return storeId; }</span>
+<span class="nc" id="L55">        public void setStoreId(UUID storeId) { this.storeId = storeId; }</span>
+<span class="nc" id="L56">        public UUID getOrderId() { return orderId; }</span>
+<span class="nc" id="L57">        public void setOrderId(UUID orderId) { this.orderId = orderId; }</span>
+<span class="nc" id="L58">        public UUID getCashierUserId() { return cashierUserId; }</span>
+<span class="nc" id="L59">        public void setCashierUserId(UUID cashierUserId) { this.cashierUserId = cashierUserId; }</span>
+<span class="nc" id="L60">        public String getPaymentMethod() { return paymentMethod; }</span>
+<span class="nc" id="L61">        public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }</span>
+<span class="nc" id="L62">        public BigDecimal getAmount() { return amount; }</span>
+<span class="nc" id="L63">        public void setAmount(BigDecimal amount) { this.amount = amount; }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StoreController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">resto-os-backend</a> &gt; <a href="index.source.html" class="el_package">com.resto.tenant.controller</a> &gt; <span class="el_source">StoreController.java</span></div><h1>StoreController.java</h1><pre class="source lang-java linenums">package com.resto.tenant.controller;
+
+import com.resto.core.response.Response;
+import com.resto.tenant.domain.Store;
+import com.resto.tenant.service.TenantService;
+import lombok.Data;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping(&quot;/api/v1/stores&quot;)
+public class StoreController {
+
+    private final TenantService tenantService;
+
+<span class="nc" id="L20">    public StoreController(TenantService tenantService) {</span>
+<span class="nc" id="L21">        this.tenantService = tenantService;</span>
+<span class="nc" id="L22">    }</span>
+
+    @PostMapping
+    @PreAuthorize(&quot;hasAnyRole('OWNER', 'ADMIN')&quot;)
+    public Response&lt;Store&gt; createStore(@RequestBody CreateStoreRequest request) {
+<span class="nc" id="L27">        Store store = tenantService.createStore(</span>
+<span class="nc" id="L28">                request.getOrganizationId(),</span>
+<span class="nc" id="L29">                request.getName(),</span>
+<span class="nc" id="L30">                request.getCode(),</span>
+<span class="nc" id="L31">                request.getTimezone(),</span>
+<span class="nc" id="L32">                request.getCurrency()</span>
+        );
+<span class="nc" id="L34">        return Response.&lt;Store&gt;builder()</span>
+<span class="nc" id="L35">                .status(HttpStatus.OK)</span>
+<span class="nc" id="L36">                .statusCode(HttpStatus.OK.value())</span>
+<span class="nc" id="L37">                .message(&quot;default.message.success&quot;)</span>
+<span class="nc" id="L38">                .service(&quot;RESTO-OS&quot;)</span>
+<span class="nc" id="L39">                .data(store)</span>
+<span class="nc" id="L40">                .build();</span>
+    }
+
+    @GetMapping
+    @PreAuthorize(&quot;hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER')&quot;)
+    public Response&lt;List&lt;Store&gt;&gt; getStoresByOrg(@RequestParam(&quot;organizationId&quot;) UUID organizationId) {
+<span class="nc" id="L46">        List&lt;Store&gt; stores = tenantService.getStoresByOrganization(organizationId);</span>
+<span class="nc" id="L47">        return Response.&lt;List&lt;Store&gt;&gt;builder()</span>
+<span class="nc" id="L48">                .status(HttpStatus.OK)</span>
+<span class="nc" id="L49">                .statusCode(HttpStatus.OK.value())</span>
+<span class="nc" id="L50">                .message(&quot;default.message.success&quot;)</span>
+<span class="nc" id="L51">                .service(&quot;RESTO-OS&quot;)</span>
+<span class="nc" id="L52">                .data(stores)</span>
+<span class="nc" id="L53">                .build();</span>
+    }
+
+<span class="nc" id="L56">    public static class CreateStoreRequest {</span>
+        private UUID organizationId;
+        private String name;
+        private String code;
+        private String timezone;
+        private String currency;
+
+<span class="nc" id="L63">        public UUID getOrganizationId() { return organizationId; }</span>
+<span class="nc" id="L64">        public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }</span>
+<span class="nc" id="L65">        public String getName() { return name; }</span>
+<span class="nc" id="L66">        public void setName(String name) { this.name = name; }</span>
+<span class="nc" id="L67">        public String getCode() { return code; }</span>
+<span class="nc" id="L68">        public void setCode(String code) { this.code = code; }</span>
+<span class="nc" id="L69">        public String getTimezone() { return timezone; }</span>
+<span class="nc" id="L70">        public void setTimezone(String timezone) { this.timezone = timezone; }</span>
+<span class="nc" id="L71">        public String getCurrency() { return currency; }</span>
+<span class="nc" id="L72">        public void setCurrency(String currency) { this.currency = currency; }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

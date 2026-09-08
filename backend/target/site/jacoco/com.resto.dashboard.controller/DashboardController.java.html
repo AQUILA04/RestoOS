@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DashboardController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">resto-os-backend</a> &gt; <a href="index.source.html" class="el_package">com.resto.dashboard.controller</a> &gt; <span class="el_source">DashboardController.java</span></div><h1>DashboardController.java</h1><pre class="source lang-java linenums">package com.resto.dashboard.controller;
+
+import com.resto.core.response.Response;
+import com.resto.dashboard.dto.DashboardMetricsDto;
+import com.resto.dashboard.service.DashboardService;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
+
+@RestController
+@RequestMapping(&quot;/api/v1/dashboard&quot;)
+public class DashboardController {
+
+    private final DashboardService dashboardService;
+
+<span class="nc" id="L18">    public DashboardController(DashboardService dashboardService) {</span>
+<span class="nc" id="L19">        this.dashboardService = dashboardService;</span>
+<span class="nc" id="L20">    }</span>
+
+    @GetMapping(&quot;/metrics&quot;)
+    @PreAuthorize(&quot;hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER')&quot;)
+    public Response&lt;DashboardMetricsDto&gt; getStoreMetrics(@RequestParam(&quot;storeId&quot;) UUID storeId) {
+<span class="nc" id="L25">        DashboardMetricsDto metrics = dashboardService.getStoreMetrics(storeId);</span>
+<span class="nc" id="L26">        return Response.&lt;DashboardMetricsDto&gt;builder()</span>
+<span class="nc" id="L27">                .status(HttpStatus.OK)</span>
+<span class="nc" id="L28">                .statusCode(HttpStatus.OK.value())</span>
+<span class="nc" id="L29">                .message(&quot;default.message.success&quot;)</span>
+<span class="nc" id="L30">                .service(&quot;RESTO-OS&quot;)</span>
+<span class="nc" id="L31">                .data(metrics)</span>
+<span class="nc" id="L32">                .build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FloorPlanController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">resto-os-backend</a> &gt; <a href="index.source.html" class="el_package">com.resto.floorplan.controller</a> &gt; <span class="el_source">FloorPlanController.java</span></div><h1>FloorPlanController.java</h1><pre class="source lang-java linenums">package com.resto.floorplan.controller;
+
+import com.resto.core.response.Response;
+import com.resto.floorplan.domain.RestaurantTable;
+import com.resto.floorplan.domain.Zone;
+import com.resto.floorplan.service.FloorPlanService;
+import lombok.Data;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping(&quot;/api/v1/floor-plan&quot;)
+public class FloorPlanController {
+
+    private final FloorPlanService floorPlanService;
+
+<span class="nc" id="L21">    public FloorPlanController(FloorPlanService floorPlanService) {</span>
+<span class="nc" id="L22">        this.floorPlanService = floorPlanService;</span>
+<span class="nc" id="L23">    }</span>
+
+    @PostMapping(&quot;/zones&quot;)
+    @PreAuthorize(&quot;hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER')&quot;)
+    public Response&lt;Zone&gt; createZone(@RequestBody CreateZoneRequest request) {
+<span class="nc" id="L28">        Zone zone = floorPlanService.createZone(</span>
+<span class="nc" id="L29">                request.getOrganizationId(),</span>
+<span class="nc" id="L30">                request.getStoreId(),</span>
+<span class="nc" id="L31">                request.getName(),</span>
+<span class="nc" id="L32">                request.getDisplayOrder()</span>
+        );
+<span class="nc" id="L34">        return Response.&lt;Zone&gt;builder()</span>
+<span class="nc" id="L35">                .status(HttpStatus.OK)</span>
+<span class="nc" id="L36">                .statusCode(HttpStatus.OK.value())</span>
+<span class="nc" id="L37">                .message(&quot;default.message.success&quot;)</span>
+<span class="nc" id="L38">                .service(&quot;RESTO-OS&quot;)</span>
+<span class="nc" id="L39">                .data(zone)</span>
+<span class="nc" id="L40">                .build();</span>
+    }
+
+    @GetMapping(&quot;/zones&quot;)
+    @PreAuthorize(&quot;hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER', 'WAITER', 'CASHIER')&quot;)
+    public Response&lt;List&lt;Zone&gt;&gt; getZonesByStore(@RequestParam(&quot;storeId&quot;) UUID storeId) {
+<span class="nc" id="L46">        List&lt;Zone&gt; zones = floorPlanService.getZonesByStore(storeId);</span>
+<span class="nc" id="L47">        return Response.&lt;List&lt;Zone&gt;&gt;builder()</span>
+<span class="nc" id="L48">                .status(HttpStatus.OK)</span>
+<span class="nc" id="L49">                .statusCode(HttpStatus.OK.value())</span>
+<span class="nc" id="L50">                .message(&quot;default.message.success&quot;)</span>
+<span class="nc" id="L51">                .service(&quot;RESTO-OS&quot;)</span>
+<span class="nc" id="L52">                .data(zones)</span>
+<span class="nc" id="L53">                .build();</span>
+    }
+
+    @PostMapping(&quot;/tables&quot;)
+    @PreAuthorize(&quot;hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER')&quot;)
+    public Response&lt;RestaurantTable&gt; createTable(@RequestBody CreateTableRequest request) {
+<span class="nc" id="L59">        RestaurantTable table = floorPlanService.createTable(</span>
+<span class="nc" id="L60">                request.getOrganizationId(),</span>
+<span class="nc" id="L61">                request.getStoreId(),</span>
+<span class="nc" id="L62">                request.getZoneId(),</span>
+<span class="nc" id="L63">                request.getTableNumber(),</span>
+<span class="nc" id="L64">                request.getCapacity(),</span>
+<span class="nc" id="L65">                request.getPosX(),</span>
+<span class="nc" id="L66">                request.getPosY(),</span>
+<span class="nc" id="L67">                request.getShape()</span>
+        );
+<span class="nc" id="L69">        return Response.&lt;RestaurantTable&gt;builder()</span>
+<span class="nc" id="L70">                .status(HttpStatus.OK)</span>
+<span class="nc" id="L71">                .statusCode(HttpStatus.OK.value())</span>
+<span class="nc" id="L72">                .message(&quot;default.message.success&quot;)</span>
+<span class="nc" id="L73">                .service(&quot;RESTO-OS&quot;)</span>
+<span class="nc" id="L74">                .data(table)</span>
+<span class="nc" id="L75">                .build();</span>
+    }
+
+    @GetMapping(&quot;/tables&quot;)
+    @PreAuthorize(&quot;hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER', 'WAITER', 'CASHIER')&quot;)
+    public Response&lt;List&lt;RestaurantTable&gt;&gt; getTablesByStore(@RequestParam(&quot;storeId&quot;) UUID storeId) {
+<span class="nc" id="L81">        List&lt;RestaurantTable&gt; tables = floorPlanService.getTablesByStore(storeId);</span>
+<span class="nc" id="L82">        return Response.&lt;List&lt;RestaurantTable&gt;&gt;builder()</span>
+<span class="nc" id="L83">                .status(HttpStatus.OK)</span>
+<span class="nc" id="L84">                .statusCode(HttpStatus.OK.value())</span>
+<span class="nc" id="L85">                .message(&quot;default.message.success&quot;)</span>
+<span class="nc" id="L86">                .service(&quot;RESTO-OS&quot;)</span>
+<span class="nc" id="L87">                .data(tables)</span>
+<span class="nc" id="L88">                .build();</span>
+    }
+
+    @PatchMapping(&quot;/tables/{tableId}/status&quot;)
+    @PreAuthorize(&quot;hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER', 'WAITER', 'CASHIER')&quot;)
+    public Response&lt;RestaurantTable&gt; updateTableStatus(@PathVariable(&quot;tableId&quot;) UUID tableId,
+                                                        @RequestBody UpdateStatusRequest request) {
+<span class="nc" id="L95">        RestaurantTable table = floorPlanService.updateTableStatus(tableId, request.getStatus());</span>
+<span class="nc" id="L96">        return Response.&lt;RestaurantTable&gt;builder()</span>
+<span class="nc" id="L97">                .status(HttpStatus.OK)</span>
+<span class="nc" id="L98">                .statusCode(HttpStatus.OK.value())</span>
+<span class="nc" id="L99">                .message(&quot;default.message.success&quot;)</span>
+<span class="nc" id="L100">                .service(&quot;RESTO-OS&quot;)</span>
+<span class="nc" id="L101">                .data(table)</span>
+<span class="nc" id="L102">                .build();</span>
+    }
+
+<span class="nc" id="L105">    public static class CreateZoneRequest {</span>
+        private UUID organizationId;
+        private UUID storeId;
+        private String name;
+        private Integer displayOrder;
+
+<span class="nc" id="L111">        public UUID getOrganizationId() { return organizationId; }</span>
+<span class="nc" id="L112">        public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }</span>
+<span class="nc" id="L113">        public UUID getStoreId() { return storeId; }</span>
+<span class="nc" id="L114">        public void setStoreId(UUID storeId) { this.storeId = storeId; }</span>
+<span class="nc" id="L115">        public String getName() { return name; }</span>
+<span class="nc" id="L116">        public void setName(String name) { this.name = name; }</span>
+<span class="nc" id="L117">        public Integer getDisplayOrder() { return displayOrder; }</span>
+<span class="nc" id="L118">        public void setDisplayOrder(Integer displayOrder) { this.displayOrder = displayOrder; }</span>
+    }
+
+<span class="nc" id="L121">    public static class CreateTableRequest {</span>
+        private UUID organizationId;
+        private UUID storeId;
+        private UUID zoneId;
+        private String tableNumber;
+        private Integer capacity;
+        private Integer posX;
+        private Integer posY;
+        private String shape;
+
+<span class="nc" id="L131">        public UUID getOrganizationId() { return organizationId; }</span>
+<span class="nc" id="L132">        public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }</span>
+<span class="nc" id="L133">        public UUID getStoreId() { return storeId; }</span>
+<span class="nc" id="L134">        public void setStoreId(UUID storeId) { this.storeId = storeId; }</span>
+<span class="nc" id="L135">        public UUID getZoneId() { return zoneId; }</span>
+<span class="nc" id="L136">        public void setZoneId(UUID zoneId) { this.zoneId = zoneId; }</span>
+<span class="nc" id="L137">        public String getTableNumber() { return tableNumber; }</span>
+<span class="nc" id="L138">        public void setTableNumber(String tableNumber) { this.tableNumber = tableNumber; }</span>
+<span class="nc" id="L139">        public Integer getCapacity() { return capacity; }</span>
+<span class="nc" id="L140">        public void setCapacity(Integer capacity) { this.capacity = capacity; }</span>
+<span class="nc" id="L141">        public Integer getPosX() { return posX; }</span>
+<span class="nc" id="L142">        public void setPosX(Integer posX) { this.posX = posX; }</span>
+<span class="nc" id="L143">        public Integer getPosY() { return posY; }</span>
+<span class="nc" id="L144">        public void setPosY(Integer posY) { this.posY = posY; }</span>
+<span class="nc" id="L145">        public String getShape() { return shape; }</span>
+<span class="nc" id="L146">        public void setShape(String shape) { this.shape = shape; }</span>
+    }
+
+<span class="nc" id="L149">    public static class UpdateStatusRequest {</span>
+        private String status;
+
+<span class="nc" id="L152">        public String getStatus() { return status; }</span>
+<span class="nc" id="L153">        public void setStatus(String status) { this.status = status; }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ModifierGroup.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">resto-os-backend</a> &gt; <a href="index.source.html" class="el_package">com.resto.catalog.domain</a> &gt; <span class="el_source">ModifierGroup.java</span></div><h1>ModifierGroup.java</h1><pre class="source lang-java linenums">package com.resto.catalog.domain;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.OffsetDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = &quot;modifier_groups&quot;)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class ModifierGroup {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
+
+    @Column(name = &quot;organization_id&quot;, nullable = false)
+    private UUID organizationId;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(name = &quot;min_selection&quot;, nullable = false)
+    @Builder.Default
+    private Integer minSelection = 0;
+
+    @Column(name = &quot;max_selection&quot;, nullable = false)
+    @Builder.Default
+    private Integer maxSelection = 1;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean required = false;
+
+    @Column(name = &quot;created_at&quot;, nullable = false, updatable = false)
+    private OffsetDateTime createdAt;
+
+<span class="nc" id="L43">    public UUID getId() { return id; }</span>
+<span class="nc" id="L44">    public void setId(UUID id) { this.id = id; }</span>
+<span class="nc" id="L45">    public UUID getOrganizationId() { return organizationId; }</span>
+<span class="nc" id="L46">    public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }</span>
+<span class="nc" id="L47">    public String getName() { return name; }</span>
+<span class="nc" id="L48">    public void setName(String name) { this.name = name; }</span>
+<span class="nc" id="L49">    public Integer getMinSelection() { return minSelection; }</span>
+<span class="nc" id="L50">    public void setMinSelection(Integer minSelection) { this.minSelection = minSelection; }</span>
+<span class="nc" id="L51">    public Integer getMaxSelection() { return maxSelection; }</span>
+<span class="nc" id="L52">    public void setMaxSelection(Integer maxSelection) { this.maxSelection = maxSelection; }</span>
+<span class="nc" id="L53">    public Boolean getRequired() { return required; }</span>
+<span class="nc" id="L54">    public void setRequired(Boolean required) { this.required = required; }</span>
+<span class="nc" id="L55">    public OffsetDateTime getCreatedAt() { return createdAt; }</span>
+<span class="nc" id="L56">    public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }</span>
+
+    @PrePersist
+    protected void onCreate() {
+<span class="nc" id="L60">        createdAt = OffsetDateTime.now();</span>
+<span class="nc" id="L61">    }</span>
+
+    public static ModifierGroupBuilder builder() {
+<span class="nc" id="L64">        return new ModifierGroupBuilder();</span>
+    }
+
+    public static class ModifierGroupBuilder {
+        private UUID id;
+        private UUID organizationId;
+        private String name;
+        private Integer minSelection = 0;
+        private Integer maxSelection = 1;
+        private Boolean required = false;
+        private OffsetDateTime createdAt;
+
+<span class="nc" id="L76">        public ModifierGroupBuilder id(UUID id) { this.id = id; return this; }</span>
+<span class="nc" id="L77">        public ModifierGroupBuilder organizationId(UUID organizationId) { this.organizationId = organizationId; return this; }</span>
+<span class="nc" id="L78">        public ModifierGroupBuilder name(String name) { this.name = name; return this; }</span>
+<span class="nc" id="L79">        public ModifierGroupBuilder minSelection(Integer minSelection) { this.minSelection = minSelection; return this; }</span>
+<span class="nc" id="L80">        public ModifierGroupBuilder maxSelection(Integer maxSelection) { this.maxSelection = maxSelection; return this; }</span>
+<span class="nc" id="L81">        public ModifierGroupBuilder required(Boolean required) { this.required = required; return this; }</span>
+<span class="nc" id="L82">        public ModifierGroupBuilder createdAt(OffsetDateTime createdAt) { this.createdAt = createdAt; return this; }</span>
+
+        public ModifierGroup build() {
+<span class="nc" id="L85">            ModifierGroup mg = new ModifierGroup();</span>
+<span class="nc" id="L86">            mg.setId(this.id);</span>
+<span class="nc" id="L87">            mg.setOrganizationId(this.organizationId);</span>
+<span class="nc" id="L88">            mg.setName(this.name);</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">            mg.setMinSelection(this.minSelection != null ? this.minSelection : 0);</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">            mg.setMaxSelection(this.maxSelection != null ? this.maxSelection : 1);</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">            mg.setRequired(this.required != null ? this.required : false);</span>
+<span class="nc" id="L92">            mg.setCreatedAt(this.createdAt);</span>
+<span class="nc" id="L93">            return mg;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

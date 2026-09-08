@@ -1,0 +1,3 @@
+com\resto\smoke\RestoOSSmokeTest.class
+com\resto\unit\OrderUnitTest.class
+com\resto\integration\OrganizationControllerIT.class

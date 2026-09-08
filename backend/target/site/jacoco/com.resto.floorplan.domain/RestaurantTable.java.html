@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RestaurantTable.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">resto-os-backend</a> &gt; <a href="index.source.html" class="el_package">com.resto.floorplan.domain</a> &gt; <span class="el_source">RestaurantTable.java</span></div><h1>RestaurantTable.java</h1><pre class="source lang-java linenums">package com.resto.floorplan.domain;
+
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.OffsetDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = &quot;restaurant_tables&quot;)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class RestaurantTable {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
+
+    @Column(name = &quot;organization_id&quot;, nullable = false)
+    private UUID organizationId;
+
+    @Column(name = &quot;store_id&quot;, nullable = false)
+    private UUID storeId;
+
+    @Column(name = &quot;zone_id&quot;, nullable = false)
+    private UUID zoneId;
+
+    @Column(name = &quot;table_number&quot;, nullable = false, length = 50)
+    private String tableNumber;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer capacity = 4;
+
+    @Column(name = &quot;pos_x&quot;, nullable = false)
+    @Builder.Default
+    private Integer posX = 0;
+
+    @Column(name = &quot;pos_y&quot;, nullable = false)
+    @Builder.Default
+    private Integer posY = 0;
+
+    @Column(nullable = false, length = 50)
+    @Builder.Default
+    private String shape = &quot;SQUARE&quot;;
+
+    @Column(nullable = false, length = 50)
+    @Builder.Default
+    private String status = &quot;AVAILABLE&quot;; // AVAILABLE, OCCUPIED, RESERVED, OUT_OF_SERVICE
+
+    @Column(name = &quot;created_at&quot;, nullable = false, updatable = false)
+    private OffsetDateTime createdAt;
+
+    @Column(name = &quot;updated_at&quot;, nullable = false)
+    private OffsetDateTime updatedAt;
+
+<span class="nc" id="L60">    public UUID getId() { return id; }</span>
+<span class="nc" id="L61">    public void setId(UUID id) { this.id = id; }</span>
+<span class="nc" id="L62">    public UUID getOrganizationId() { return organizationId; }</span>
+<span class="nc" id="L63">    public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }</span>
+<span class="nc" id="L64">    public UUID getStoreId() { return storeId; }</span>
+<span class="nc" id="L65">    public void setStoreId(UUID storeId) { this.storeId = storeId; }</span>
+<span class="nc" id="L66">    public UUID getZoneId() { return zoneId; }</span>
+<span class="nc" id="L67">    public void setZoneId(UUID zoneId) { this.zoneId = zoneId; }</span>
+<span class="nc" id="L68">    public String getTableNumber() { return tableNumber; }</span>
+<span class="nc" id="L69">    public void setTableNumber(String tableNumber) { this.tableNumber = tableNumber; }</span>
+<span class="nc" id="L70">    public Integer getCapacity() { return capacity; }</span>
+<span class="nc" id="L71">    public void setCapacity(Integer capacity) { this.capacity = capacity; }</span>
+<span class="nc" id="L72">    public Integer getPosX() { return posX; }</span>
+<span class="nc" id="L73">    public void setPosX(Integer posX) { this.posX = posX; }</span>
+<span class="nc" id="L74">    public Integer getPosY() { return posY; }</span>
+<span class="nc" id="L75">    public void setPosY(Integer posY) { this.posY = posY; }</span>
+<span class="nc" id="L76">    public String getShape() { return shape; }</span>
+<span class="nc" id="L77">    public void setShape(String shape) { this.shape = shape; }</span>
+<span class="nc" id="L78">    public String getStatus() { return status; }</span>
+<span class="nc" id="L79">    public void setStatus(String status) { this.status = status; }</span>
+<span class="nc" id="L80">    public OffsetDateTime getCreatedAt() { return createdAt; }</span>
+<span class="nc" id="L81">    public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }</span>
+<span class="nc" id="L82">    public OffsetDateTime getUpdatedAt() { return updatedAt; }</span>
+<span class="nc" id="L83">    public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }</span>
+
+    @PrePersist
+    protected void onCreate() {
+<span class="nc" id="L87">        createdAt = OffsetDateTime.now();</span>
+<span class="nc" id="L88">        updatedAt = OffsetDateTime.now();</span>
+<span class="nc" id="L89">    }</span>
+
+    @PreUpdate
+    protected void onUpdate() {
+<span class="nc" id="L93">        updatedAt = OffsetDateTime.now();</span>
+<span class="nc" id="L94">    }</span>
+
+    public static RestaurantTableBuilder builder() {
+<span class="nc" id="L97">        return new RestaurantTableBuilder();</span>
+    }
+
+    public static class RestaurantTableBuilder {
+        private UUID id;
+        private UUID organizationId;
+        private UUID storeId;
+        private UUID zoneId;
+        private String tableNumber;
+        private Integer capacity = 4;
+        private Integer posX = 0;
+        private Integer posY = 0;
+        private String shape = &quot;SQUARE&quot;;
+        private String status = &quot;AVAILABLE&quot;;
+        private OffsetDateTime createdAt;
+        private OffsetDateTime updatedAt;
+
+<span class="nc" id="L114">        public RestaurantTableBuilder id(UUID id) { this.id = id; return this; }</span>
+<span class="nc" id="L115">        public RestaurantTableBuilder organizationId(UUID organizationId) { this.organizationId = organizationId; return this; }</span>
+<span class="nc" id="L116">        public RestaurantTableBuilder storeId(UUID storeId) { this.storeId = storeId; return this; }</span>
+<span class="nc" id="L117">        public RestaurantTableBuilder zoneId(UUID zoneId) { this.zoneId = zoneId; return this; }</span>
+<span class="nc" id="L118">        public RestaurantTableBuilder tableNumber(String tableNumber) { this.tableNumber = tableNumber; return this; }</span>
+<span class="nc" id="L119">        public RestaurantTableBuilder capacity(Integer capacity) { this.capacity = capacity; return this; }</span>
+<span class="nc" id="L120">        public RestaurantTableBuilder posX(Integer posX) { this.posX = posX; return this; }</span>
+<span class="nc" id="L121">        public RestaurantTableBuilder posY(Integer posY) { this.posY = posY; return this; }</span>
+<span class="nc" id="L122">        public RestaurantTableBuilder shape(String shape) { this.shape = shape; return this; }</span>
+<span class="nc" id="L123">        public RestaurantTableBuilder status(String status) { this.status = status; return this; }</span>
+<span class="nc" id="L124">        public RestaurantTableBuilder createdAt(OffsetDateTime createdAt) { this.createdAt = createdAt; return this; }</span>
+<span class="nc" id="L125">        public RestaurantTableBuilder updatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; return this; }</span>
+
+        public RestaurantTable build() {
+<span class="nc" id="L128">            RestaurantTable table = new RestaurantTable();</span>
+<span class="nc" id="L129">            table.setId(this.id);</span>
+<span class="nc" id="L130">            table.setOrganizationId(this.organizationId);</span>
+<span class="nc" id="L131">            table.setStoreId(this.storeId);</span>
+<span class="nc" id="L132">            table.setZoneId(this.zoneId);</span>
+<span class="nc" id="L133">            table.setTableNumber(this.tableNumber);</span>
+<span class="nc bnc" id="L134" title="All 2 branches missed.">            table.setCapacity(this.capacity != null ? this.capacity : 4);</span>
+<span class="nc bnc" id="L135" title="All 2 branches missed.">            table.setPosX(this.posX != null ? this.posX : 0);</span>
+<span class="nc bnc" id="L136" title="All 2 branches missed.">            table.setPosY(this.posY != null ? this.posY : 0);</span>
+<span class="nc bnc" id="L137" title="All 2 branches missed.">            table.setShape(this.shape != null ? this.shape : &quot;SQUARE&quot;);</span>
+<span class="nc bnc" id="L138" title="All 2 branches missed.">            table.setStatus(this.status != null ? this.status : &quot;AVAILABLE&quot;);</span>
+<span class="nc" id="L139">            table.setCreatedAt(this.createdAt);</span>
+<span class="nc" id="L140">            table.setUpdatedAt(this.updatedAt);</span>
+<span class="nc" id="L141">            return table;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

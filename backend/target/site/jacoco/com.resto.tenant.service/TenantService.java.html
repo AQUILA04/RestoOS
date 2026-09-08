@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TenantService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">resto-os-backend</a> &gt; <a href="index.source.html" class="el_package">com.resto.tenant.service</a> &gt; <span class="el_source">TenantService.java</span></div><h1>TenantService.java</h1><pre class="source lang-java linenums">package com.resto.tenant.service;
+
+import com.resto.tenant.domain.Organization;
+import com.resto.tenant.domain.Store;
+import com.resto.tenant.repository.OrganizationRepository;
+import com.resto.tenant.repository.StoreRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.UUID;
+
+@Service
+@Transactional
+public class TenantService {
+
+    private final OrganizationRepository organizationRepository;
+    private final StoreRepository storeRepository;
+
+<span class="nc" id="L20">    public TenantService(OrganizationRepository organizationRepository, StoreRepository storeRepository) {</span>
+<span class="nc" id="L21">        this.organizationRepository = organizationRepository;</span>
+<span class="nc" id="L22">        this.storeRepository = storeRepository;</span>
+<span class="nc" id="L23">    }</span>
+
+    public Organization createOrganization(String name, String code) {
+<span class="nc bnc" id="L26" title="All 2 branches missed.">        if (organizationRepository.existsByCode(code)) {</span>
+<span class="nc" id="L27">            throw new IllegalArgumentException(&quot;Organization code already exists: &quot; + code);</span>
+        }
+<span class="nc" id="L29">        Organization org = Organization.builder()</span>
+<span class="nc" id="L30">                .name(name)</span>
+<span class="nc" id="L31">                .code(code)</span>
+<span class="nc" id="L32">                .build();</span>
+<span class="nc" id="L33">        return organizationRepository.save(org);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;Organization&gt; getAllOrganizations() {
+<span class="nc" id="L38">        return organizationRepository.findAll();</span>
+    }
+
+    @Transactional(readOnly = true)
+    public Organization getOrganizationById(UUID id) {
+<span class="nc" id="L43">        return organizationRepository.findById(id)</span>
+<span class="nc" id="L44">                .orElseThrow(() -&gt; new IllegalArgumentException(&quot;Organization not found with id: &quot; + id));</span>
+    }
+
+    public Store createStore(UUID organizationId, String name, String code, String timezone, String currency) {
+<span class="nc bnc" id="L48" title="All 2 branches missed.">        if (!organizationRepository.existsById(organizationId)) {</span>
+<span class="nc" id="L49">            throw new IllegalArgumentException(&quot;Organization not found with id: &quot; + organizationId);</span>
+        }
+<span class="nc bnc" id="L51" title="All 2 branches missed.">        if (storeRepository.existsByOrganizationIdAndCode(organizationId, code)) {</span>
+<span class="nc" id="L52">            throw new IllegalArgumentException(&quot;Store code already exists for this organization: &quot; + code);</span>
+        }
+<span class="nc" id="L54">        Store store = Store.builder()</span>
+<span class="nc" id="L55">                .organizationId(organizationId)</span>
+<span class="nc" id="L56">                .name(name)</span>
+<span class="nc" id="L57">                .code(code)</span>
+<span class="nc bnc" id="L58" title="All 2 branches missed.">                .timezone(timezone != null ? timezone : &quot;UTC&quot;)</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">                .currency(currency != null ? currency : &quot;EUR&quot;)</span>
+<span class="nc" id="L60">                .build();</span>
+<span class="nc" id="L61">        return storeRepository.save(store);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;Store&gt; getStoresByOrganization(UUID organizationId) {
+<span class="nc" id="L66">        return storeRepository.findByOrganizationId(organizationId);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
