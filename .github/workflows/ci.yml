@@ -48,17 +48,18 @@ jobs:
       - name: Start containers
         run: docker compose -f docker-compose.test.yml up -d --wait
       - name: Failsafe IT
+        # Skip surefire (already green in unit-tests). Do not inject SPRING_DATASOURCE_*:
+        # H2 @ActiveProfiles("test") ITs must keep H2; Postgres is covered by e2e-tests.
         run: |
           cd backend
-          # Skip surefire (already green in unit-tests). Failsafe only.
           mvn -B verify -DskipTests
         env:
           RESTOOS_JWT_SECRET: e2e-secret-key-which-is-long-enough-123456
           SPRING_MAIL_HOST: localhost
           SPRING_MAIL_PORT: 1025
           SPRING_REDIS_HOST: localhost
-          # Do not set SPRING_DATASOURCE_* here: H2 @ActiveProfiles("test") ITs must keep H2.
-          # Postgres app-role path is exercised by the e2e-tests job.      - if: always()
+      - name: Stop containers
+        if: always()
         run: docker compose -f docker-compose.test.yml down -v
       - uses: actions/upload-artifact@v4
         if: always()
@@ -67,7 +68,6 @@ jobs:
           path: backend/target/failsafe-reports/
           retention-days: 7
           if-no-files-found: warn
-
   frontend-build:
     name: 3. Frontend Build
     runs-on: ubuntu-latest
