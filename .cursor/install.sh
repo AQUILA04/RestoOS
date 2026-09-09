@@ -34,9 +34,13 @@ echo "==> Building backend jar"
 ( cd backend && mvn -B clean package -DskipTests )
 
 echo "==> Installing frontend dependencies"
-( cd frontend && npm ci )
+# --ignore-scripts blocks dependency lifecycle (pre/post-install) scripts as a
+# supply-chain safeguard; the Angular build does not rely on any of them.
+( cd frontend && npm ci --ignore-scripts )
 
 echo "==> Installing Playwright Chromium (for golden-path E2E)"
-( cd frontend && npx --yes playwright install --with-deps chromium )
+# Invoke the locally-installed Playwright CLI directly instead of `npx`, which
+# could otherwise fetch and execute an on-demand package.
+( cd frontend && ./node_modules/.bin/playwright install --with-deps chromium )
 
 echo "==> install.sh complete"
