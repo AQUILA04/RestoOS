@@ -30,7 +30,10 @@ import { Component } from '@angular/core';
   styles: [`
     :host {
       display: block;
+      width: 100%;
+      max-width: 100%;
       min-height: 100dvh;
+      overflow-x: clip;
     }
 
     .shell-header {

@@ -28,6 +28,71 @@ h1 {
   word-break: break-word;
 }
 
+.org-settings {
+  margin-top: 28px;
+  max-width: 520px;
+  width: 100%;
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+
+.org-settings h2 {
+  margin: 0 0 8px;
+  font-size: clamp(1rem, 3.5vw, 1.15rem);
+}
+
+.org-settings .hint {
+  color: #607D8B;
+  margin: 0 0 12px;
+}
+
+.settings-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.settings-row input {
+  flex: 1 1 180px;
+  min-width: 0;
+  min-height: 48px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #CFD8DC;
+}
+
+.settings-row button {
+  flex: 0 0 auto;
+  min-height: 48px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 8px;
+  background: #D84315;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.toast {
+  margin-top: 10px;
+  color: #2E7D32;
+  font-weight: 600;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 @media (max-width: 767px) {
   .dashboard {
     padding: 16px 12px;
@@ -39,6 +104,21 @@ h1 {
 
   .kpi {
     padding: 16px;
+  }
+
+  .org-settings {
+    padding: 16px;
+    margin-top: 20px;
+  }
+
+  .settings-row {
+    flex-direction: column;
+  }
+
+  .settings-row input,
+  .settings-row button {
+    width: 100%;
+    flex: 1 1 auto;
   }
 }
 
