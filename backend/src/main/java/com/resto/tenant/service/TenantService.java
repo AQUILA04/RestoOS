@@ -33,6 +33,15 @@ public class TenantService {
         return organizationRepository.save(org);
     }
 
+    public Organization updateOrganizationSettings(UUID id, String mobileMoneyLabel) {
+        Organization org = getOrganizationById(id);
+        if (mobileMoneyLabel != null) {
+            String trimmed = mobileMoneyLabel.trim();
+            org.setMobileMoneyLabel(trimmed.isEmpty() ? null : trimmed);
+        }
+        return organizationRepository.save(org);
+    }
+
     @Transactional(readOnly = true)
     public List<Organization> getAllOrganizations() {
         return organizationRepository.findAll();

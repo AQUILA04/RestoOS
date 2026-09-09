@@ -100,6 +100,37 @@ class PaymentServiceTest {
     }
 
     @Test
+    @DisplayName("Early full payment marks PAID but keeps kitchen status")
+    void earlyPaymentKeepsOperationalStatus() {
+        Order order = Order.builder()
+                .id(orderId)
+                .organizationId(orgId)
+                .storeId(storeId)
+                .orderNumber(1)
+                .status("SENT_TO_KITCHEN")
+                .paymentStatus("UNPAID")
+                .totalAmount(new BigDecimal("20.00"))
+                .build();
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(i -> {
+            Payment p = i.getArgument(0);
+            p.setId(UUID.randomUUID());
+            return p;
+        });
+        when(paymentRepository.findByOrderId(orderId)).thenAnswer(inv -> {
+            Payment p = Payment.builder().amount(new BigDecimal("20.00")).orderId(orderId).build();
+            return List.of(p);
+        });
+        when(orderRepository.save(any(Order.class))).thenAnswer(i -> i.getArgument(0));
+
+        paymentService.markPaid(orgId, storeId, orderId, cashierId, "CARD", new BigDecimal("20.00"));
+
+        assertEquals("PAID", order.getPaymentStatus());
+        assertEquals("SENT_TO_KITCHEN", order.getStatus());
+        verify(orderService, never()).releaseTableIfIdle(any(), any());
+    }
+
+    @Test
     @DisplayName("Rejects cancelled order and invalid method")
     void rejectsInvalid() {
         Order cancelled = Order.builder()

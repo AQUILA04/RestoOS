@@ -142,6 +142,56 @@ class OrderUnitTest {
     }
 
     @Test
+    @DisplayName("DINE_IN may be created without table; table can be assigned later")
+    void dineInWithoutTableThenAssign() {
+        when(orderCounterRepository.allocateNextOrderNumber(storeId, orgId)).thenReturn(102);
+
+        Product product = Product.builder()
+                .id(productId)
+                .organizationId(orgId)
+                .categoryId(UUID.randomUUID())
+                .name("Burger")
+                .basePrice(new BigDecimal("12.00"))
+                .taxRate(new BigDecimal("10.00"))
+                .active(true)
+                .is86(false)
+                .build();
+        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+        when(storeProductRepository.findByStoreIdAndProductId(storeId, productId)).thenReturn(Optional.empty());
+
+        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> {
+            Order o = inv.getArgument(0);
+            if (o.getId() == null) o.setId(UUID.randomUUID());
+            return o;
+        });
+
+        OrderService.CreateOrderItemParam item = new OrderService.CreateOrderItemParam();
+        item.setProductId(productId);
+        item.setQuantity(1);
+
+        Order order = orderService.createOrder(orgId, storeId, null, "DINE_IN", null,
+                List.of(item), true, actorId);
+
+        assertNull(order.getTableId());
+        assertEquals(actorId, order.getCreatedBy());
+        assertEquals("SENT_TO_KITCHEN", order.getStatus());
+        verify(tableRepository, never()).save(any());
+
+        RestaurantTable table = new RestaurantTable();
+        table.setId(tableId);
+        table.setStoreId(storeId);
+        table.setStatus("AVAILABLE");
+        when(tableRepository.findById(tableId)).thenReturn(Optional.of(table));
+        when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
+
+        Order updated = orderService.updateOrderTable(order.getId(), tableId, actorId);
+        assertEquals(tableId, updated.getTableId());
+        ArgumentCaptor<RestaurantTable> tableCap = ArgumentCaptor.forClass(RestaurantTable.class);
+        verify(tableRepository, atLeastOnce()).save(tableCap.capture());
+        assertEquals("OCCUPIED", tableCap.getValue().getStatus());
+    }
+
+    @Test
     @DisplayName("cancel requires reason and allowed state")
     void cancelRules() {
         Order order = Order.builder()

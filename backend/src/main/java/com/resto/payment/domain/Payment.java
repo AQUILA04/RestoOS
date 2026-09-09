@@ -38,6 +38,14 @@ public class Payment {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 
+    /** Cash received from customer (CASH only) */
+    @Column(name = "amount_tendered", precision = 10, scale = 2)
+    private BigDecimal amountTendered;
+
+    /** Change given back (amountTendered - amount) */
+    @Column(name = "change_amount", precision = 10, scale = 2)
+    private BigDecimal changeAmount;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
@@ -55,6 +63,10 @@ public class Payment {
     public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
     public BigDecimal getAmount() { return amount; }
     public void setAmount(BigDecimal amount) { this.amount = amount; }
+    public BigDecimal getAmountTendered() { return amountTendered; }
+    public void setAmountTendered(BigDecimal amountTendered) { this.amountTendered = amountTendered; }
+    public BigDecimal getChangeAmount() { return changeAmount; }
+    public void setChangeAmount(BigDecimal changeAmount) { this.changeAmount = changeAmount; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
 
@@ -75,6 +87,8 @@ public class Payment {
         private UUID cashierUserId;
         private String paymentMethod;
         private BigDecimal amount;
+        private BigDecimal amountTendered;
+        private BigDecimal changeAmount;
         private OffsetDateTime createdAt;
 
         public PaymentBuilder id(UUID id) { this.id = id; return this; }
@@ -84,6 +98,8 @@ public class Payment {
         public PaymentBuilder cashierUserId(UUID cashierUserId) { this.cashierUserId = cashierUserId; return this; }
         public PaymentBuilder paymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; return this; }
         public PaymentBuilder amount(BigDecimal amount) { this.amount = amount; return this; }
+        public PaymentBuilder amountTendered(BigDecimal amountTendered) { this.amountTendered = amountTendered; return this; }
+        public PaymentBuilder changeAmount(BigDecimal changeAmount) { this.changeAmount = changeAmount; return this; }
         public PaymentBuilder createdAt(OffsetDateTime createdAt) { this.createdAt = createdAt; return this; }
 
         public Payment build() {
@@ -95,6 +111,8 @@ public class Payment {
             p.setCashierUserId(this.cashierUserId);
             p.setPaymentMethod(this.paymentMethod);
             p.setAmount(this.amount);
+            p.setAmountTendered(this.amountTendered);
+            p.setChangeAmount(this.changeAmount);
             p.setCreatedAt(this.createdAt);
             return p;
         }

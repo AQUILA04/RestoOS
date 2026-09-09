@@ -3,15 +3,79 @@
   <div class="order-status-badge">{{ orderStatus }}</div>
   <p>Total: {{ order.totalAmount | currency:'EUR' }}</p>
 
-  <label>
+  <section class="table-assign" *ngIf="canAssignTable" id="table-assign-section">
+    <h2>Table (optionnelle)</h2>
+    <div class="table-row">
+      <label for="order-table-select">Table occupée</label>
+      <select id="order-table-select" [(ngModel)]="selectedTableId">
+        <option value="">Sans table</option>
+        <option *ngFor="let t of tables" [value]="t.id">{{ t.name }}</option>
+      </select>
+      <button type="button" id="btn-assign-table" (click)="assignTable()">Enregistrer la table</button>
+    </div>
+  </section>
+
+  <label for="receipt-client-email">
     Email client (optionnel)
     <input id="receipt-client-email" [(ngModel)]="clientEmail" type="email" />
   </label>
 
   <div class="actions">
-    <button type="button" id="btn-mark-delivered" (click)="deliver()">LIVRÉ</button>
-    <button type="button" id="btn-pay-cash" (click)="payCash()">Payer cash</button>
+    <button
+      type="button"
+      id="btn-open-payment"
+      [disabled]="!canPay"
+      (click)="openPayment()">
+      {{ canPay ? 'Encaisser' : (order.paymentStatus === 'PAID' ? 'Déjà payé' : 'Encaissement indisponible') }}
+    </button>
+    <button
+      type="button"
+      id="btn-mark-delivered"
+      [disabled]="!canDeliver"
+      (click)="deliver()">
+      {{ canDeliver ? 'Marquer livré' : (order.status === 'DELIVERED' || order.status === 'CLOSED' ? 'Déjà livré' : 'En attente cuisine') }}
+    </button>
     <button type="button" id="btn-send-email-receipt" disabled title="V2 — reçu numérique différé">Envoyer reçu</button>
   </div>
+
+  <div class="payment-panel" *ngIf="paymentPanelOpen && canPay" id="payment-methods-panel">
+    <h2>Mode de paiement</h2>
+    <div class="payment-methods">
+      <button type="button" id="btn-pay-card" class="pay-method" (click)="payWith('CARD')">Carte</button>
+      <button type="button" id="btn-pay-mobile" class="pay-method" (click)="payWith('MOBILE_MONEY')">
+        {{ mobileMoneyLabel }}
+      </button>
+      <button type="button" id="btn-pay-cash-toggle" class="pay-method" (click)="cashAmountReceived = cashAmountReceived ?? order.totalAmount">
+        Cash
+      </button>
+    </div>
+
+    <div class="cash-panel" *ngIf="cashAmountReceived !== null" id="cash-payment-panel">
+      <label for="cash-amount-received">
+        Montant reçu
+        <input
+          id="cash-amount-received"
+          type="number"
+          min="0"
+          step="0.01"
+          [(ngModel)]="cashAmountReceived" />
+      </label>
+      <p id="cash-change-display" [class.insufficient]="!cashEnough">
+        Reliquat:
+        <strong *ngIf="cashChange !== null">{{ cashChange | number:'1.2-2' }}</strong>
+      </p>
+      <button
+        type="button"
+        id="btn-pay-cash"
+        [disabled]="!cashEnough"
+        (click)="payWith('CASH')">
+        Valider cash
+      </button>
+    </div>
+  </div>
+
+  <p class="success" *ngIf="lastChange != null && order.paymentStatus === 'PAID'">
+    Reliquat rendu: {{ lastChange | number:'1.2-2' }}
+  </p>
   <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
 </div>

@@ -104,6 +104,18 @@ export class ApiService {
     );
   }
 
+  updateOrderTable(orderId: string, tableId: string | null): Observable<any> {
+    return this.patchData<any>(`/api/v1/orders/${orderId}/table`, { tableId });
+  }
+
+  getOrganization(orgId: string): Observable<any> {
+    return this.getData<any>(`/api/v1/organizations/${orgId}`);
+  }
+
+  updateOrganization(orgId: string, body: { mobileMoneyLabel?: string }): Observable<any> {
+    return this.patchData<any>(`/api/v1/organizations/${orgId}`, body);
+  }
+
   markPaid(orderId: string, body: unknown, idempotencyKey: string): Observable<any> {
     return this.postData<any>(`/api/v1/orders/${orderId}/payment/mark-paid`, body, idempotencyKey).pipe(
       catchError(() =>
@@ -112,8 +124,9 @@ export class ApiService {
           storeId: this.storeContext.storeId,
           orderId,
           cashierUserId: this.storeContext.userId,
-          paymentMethod: 'CASH',
+          paymentMethod: (body as any)?.paymentMethod || 'CASH',
           amount: (body as any)?.amount,
+          amountTendered: (body as any)?.amountTendered,
         }, idempotencyKey).pipe(
           map(() => ({ id: orderId, paymentStatus: 'PAID', status: 'CLOSED' })),
         ),

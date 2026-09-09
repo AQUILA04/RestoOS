@@ -8,4 +8,21 @@
     <div class="kpi">Prêtes: {{ metrics.readyOrdersCount }}</div>
     <div class="kpi">Tables: {{ metrics.occupiedTablesCount }}</div>
   </div>
+
+  <section class="org-settings" id="org-payment-settings">
+    <h2>Paiement — libellé transfert mobile</h2>
+    <p class="hint">Ex. Mixx by Yas, Flooz, MoMo, Juice selon le pays.</p>
+    <div class="settings-row">
+      <label class="sr-only" for="mobile-money-label-input">Libellé transfert mobile</label>
+      <input
+        id="mobile-money-label-input"
+        type="text"
+        [(ngModel)]="mobileMoneyLabel"
+        placeholder="Transfert Mobile" />
+      <button type="button" id="btn-save-mobile-money-label" (click)="saveMobileMoneyLabel()">
+        Enregistrer
+      </button>
+    </div>
+    <p class="toast" *ngIf="settingsToast">{{ settingsToast }}</p>
+  </section>
 </div>

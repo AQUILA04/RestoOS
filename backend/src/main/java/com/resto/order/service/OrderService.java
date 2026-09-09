@@ -73,10 +73,7 @@ public class OrderService {
         }
 
         String resolvedType = orderType != null ? orderType : "DINE_IN";
-        if ("DINE_IN".equals(resolvedType)) {
-            if (tableId == null) {
-                throw new IllegalArgumentException("tableId is required for DINE_IN orders");
-            }
+        if ("DINE_IN".equals(resolvedType) && tableId != null) {
             RestaurantTable table = tableRepository.findById(tableId)
                     .orElseThrow(() -> new IllegalArgumentException("Table not found: " + tableId));
             if (!storeId.equals(table.getStoreId())) {
@@ -94,6 +91,7 @@ public class OrderService {
                 .organizationId(organizationId)
                 .storeId(storeId)
                 .tableId(tableId)
+                .createdBy(actorUserId)
                 .orderNumber(nextOrderNumber)
                 .orderType(resolvedType)
                 .status(initialStatus)
@@ -207,10 +205,65 @@ public class OrderService {
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
         OrderStateMachine.assertTransition(order.getStatus(), "DELIVERED");
         order.setStatus("DELIVERED");
+        // If already paid (encaissement anticipé), close and free the table
+        if ("PAID".equals(order.getPaymentStatus())) {
+            order.setStatus("CLOSED");
+            if (order.getTableId() != null) {
+                releaseTableIfIdle(order.getStoreId(), order.getTableId());
+            }
+        }
         Order saved = orderRepository.save(order);
         auditService.record(order.getOrganizationId(), order.getStoreId(), actorUserId,
                 "ORDER_DELIVERED", "ORDER", orderId, "Marked delivered");
         notifyPos(saved, "ORDER_DELIVERED");
+        return saved;
+    }
+
+    /**
+     * Assign or change the occupied table after order creation (DINE_IN).
+     * Table is optional at creation and can be set later.
+     */
+    public Order updateOrderTable(UUID orderId, UUID tableId, UUID actorUserId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
+
+        if (!"DINE_IN".equals(order.getOrderType())) {
+            throw new IllegalArgumentException("Table can only be set on DINE_IN orders");
+        }
+        if ("CLOSED".equals(order.getStatus()) || "CANCELLED".equals(order.getStatus())) {
+            throw new IllegalStateException("Cannot update table for order in status: " + order.getStatus());
+        }
+
+        UUID previousTableId = order.getTableId();
+
+        if (tableId == null) {
+            order.setTableId(null);
+            Order saved = orderRepository.save(order);
+            if (previousTableId != null) {
+                releaseTableIfIdle(order.getStoreId(), previousTableId);
+            }
+            auditService.record(order.getOrganizationId(), order.getStoreId(), actorUserId,
+                    "ORDER_TABLE_CLEARED", "ORDER", orderId, "Table cleared");
+            return saved;
+        }
+
+        RestaurantTable table = tableRepository.findById(tableId)
+                .orElseThrow(() -> new IllegalArgumentException("Table not found: " + tableId));
+        if (!order.getStoreId().equals(table.getStoreId())) {
+            throw new IllegalArgumentException("Table does not belong to store");
+        }
+        if ("OUT_OF_SERVICE".equals(table.getStatus())) {
+            throw new IllegalArgumentException("Table is out of service");
+        }
+
+        order.setTableId(tableId);
+        Order saved = orderRepository.save(order);
+        occupyTable(tableId);
+        if (previousTableId != null && !previousTableId.equals(tableId)) {
+            releaseTableIfIdle(order.getStoreId(), previousTableId);
+        }
+        auditService.record(order.getOrganizationId(), order.getStoreId(), actorUserId,
+                "ORDER_TABLE_ASSIGNED", "ORDER", orderId, "tableId=" + tableId);
         return saved;
     }
 
