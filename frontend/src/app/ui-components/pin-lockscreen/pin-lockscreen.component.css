@@ -3,15 +3,22 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
+  min-height: calc(100dvh - var(--shell-header-height, 52px));
+  padding: 24px 16px;
   background-color: var(--color-kds-obsidian);
   color: #FFFFFF;
+  width: 100%;
+  overflow-x: clip;
 }
 
 .user-cards {
   display: flex;
-  gap: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
   margin-bottom: 40px;
+  width: 100%;
+  max-width: 720px;
 }
 
 .user-card {
@@ -19,6 +26,7 @@
   flex-direction: column;
   align-items: center;
   padding: 16px;
+  min-width: 96px;
   border-radius: 12px;
   background: var(--color-kds-card-bg);
   cursor: pointer;
@@ -48,6 +56,7 @@
   margin-top: 8px;
   font-family: var(--font-body);
   font-size: 14px;
+  text-align: center;
 }
 
 .pin-display {
@@ -72,11 +81,15 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
+  width: min(100%, 280px);
+  justify-items: center;
 }
 
 .pin-button {
-  width: 72px;
-  height: 72px;
+  width: min(72px, 22vw);
+  height: min(72px, 22vw);
+  max-width: 72px;
+  max-height: 72px;
   border-radius: 50%;
   background: var(--color-kds-card-bg);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -98,4 +111,34 @@
 .pin-button.action {
   font-size: 20px;
   color: #999;
+}
+
+@media (max-width: 480px) {
+  .lockscreen-container {
+    padding: 16px 12px;
+  }
+
+  .user-cards {
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  .user-card {
+    min-width: 84px;
+    padding: 12px;
+  }
+
+  .avatar {
+    width: 56px;
+    height: 56px;
+    font-size: 20px;
+  }
+
+  .numpad-grid {
+    gap: 12px;
+  }
+
+  .pin-button {
+    font-size: 24px;
+  }
 }

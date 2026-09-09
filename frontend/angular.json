@@ -15,17 +15,32 @@
             "outputPath": "dist/restoos-shell",
             "index": "src/index.html",
             "browser": "src/main.ts",
-            "polyfills": ["src/polyfills.ts", "zone.js"],
+            "polyfills": [
+              "src/polyfills.ts",
+              "zone.js"
+            ],
             "tsConfig": "tsconfig.app.json",
-            "assets": ["src/assets"],
-            "styles": ["src/styles.css", "src/styles/tokens.css"],
+            "assets": [
+              "src/assets"
+            ],
+            "styles": [
+              "src/styles.css",
+              "src/styles/tokens.css"
+            ],
             "scripts": [],
-            "allowedCommonJsDependencies": ["sockjs-client", "@stomp/stompjs"]
+            "allowedCommonJsDependencies": [
+              "sockjs-client",
+              "@stomp/stompjs"
+            ]
           },
           "configurations": {
             "production": {
               "budgets": [
-                { "type": "initial", "maximumWarning": "2mb", "maximumError": "5mb" }
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "5mb"
+                }
               ],
               "outputHashing": "all"
             },
@@ -40,22 +55,37 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
-            "production": { "buildTarget": "restoos-shell:build:production" },
-            "development": { "buildTarget": "restoos-shell:build:development" }
+            "production": {
+              "buildTarget": "restoos-shell:build:production"
+            },
+            "development": {
+              "buildTarget": "restoos-shell:build:development"
+            }
           },
           "defaultConfiguration": "development"
         },
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
-            "polyfills": ["zone.js", "zone.js/testing"],
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
             "tsConfig": "tsconfig.spec.json",
-            "assets": ["src/assets"],
-            "styles": ["src/styles.css", "src/styles/tokens.css"],
+            "assets": [
+              "src/assets"
+            ],
+            "styles": [
+              "src/styles.css",
+              "src/styles/tokens.css"
+            ],
             "scripts": []
           }
         }
       }
     }
+  },
+  "cli": {
+    "analytics": false
   }
 }

@@ -1,2 +1,20 @@
-.kds-page { min-height: 100vh; background: #121214; color: white; padding: 16px; }
-h1 { font-family: Outfit, sans-serif; margin: 0 0 16px; }
+.kds-page {
+  min-height: calc(100dvh - var(--shell-header-height, 52px));
+  background: #121214;
+  color: white;
+  padding: 16px;
+  width: 100%;
+  overflow-x: clip;
+}
+
+h1 {
+  font-family: Outfit, sans-serif;
+  margin: 0 0 16px;
+  font-size: clamp(1.25rem, 4vw, 1.75rem);
+}
+
+@media (max-width: 767px) {
+  .kds-page {
+    padding: 12px;
+  }
+}

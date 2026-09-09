@@ -1,21 +1,21 @@
-<div class="pos-layout-container">
-  <!-- Column 1: Categories 220px -->
+<div class="pos-layout-container" [class.cart-open]="cartOpen">
+  <!-- Column 1: Categories -->
   <div class="column-categories">
-    <div 
-      *ngFor="let c of categories" 
-      class="category-card" 
+    <div
+      *ngFor="let c of categories"
+      class="category-card"
       [class.active]="c.id === activeCategoryId"
       (click)="selectCategory(c.id)">
       {{ c.name }}
     </div>
   </div>
 
-  <!-- Column 2: Product Grid Flex -->
+  <!-- Column 2: Product Grid -->
   <div class="column-products">
     <div class="products-grid">
-      <div 
-        *ngFor="let p of products" 
-        class="product-card" 
+      <div
+        *ngFor="let p of products"
+        class="product-card"
         [class.is-86]="p.is86"
         (click)="selectProduct(p)">
         <div class="product-title">{{ p.name }}</div>
@@ -25,10 +25,35 @@
     </div>
   </div>
 
-  <!-- Column 3: Active Cart 380px -->
-  <div class="column-cart">
+  <!-- Mobile cart toggle -->
+  <button
+    type="button"
+    class="cart-fab"
+    id="open-cart-btn"
+    aria-label="Ouvrir le panier"
+    (click)="cartOpen = true">
+    <span class="cart-fab-label">Panier</span>
+    <span class="cart-fab-count" *ngIf="cartItems.length">{{ cartItemCount }}</span>
+    <span class="cart-fab-total">{{ cartTotal | currency:'EUR' }}</span>
+  </button>
+
+  <div
+    class="cart-backdrop"
+    *ngIf="cartOpen"
+    (click)="cartOpen = false"
+    aria-hidden="true"></div>
+
+  <!-- Column 3: Active Cart -->
+  <aside class="column-cart" [class.open]="cartOpen" aria-label="Commande active">
     <div class="cart-header">
       <h2>Commande Active</h2>
+      <button
+        type="button"
+        class="cart-close-btn"
+        aria-label="Fermer le panier"
+        (click)="cartOpen = false">
+        ✕
+      </button>
     </div>
     <div class="cart-items-list">
       <div *ngFor="let item of cartItems" class="cart-item-row">
@@ -49,9 +74,9 @@
         class="checkout-btn"
         id="submit-order-btn"
         [disabled]="!cartItems.length"
-        (click)="checkout.emit()">
+        (click)="onCheckout()">
         ENVOYER EN CUISINE
       </button>
     </div>
-  </div>
+  </aside>
 </div>

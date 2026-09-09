@@ -23,6 +23,15 @@
   --touch-target-large: 64px;
   --pos-sidebar-width: 220px;
   --pos-cart-width: 380px;
+
+  /* Responsive breakpoints (reference) */
+  --bp-sm: 480px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+  --bp-xl: 1280px;
+
+  /* Shell */
+  --shell-header-height: 52px;
 }
 
 body {

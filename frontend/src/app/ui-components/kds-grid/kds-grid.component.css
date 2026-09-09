@@ -1,8 +1,10 @@
 .kds-obsidian-surface {
   background-color: var(--color-kds-obsidian);
-  min-height: 100vh;
+  min-height: calc(100dvh - var(--shell-header-height, 52px) - 64px);
   padding: 20px;
   color: #FFFFFF;
+  width: 100%;
+  overflow-x: clip;
 }
 
 .kds-cards-grid {
@@ -11,9 +13,11 @@
   gap: 20px;
 }
 
-/* UX-DR4: 320px width obsidian card */
+/* UX-DR4: 320px width obsidian card — fluid on small screens */
 .kds-card {
-  width: 320px;
+  width: min(100%, 320px);
+  flex: 1 1 280px;
+  max-width: 360px;
   background-color: var(--color-kds-card-bg);
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -33,8 +37,10 @@
   padding: 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
 }
 
 .ticket-number {
@@ -50,13 +56,6 @@
   border-radius: 4px;
   background-color: rgba(255, 255, 255, 0.15);
   font-weight: 600;
-}
-
-.cashier-line {
-  padding: 6px 14px 0;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.75);
-  font-weight: 500;
 }
 
 /* UX-DR4: 3-tier timer escalation */
@@ -110,6 +109,7 @@
 .item-name {
   font-family: var(--font-body);
   font-weight: 600;
+  word-break: break-word;
 }
 
 .item-mods {
@@ -133,8 +133,39 @@
   padding: 10px;
   border-radius: 6px;
   background-color: var(--color-primary-flame);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .status-btn.status-prep {
   background-color: #2E7D32;
+}
+
+@media (max-width: 767px) {
+  .kds-obsidian-surface {
+    padding: 12px;
+  }
+
+  .kds-cards-grid {
+    gap: 12px;
+  }
+
+  .kds-card {
+    flex: 1 1 100%;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .ticket-number {
+    font-size: 20px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .kds-card {
+    flex: 1 1 calc(50% - 20px);
+    max-width: calc(50% - 10px);
+  }
 }

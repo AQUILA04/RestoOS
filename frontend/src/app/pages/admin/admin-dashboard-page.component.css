@@ -1,33 +1,70 @@
-.dashboard { padding: 24px; background: #F8F9FA; min-height: 100vh; }
-.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; }
+.dashboard {
+  padding: 24px;
+  background: #F8F9FA;
+  min-height: calc(100dvh - var(--shell-header-height, 52px));
+  width: 100%;
+  overflow-x: clip;
+}
+
+h1 {
+  margin: 0 0 16px;
+  font-size: clamp(1.35rem, 4vw, 2rem);
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
+  gap: 16px;
+}
+
 .kpi {
   background: white;
   border-radius: 12px;
   padding: 20px;
   font-family: Outfit, sans-serif;
-  font-size: 1.5rem;
+  font-size: clamp(1.1rem, 3.5vw, 1.5rem);
   font-weight: 700;
   box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  word-break: break-word;
 }
+
 .org-settings {
   margin-top: 28px;
   max-width: 520px;
+  width: 100%;
   background: white;
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 1px 3px rgba(0,0,0,.08);
 }
-.org-settings h2 { margin: 0 0 8px; font-size: 1.15rem; }
-.org-settings .hint { color: #607D8B; margin: 0 0 12px; }
-.settings-row { display: flex; gap: 8px; }
+
+.org-settings h2 {
+  margin: 0 0 8px;
+  font-size: clamp(1rem, 3.5vw, 1.15rem);
+}
+
+.org-settings .hint {
+  color: #607D8B;
+  margin: 0 0 12px;
+}
+
+.settings-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .settings-row input {
-  flex: 1;
+  flex: 1 1 180px;
+  min-width: 0;
   min-height: 48px;
   padding: 8px 12px;
   border-radius: 8px;
   border: 1px solid #CFD8DC;
 }
+
 .settings-row button {
+  flex: 0 0 auto;
   min-height: 48px;
   padding: 0 16px;
   border: none;
@@ -37,7 +74,13 @@
   font-weight: 700;
   cursor: pointer;
 }
-.toast { margin-top: 10px; color: #2E7D32; font-weight: 600; }
+
+.toast {
+  margin-top: 10px;
+  color: #2E7D32;
+  font-weight: 600;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -50,3 +93,37 @@
   border: 0;
 }
 
+@media (max-width: 767px) {
+  .dashboard {
+    padding: 16px 12px;
+  }
+
+  .kpi-grid {
+    gap: 12px;
+  }
+
+  .kpi {
+    padding: 16px;
+  }
+
+  .org-settings {
+    padding: 16px;
+    margin-top: 20px;
+  }
+
+  .settings-row {
+    flex-direction: column;
+  }
+
+  .settings-row input,
+  .settings-row button {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .kpi-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
