@@ -25,6 +25,14 @@ public class Order {
     @Column(name = "table_id")
     private UUID tableId;
 
+    /** Cashier / waiter who registered the order */
+    @Column(name = "created_by")
+    private UUID createdBy;
+
+    /** Resolved display name for KDS / POS (not persisted) */
+    @Transient
+    private String createdByName;
+
     @Column(name = "order_number", nullable = false)
     private Integer orderNumber;
 
@@ -79,6 +87,10 @@ public class Order {
     public void setStoreId(UUID storeId) { this.storeId = storeId; }
     public UUID getTableId() { return tableId; }
     public void setTableId(UUID tableId) { this.tableId = tableId; }
+    public UUID getCreatedBy() { return createdBy; }
+    public void setCreatedBy(UUID createdBy) { this.createdBy = createdBy; }
+    public String getCreatedByName() { return createdByName; }
+    public void setCreatedByName(String createdByName) { this.createdByName = createdByName; }
     public Integer getOrderNumber() { return orderNumber; }
     public void setOrderNumber(Integer orderNumber) { this.orderNumber = orderNumber; }
     public String getOrderType() { return orderType; }
@@ -130,6 +142,8 @@ public class Order {
         private UUID organizationId;
         private UUID storeId;
         private UUID tableId;
+        private UUID createdBy;
+        private String createdByName;
         private Integer orderNumber;
         private String orderType = "DINE_IN";
         private String status = "CREATED";
@@ -150,6 +164,8 @@ public class Order {
         public OrderBuilder organizationId(UUID organizationId) { this.organizationId = organizationId; return this; }
         public OrderBuilder storeId(UUID storeId) { this.storeId = storeId; return this; }
         public OrderBuilder tableId(UUID tableId) { this.tableId = tableId; return this; }
+        public OrderBuilder createdBy(UUID createdBy) { this.createdBy = createdBy; return this; }
+        public OrderBuilder createdByName(String createdByName) { this.createdByName = createdByName; return this; }
         public OrderBuilder orderNumber(Integer orderNumber) { this.orderNumber = orderNumber; return this; }
         public OrderBuilder orderType(String orderType) { this.orderType = orderType; return this; }
         public OrderBuilder status(String status) { this.status = status; return this; }
@@ -172,6 +188,8 @@ public class Order {
             order.setOrganizationId(this.organizationId);
             order.setStoreId(this.storeId);
             order.setTableId(this.tableId);
+            order.setCreatedBy(this.createdBy);
+            order.setCreatedByName(this.createdByName);
             order.setOrderNumber(this.orderNumber);
             order.setOrderType(this.orderType != null ? this.orderType : "DINE_IN");
             order.setStatus(this.status != null ? this.status : "CREATED");

@@ -38,9 +38,15 @@ public class PaymentService {
     /**
      * Mark order paid (declarative). When amount covers total → PAID + CLOSED.
      * Invariant: CLOSED + UNPAID is forbidden.
+     * For CASH, optional amountTendered records cash received and computes change.
      */
     public Payment markPaid(UUID organizationId, UUID storeId, UUID orderId, UUID cashierUserId,
                             String paymentMethod, BigDecimal amount) {
+        return markPaid(organizationId, storeId, orderId, cashierUserId, paymentMethod, amount, null);
+    }
+
+    public Payment markPaid(UUID organizationId, UUID storeId, UUID orderId, UUID cashierUserId,
+                            String paymentMethod, BigDecimal amount, BigDecimal amountTendered) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
 
@@ -57,6 +63,14 @@ public class PaymentService {
             throw new IllegalArgumentException("Invalid payment method: " + paymentMethod);
         }
 
+        BigDecimal changeAmount = null;
+        if ("CASH".equals(paymentMethod) && amountTendered != null) {
+            if (amountTendered.compareTo(amount) < 0) {
+                throw new IllegalArgumentException("Cash received must cover payment amount");
+            }
+            changeAmount = amountTendered.subtract(amount);
+        }
+
         Payment payment = Payment.builder()
                 .organizationId(organizationId)
                 .storeId(storeId != null ? storeId : order.getStoreId())
@@ -64,6 +78,8 @@ public class PaymentService {
                 .cashierUserId(cashierUserId)
                 .paymentMethod(paymentMethod)
                 .amount(amount)
+                .amountTendered(amountTendered)
+                .changeAmount(changeAmount)
                 .build();
         Payment savedPayment = paymentRepository.save(payment);
 

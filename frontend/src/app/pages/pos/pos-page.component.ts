@@ -1,8 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { ApiService } from '../../core/services/api.service';
 import { StoreContextService } from '../../core/services/store-context.service';
 import { OfflineQueueService } from '../../core/services/offline-queue.service';
+import { WebSocketService } from '../../core/services/websocket.service';
 import { CartItem } from '../../ui-components/pos-layout/pos-layout.component';
 import { TableNode, ZoneTab } from '../../ui-components/floor-plan/floor-plan.component';
 import { ModifierGroupItem, ModifierOptionItem } from '../../ui-components/modifier-modal/modifier-modal.component';
@@ -13,9 +16,9 @@ import { ModifierGroupItem, ModifierOptionItem } from '../../ui-components/modif
   styleUrls: ['./pos-page.component.css'],
   standalone: false,
 })
-export class PosPageComponent implements OnInit {
+export class PosPageComponent implements OnInit, OnDestroy {
   authenticated = false;
-  activeTab: 'floor' | 'catalog' = 'floor';
+  activeTab: 'floor' | 'catalog' | 'ready' = 'floor';
   staff: Array<{ id: string; name: string }> = [];
   zones: ZoneTab[] = [];
   tables: TableNode[] = [];
@@ -35,12 +38,16 @@ export class PosPageComponent implements OnInit {
   errorMessage = '';
   isOnline = true;
   pendingCount = 0;
+  readyOrders: Array<{ id: string; orderNumber: number; tableId?: string; totalAmount?: number }> = [];
+  private wsSub?: Subscription;
 
   constructor(
     private readonly auth: AuthService,
     private readonly api: ApiService,
     private readonly storeContext: StoreContextService,
     private readonly offlineQueue: OfflineQueueService,
+    private readonly ws: WebSocketService,
+    private readonly router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -52,6 +59,11 @@ export class PosPageComponent implements OnInit {
     } else {
       this.loadStaffForPin();
     }
+  }
+
+  ngOnDestroy(): void {
+    this.wsSub?.unsubscribe();
+    this.ws.disconnect();
   }
 
   loadStaffForPin(): void {
@@ -154,6 +166,33 @@ export class PosPageComponent implements OnInit {
       },
       error: () => (this.allProducts = []),
     });
+
+    this.reloadReadyOrders(storeId);
+    this.ws.connect(storeId, 'pos');
+    this.wsSub?.unsubscribe();
+    this.wsSub = this.ws.getMessages().subscribe((msg) => {
+      if (msg?.status === 'READY' || msg?.type === 'KITCHEN_ORDER_UPDATE' || msg?.type === 'ORDER_DELIVERED') {
+        this.reloadReadyOrders(storeId);
+      }
+    });
+  }
+
+  reloadReadyOrders(storeId?: string): void {
+    const sid = storeId || this.storeContext.storeId;
+    if (!sid) return;
+    this.api.getData<any[]>('/api/v1/orders', { storeId: sid }).subscribe({
+      next: (orders) => {
+        this.readyOrders = (orders || [])
+          .filter((o) => o.status === 'READY')
+          .map((o) => ({
+            id: o.id,
+            orderNumber: o.orderNumber,
+            tableId: o.tableId,
+            totalAmount: o.totalAmount,
+          }));
+      },
+      error: () => (this.readyOrders = []),
+    });
   }
 
   onCategorySelect(categoryId: string): void {
@@ -173,6 +212,19 @@ export class PosPageComponent implements OnInit {
   selectTable(table: TableNode): void {
     this.selectedTable = table;
     this.activeTab = 'catalog';
+  }
+
+  clearTableSelection(): void {
+    this.selectedTable = null;
+  }
+
+  startOrderWithoutTable(): void {
+    this.selectedTable = null;
+    this.activeTab = 'catalog';
+  }
+
+  openReadyOrder(order: { orderNumber: number }): void {
+    void this.router.navigate(['/pos/orders', order.orderNumber]);
   }
 
   onProductSelect(product: any): void {
@@ -219,15 +271,20 @@ export class PosPageComponent implements OnInit {
     ];
   }
 
+  tableLabel(tableId?: string): string {
+    if (!tableId) return 'Sans table';
+    const t = this.tables.find((x) => x.id === tableId);
+    return t ? `Table ${t.name || t.tableNumber}` : 'Table';
+  }
+
   async submitOrder(): Promise<void> {
-    if (!this.selectedTable) {
-      this.errorMessage = 'Sélectionnez une table';
+    if (!this.cartItems.length) {
+      this.errorMessage = 'Ajoutez au moins un article';
       return;
     }
-    const payload = {
+    const payload: Record<string, unknown> = {
       organizationId: this.storeContext.organizationId,
       storeId: this.storeContext.storeId,
-      tableId: this.selectedTable.id,
       orderType: 'DINE_IN',
       sendToKitchen: true,
       items: this.cartItems.map((item: any) => ({
@@ -236,6 +293,9 @@ export class PosPageComponent implements OnInit {
         modifierOptionIds: (item.modifierOptionIds || []).filter(Boolean),
       })),
     };
+    if (this.selectedTable?.id) {
+      payload['tableId'] = this.selectedTable.id;
+    }
     const idempotencyKey = crypto.randomUUID();
     if (!navigator.onLine) {
       await this.offlineQueue.enqueueOrder({ ...payload, idempotencyKey });
@@ -247,6 +307,7 @@ export class PosPageComponent implements OnInit {
         this.orderNumberDisplay = `#${order.orderNumber}`;
         this.orderStatus = 'EN CUISINE';
         this.cartItems = [];
+        this.errorMessage = '';
       },
       error: async (err) => {
         await this.offlineQueue.enqueueOrder({ ...payload, idempotencyKey });

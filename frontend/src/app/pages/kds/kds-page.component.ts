@@ -43,6 +43,7 @@ export class KdsPageComponent implements OnInit, OnDestroy {
           orderType: o.orderType || 'DINE_IN',
           status: o.status === 'CREATED' ? 'SENT_TO_KITCHEN' : o.status,
           createdAt: o.createdAt || new Date().toISOString(),
+          cashierName: o.createdByName || o.cashierName || undefined,
           items: (o.items || []).map((i: any) => {
             const key = i.id || i.productName || i.name;
             const preparedLocal = this.localPrepared.get(o.id)?.has(key);

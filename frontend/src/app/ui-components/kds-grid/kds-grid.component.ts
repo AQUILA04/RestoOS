@@ -14,6 +14,7 @@ export interface KdsTicket {
   orderType: string;
   status: 'SENT_TO_KITCHEN' | 'PREPARING' | 'READY';
   createdAt: string;
+  cashierName?: string;
   items: KdsTicketItem[];
 }
 

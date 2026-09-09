@@ -8,9 +8,18 @@
   <div class="pos-tabs">
     <button type="button" id="tab-floor-plan" [class.active]="activeTab === 'floor'" (click)="activeTab = 'floor'">Plan de salle</button>
     <button type="button" id="tab-pos-catalog" [class.active]="activeTab === 'catalog'" (click)="activeTab = 'catalog'">Catalogue</button>
+    <button type="button" id="tab-ready-orders" [class.active]="activeTab === 'ready'" (click)="activeTab = 'ready'; reloadReadyOrders()">
+      À livrer
+      <span class="ready-count" *ngIf="readyOrders.length">{{ readyOrders.length }}</span>
+    </button>
   </div>
 
   <div *ngIf="activeTab === 'floor'">
+    <div class="floor-actions">
+      <button type="button" id="btn-order-without-table" class="secondary-btn" (click)="startOrderWithoutTable()">
+        Commander sans table
+      </button>
+    </div>
     <resto-floor-plan
       [zones]="zones"
       [tables]="tables"
@@ -21,7 +30,12 @@
   </div>
 
   <div *ngIf="activeTab === 'catalog'">
-    <p *ngIf="selectedTable">Table {{ selectedTable.name || selectedTable.tableNumber }}</p>
+    <div class="table-context">
+      <p *ngIf="selectedTable">Table {{ selectedTable.name || selectedTable.tableNumber }}
+        <button type="button" class="link-btn" (click)="clearTableSelection()">Retirer</button>
+      </p>
+      <p *ngIf="!selectedTable" class="hint">Aucune table — optionnelle, à assigner plus tard</p>
+    </div>
     <resto-pos-layout
       [categories]="categories"
       [products]="products"
@@ -31,6 +45,21 @@
       (productSelect)="onProductSelect($event)"
       (checkout)="submitOrder()">
     </resto-pos-layout>
+  </div>
+
+  <div *ngIf="activeTab === 'ready'" class="ready-panel" id="ready-orders-panel">
+    <h2>Commandes prêtes à livrer</h2>
+    <p class="hint" *ngIf="!readyOrders.length">Aucune commande prête pour le moment.</p>
+    <button
+      type="button"
+      class="ready-card"
+      *ngFor="let order of readyOrders"
+      [attr.data-order-number]="order.orderNumber"
+      (click)="openReadyOrder(order)">
+      <span class="ready-num">#{{ order.orderNumber }}</span>
+      <span class="ready-meta">{{ tableLabel(order.tableId) }}</span>
+      <span class="ready-cta">Livrer →</span>
+    </button>
   </div>
 
   <div class="order-feedback" *ngIf="orderNumberDisplay">

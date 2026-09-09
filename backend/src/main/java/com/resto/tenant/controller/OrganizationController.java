@@ -55,6 +55,34 @@ public class OrganizationController {
                 .build();
     }
 
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER', 'CASHIER', 'WAITER', 'KITCHEN')")
+    public Response<Organization> getOrganization(@PathVariable("id") java.util.UUID id) {
+        Organization org = tenantService.getOrganizationById(id);
+        return Response.<Organization>builder()
+                .status(HttpStatus.OK)
+                .statusCode(HttpStatus.OK.value())
+                .message("default.message.success")
+                .service("RESTO-OS")
+                .data(org)
+                .build();
+    }
+
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER')")
+    public Response<Organization> updateOrganization(
+            @PathVariable("id") java.util.UUID id,
+            @RequestBody UpdateOrgRequest request) {
+        Organization org = tenantService.updateOrganizationSettings(id, request.getMobileMoneyLabel());
+        return Response.<Organization>builder()
+                .status(HttpStatus.OK)
+                .statusCode(HttpStatus.OK.value())
+                .message("default.message.success")
+                .service("RESTO-OS")
+                .data(org)
+                .build();
+    }
+
     public static class CreateOrgRequest {
         private String name;
         private String code;
@@ -69,5 +97,12 @@ public class OrganizationController {
         public void setCountry(String country) { this.country = country; }
         public String getCurrency() { return currency; }
         public void setCurrency(String currency) { this.currency = currency; }
+    }
+
+    public static class UpdateOrgRequest {
+        private String mobileMoneyLabel;
+
+        public String getMobileMoneyLabel() { return mobileMoneyLabel; }
+        public void setMobileMoneyLabel(String mobileMoneyLabel) { this.mobileMoneyLabel = mobileMoneyLabel; }
     }
 }

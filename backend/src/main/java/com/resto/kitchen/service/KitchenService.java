@@ -5,15 +5,19 @@ import com.resto.order.domain.Order;
 import com.resto.order.domain.OrderItem;
 import com.resto.order.domain.OrderStateMachine;
 import com.resto.order.repository.OrderRepository;
+import com.resto.tenant.domain.User;
+import com.resto.tenant.repository.UserRepository;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -22,13 +26,16 @@ public class KitchenService {
     private static final List<String> ACTIVE = List.of("SENT_TO_KITCHEN", "PREPARING", "READY");
 
     private final OrderRepository orderRepository;
+    private final UserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final AuditService auditService;
 
     public KitchenService(OrderRepository orderRepository,
+                          UserRepository userRepository,
                           SimpMessagingTemplate messagingTemplate,
                           AuditService auditService) {
         this.orderRepository = orderRepository;
+        this.userRepository = userRepository;
         this.messagingTemplate = messagingTemplate;
         this.auditService = auditService;
     }
@@ -88,6 +95,7 @@ public class KitchenService {
                 });
             }
         });
+        enrichCashierNames(queue);
         queue.sort((a, b) -> {
             if (a.getCreatedAt() == null || b.getCreatedAt() == null) {
                 return 0;
@@ -95,6 +103,31 @@ public class KitchenService {
             return a.getCreatedAt().compareTo(b.getCreatedAt());
         });
         return queue;
+    }
+
+    private void enrichCashierNames(List<Order> orders) {
+        List<UUID> cashierIds = orders.stream()
+                .map(Order::getCreatedBy)
+                .filter(id -> id != null)
+                .distinct()
+                .collect(Collectors.toList());
+        if (cashierIds.isEmpty()) {
+            return;
+        }
+        Map<UUID, String> names = new HashMap<>();
+        for (User user : userRepository.findAllById(cashierIds)) {
+            String display = ((user.getFirstName() != null ? user.getFirstName() : "") + " "
+                    + (user.getLastName() != null ? user.getLastName() : "")).trim();
+            if (display.isBlank()) {
+                display = user.getEmail() != null ? user.getEmail() : "Caissier";
+            }
+            names.put(user.getId(), display);
+        }
+        for (Order order : orders) {
+            if (order.getCreatedBy() != null) {
+                order.setCreatedByName(names.getOrDefault(order.getCreatedBy(), "Caissier"));
+            }
+        }
     }
 
     private void broadcast(Order order, String type) {
