@@ -137,10 +137,22 @@ jobs:
 
       - name: Install frontend & Playwright
         run: |
+          # Ubuntu runners often ship a Google Chrome apt source that can fail with
+          # "Hash Sum mismatch" during `playwright install --with-deps`.
+          sudo rm -f /etc/apt/sources.list.d/google-chrome*.list \
+                     /etc/apt/sources.list.d/google-chrome-stable.list \
+                     /etc/apt/sources.list.d/*chrome*.list || true
           cd frontend
           npm ci
-          npx playwright install --with-deps chromium
-
+          npx playwright install chromium
+          npx playwright install-deps chromium || {
+            echo "install-deps failed once; retry without Google Chrome apt sources"
+            sudo rm -f /etc/apt/sources.list.d/google-chrome*.list \
+                       /etc/apt/sources.list.d/*chrome*.list || true
+            sudo apt-get clean
+            sudo apt-get update -o Acquire::Retries=3
+            npx playwright install-deps chromium
+          }
       - name: Build & serve frontend
         run: |
           cd frontend
