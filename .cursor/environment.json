@@ -1,0 +1,22 @@
+{
+  "name": "RestoOS",
+  "install": "bash .cursor/install.sh",
+  "start": "bash .cursor/start.sh",
+  "terminals": [
+    {
+      "name": "backend",
+      "command": "bash .cursor/run-backend.sh",
+      "description": "Spring Boot backend (e2e profile) on http://localhost:8080, backed by the Dockerized Postgres/Redis/Mailpit infra."
+    },
+    {
+      "name": "frontend",
+      "command": "cd frontend && npm run start",
+      "description": "Angular dev server (ng serve) on http://localhost:4200 with /api and /ws proxied to the backend."
+    }
+  ],
+  "ports": [
+    { "name": "frontend", "port": 4200 },
+    { "name": "backend", "port": 8080 },
+    { "name": "mailpit", "port": 8025 }
+  ]
+}
