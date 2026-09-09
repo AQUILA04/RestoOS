@@ -1,0 +1,307 @@
+.lp {
+  --lp-ink: #f4ebe3;
+  --lp-muted: #c4b4a6;
+  --lp-bg: #1a0f12;
+  --lp-surface: #24161a;
+  --lp-brass: #c9a46a;
+  --lp-brass-soft: #e8d4b0;
+  --lp-wine: #6b1f2a;
+  --lp-wine-deep: #3a1018;
+  --lp-font-display: 'Cormorant Garamond', Georgia, serif;
+  --lp-font-body: 'Figtree', system-ui, sans-serif;
+  position: relative;
+  min-height: 100dvh;
+  color: var(--lp-ink);
+  background: radial-gradient(1200px 600px at 80% -10%, var(--lp-wine) 0%, transparent 55%),
+    radial-gradient(900px 500px at -10% 40%, var(--lp-wine-deep) 0%, transparent 50%),
+    var(--lp-bg);
+  font-family: var(--lp-font-body);
+  overflow-x: clip;
+}
+
+.lp-grain {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  opacity: 0.04;
+  z-index: 50;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.lp-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem clamp(1rem, 4vw, 2.5rem);
+  backdrop-filter: blur(14px);
+  background: rgba(26, 15, 18, 0.72);
+  border-bottom: 1px solid rgba(201, 164, 106, 0.12);
+}
+
+.lp-brand {
+  font-family: var(--lp-font-display);
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--lp-brass-soft);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+}
+
+.lp-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+}
+
+.lp-nav a,
+.lp-link {
+  color: var(--lp-muted);
+  text-decoration: none;
+  background: none;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.lp-nav a:hover,
+.lp-link:hover {
+  color: var(--lp-ink);
+}
+
+.lp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 1.15rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.lp-btn-primary {
+  background: linear-gradient(135deg, var(--lp-brass), #a67c3d);
+  color: #1a0f12;
+}
+
+.lp-btn-ghost {
+  background: transparent;
+  border-color: rgba(201, 164, 106, 0.45);
+  color: var(--lp-brass-soft);
+}
+
+.lp-btn-lg {
+  min-height: 52px;
+  padding: 0 1.5rem;
+  font-size: 1.05rem;
+}
+
+.lp-hero {
+  width: min(1080px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: clamp(3rem, 8vw, 6rem) 0 3rem;
+}
+
+.lp-eyebrow {
+  color: var(--lp-brass);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+}
+
+.lp-hero h1 {
+  font-family: var(--lp-font-display);
+  font-weight: 600;
+  font-size: clamp(2.4rem, 7vw, 4.2rem);
+  line-height: 1.08;
+  margin: 0 0 1.25rem;
+  max-width: 16ch;
+}
+
+.lp-accent {
+  display: block;
+  color: var(--lp-brass-soft);
+  font-style: italic;
+  font-weight: 500;
+}
+
+.lp-lead {
+  max-width: 38rem;
+  color: var(--lp-muted);
+  font-size: 1.125rem;
+  line-height: 1.65;
+  margin: 0 0 2rem;
+}
+
+.lp-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.lp-mock {
+  margin-top: 3rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  max-width: 560px;
+}
+
+.lp-mock-card {
+  background: rgba(244, 235, 227, 0.08);
+  border: 1px solid rgba(201, 164, 106, 0.22);
+  border-radius: 18px;
+  padding: 1.25rem;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+}
+
+.lp-mock-card-dark {
+  background: rgba(18, 10, 12, 0.85);
+  transform: translateY(12px);
+}
+
+.lp-mock-label {
+  display: block;
+  color: var(--lp-brass);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.lp-mock-card strong {
+  display: block;
+  font-family: var(--lp-font-display);
+  font-size: 1.35rem;
+  margin-bottom: 0.25rem;
+}
+
+.lp-mock-card em {
+  color: var(--lp-muted);
+  font-style: normal;
+  font-size: 0.95rem;
+}
+
+.lp-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  width: min(1080px, calc(100% - 2rem));
+  margin: 0 auto 3rem;
+  padding: 1rem;
+  border-radius: 16px;
+  background: rgba(36, 22, 26, 0.8);
+  border: 1px solid rgba(201, 164, 106, 0.14);
+  text-align: center;
+  color: var(--lp-muted);
+  font-size: 0.95rem;
+}
+
+.lp-section {
+  width: min(1080px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 3rem 0 4rem;
+}
+
+.lp-section-alt {
+  padding-bottom: 5rem;
+}
+
+.lp-section-head h2 {
+  font-family: var(--lp-font-display);
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  margin: 0 0 0.75rem;
+  font-weight: 600;
+}
+
+.lp-section-lead {
+  color: var(--lp-muted);
+  max-width: 36rem;
+  line-height: 1.6;
+}
+
+.lp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.lp-card {
+  background: var(--lp-surface);
+  border: 1px solid rgba(201, 164, 106, 0.14);
+  border-radius: 18px;
+  padding: 1.35rem;
+}
+
+.lp-card h3 {
+  font-family: var(--lp-font-display);
+  font-size: 1.4rem;
+  margin: 0 0 0.5rem;
+  color: var(--lp-brass-soft);
+}
+
+.lp-card p {
+  margin: 0;
+  color: var(--lp-muted);
+  line-height: 1.55;
+}
+
+.lp-footer {
+  border-top: 1px solid rgba(201, 164, 106, 0.12);
+  padding: 1.5rem clamp(1rem, 4vw, 2.5rem);
+  color: var(--lp-muted);
+  font-size: 0.9rem;
+}
+
+.lp-footer a {
+  color: var(--lp-brass-soft);
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal.delay-1 { transition-delay: 0.08s; }
+.reveal.delay-2 { transition-delay: 0.16s; }
+.reveal.delay-3 { transition-delay: 0.24s; }
+.reveal.delay-4 { transition-delay: 0.32s; }
+
+.reveal.in {
+  opacity: 1;
+  transform: none;
+}
+
+@media (max-width: 767px) {
+  .lp-nav a:not(.lp-btn) {
+    display: none;
+  }
+
+  .lp-strip {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .lp-mock-card-dark {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

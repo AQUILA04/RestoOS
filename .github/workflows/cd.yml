@@ -1,0 +1,194 @@
+name: RestoOS CD Pipeline
+
+on:
+  workflow_run:
+    workflows: ["RestoOS CI/CD Quality Pipeline"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Action to perform"
+        type: choice
+        required: true
+        default: promote
+        options: [promote]
+
+jobs:
+  resolve-images:
+    if: |
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' &&
+       startsWith(github.event.workflow_run.head_branch, 'release/')) ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      api_image: ${{ steps.resolve.outputs.api_image }}
+      frontend_image: ${{ steps.resolve.outputs.frontend_image }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && 'main' || github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+      - name: Resolve published images
+        id: resolve
+        run: |
+          echo "api_image=ghcr.io/aquila04/restoos-backend:latest" >> "$GITHUB_OUTPUT"
+          echo "frontend_image=ghcr.io/aquila04/restoos-frontend:latest" >> "$GITHUB_OUTPUT"
+
+  deploy-prod:
+    needs: resolve-images
+    if: |
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      startsWith(github.event.workflow_run.head_branch, 'release/')
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - name: Prepare SSH key
+        run: |
+          echo "$SSH_PRIVATE_KEY" > private_key
+          chmod 600 private_key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Bootstrap deploy
+        env:
+          SERVER_USER: ${{ secrets.PROD_SERVER_USER }}
+          SERVER_HOST: ${{ secrets.PROD_SERVER_HOST }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          API_IMAGE: ${{ needs.resolve-images.outputs.api_image }}
+          FRONTEND_IMAGE: ${{ needs.resolve-images.outputs.frontend_image }}
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          DB_ADMIN_USER: ${{ secrets.DB_ADMIN_USER }}
+          DB_APP_USER: ${{ secrets.DB_APP_USER }}
+          PROD_DB_PASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
+          PROD_DB_APP_PASSWORD: ${{ secrets.PROD_DB_APP_PASSWORD }}
+          PROD_DB_NAME: ${{ secrets.PROD_DB_NAME }}
+          PROD_APP_HOSTNAME: ${{ secrets.PROD_APP_HOSTNAME }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          OIDC_ISSUER_URI: ${{ secrets.OIDC_ISSUER_URI }}
+          OIDC_CLIENT_ID: ${{ secrets.OIDC_CLIENT_ID }}
+          KEYCLOAK_URL: ${{ secrets.KEYCLOAK_URL }}
+          KEYCLOAK_ADMIN_CLIENT_ID: ${{ secrets.KEYCLOAK_ADMIN_CLIENT_ID }}
+          KEYCLOAK_ADMIN_CLIENT_SECRET: ${{ secrets.KEYCLOAK_ADMIN_CLIENT_SECRET }}
+          LANDING_PUBLIC_URL: ${{ secrets.LANDING_PUBLIC_URL }}
+          FRONTEND_PUBLIC_URL: ${{ secrets.FRONTEND_PUBLIC_URL }}
+          API_PUBLIC_URL: ${{ secrets.API_PUBLIC_URL }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          OPTIMIZE_NOTIFICATION_HUB_OAUTH2_CLIENT_SECRET: ${{ secrets.OPTIMIZE_NOTIFICATION_HUB_OAUTH2_CLIENT_SECRET }}
+        run: |
+          ssh -o StrictHostKeyChecking=no -i private_key "$SERVER_USER@$SERVER_HOST" "mkdir -p /opt/restoos"
+          ENV_FILE_CONTENT=$(cat <<EOF
+          LANDING_PUBLIC_URL=${LANDING_PUBLIC_URL:-https://restoos.optimizesolux.com}
+          FRONTEND_PUBLIC_URL=${FRONTEND_PUBLIC_URL:-https://restoos.optimizesolux.com}
+          API_PUBLIC_URL=${API_PUBLIC_URL:-https://restoos.optimizesolux.com/api}
+          APP_HOSTNAME=${PROD_APP_HOSTNAME:-restoos.optimizesolux.com}
+          GHCR_USERNAME=${GHCR_USERNAME}
+          GHCR_TOKEN=${GHCR_TOKEN}
+          DB_ADMIN_USER=${DB_ADMIN_USER:-restoos_admin}
+          DB_APP_USER=${DB_APP_USER:-restoos_app}
+          DB_PASSWORD=${PROD_DB_PASSWORD}
+          DB_APP_PASSWORD=${PROD_DB_APP_PASSWORD}
+          DB_NAME=${PROD_DB_NAME:-restoos}
+          JWT_SECRET=${JWT_SECRET}
+          OIDC_ISSUER_URI=${OIDC_ISSUER_URI:-https://auth.optimizesolux.com/realms/restoos}
+          OIDC_CLIENT_ID=${OIDC_CLIENT_ID:-restoos-frontend}
+          KEYCLOAK_URL=${KEYCLOAK_URL:-https://auth.optimizesolux.com}
+          KEYCLOAK_ADMIN_CLIENT_ID=${KEYCLOAK_ADMIN_CLIENT_ID:-restoos-backend}
+          KEYCLOAK_ADMIN_CLIENT_SECRET=${KEYCLOAK_ADMIN_CLIENT_SECRET}
+          REDIS_HOST=redis
+          REDIS_PORT=6379
+          REDIS_DATABASE=9
+          REDIS_PASSWORD=${REDIS_PASSWORD}
+          RESTOOS_REDIS_BROKER=true
+          RESTOOS_HMAC_SESSION_ENABLED=false
+          OPTIMIZE_NOTIFICATION_HUB_ENABLED=true
+          OPTIMIZE_NOTIFICATION_HUB_BASE_URL=https://notification-api.optimizesolux.com
+          OPTIMIZE_NOTIFICATION_HUB_OAUTH2_TOKEN_URI=https://auth.optimizesolux.com/realms/notification-hub/protocol/openid-connect/token
+          OPTIMIZE_NOTIFICATION_HUB_OAUTH2_CLIENT_ID=restoos
+          OPTIMIZE_NOTIFICATION_HUB_OAUTH2_CLIENT_SECRET=${OPTIMIZE_NOTIFICATION_HUB_OAUTH2_CLIENT_SECRET}
+          OPTIMIZE_NOTIFICATION_HUB_FROM=noreply@optimizesolux.com
+          RESTOOS_ACTIVATION_BASE_URL=https://restoos.optimizesolux.com/activate
+          EOF
+          )
+          ssh -o StrictHostKeyChecking=no -i private_key "$SERVER_USER@$SERVER_HOST" \
+            "curl -sSL https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/main/deploy/init.sh -o /opt/restoos/init.sh && chmod +x /opt/restoos/init.sh && RESTOOS_GITHUB_REPO=${GITHUB_REPOSITORY} /opt/restoos/init.sh prod ${API_IMAGE} ${FRONTEND_IMAGE} --github-repo ${GITHUB_REPOSITORY} --env-file-content '$ENV_FILE_CONTENT'"
+      - if: always()
+        run: rm -f private_key
+
+  promote:
+    needs: resolve-images
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'promote'
+    runs-on: ubuntu-latest
+    environment: prod
+    steps:
+      - name: Prepare SSH key
+        run: |
+          echo "$SSH_PRIVATE_KEY" > private_key
+          chmod 600 private_key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Bootstrap promote
+        env:
+          SERVER_USER: ${{ secrets.PROD_SERVER_USER }}
+          SERVER_HOST: ${{ secrets.PROD_SERVER_HOST }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          API_IMAGE: ${{ needs.resolve-images.outputs.api_image }}
+          FRONTEND_IMAGE: ${{ needs.resolve-images.outputs.frontend_image }}
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          DB_ADMIN_USER: ${{ secrets.DB_ADMIN_USER }}
+          DB_APP_USER: ${{ secrets.DB_APP_USER }}
+          PROD_DB_PASSWORD: ${{ secrets.PROD_DB_PASSWORD }}
+          PROD_DB_APP_PASSWORD: ${{ secrets.PROD_DB_APP_PASSWORD }}
+          PROD_DB_NAME: ${{ secrets.PROD_DB_NAME }}
+          PROD_APP_HOSTNAME: ${{ secrets.PROD_APP_HOSTNAME }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          OIDC_ISSUER_URI: ${{ secrets.OIDC_ISSUER_URI }}
+          OIDC_CLIENT_ID: ${{ secrets.OIDC_CLIENT_ID }}
+          KEYCLOAK_URL: ${{ secrets.KEYCLOAK_URL }}
+          KEYCLOAK_ADMIN_CLIENT_ID: ${{ secrets.KEYCLOAK_ADMIN_CLIENT_ID }}
+          KEYCLOAK_ADMIN_CLIENT_SECRET: ${{ secrets.KEYCLOAK_ADMIN_CLIENT_SECRET }}
+          LANDING_PUBLIC_URL: ${{ secrets.LANDING_PUBLIC_URL }}
+          FRONTEND_PUBLIC_URL: ${{ secrets.FRONTEND_PUBLIC_URL }}
+          API_PUBLIC_URL: ${{ secrets.API_PUBLIC_URL }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          OPTIMIZE_NOTIFICATION_HUB_OAUTH2_CLIENT_SECRET: ${{ secrets.OPTIMIZE_NOTIFICATION_HUB_OAUTH2_CLIENT_SECRET }}
+        run: |
+          ssh -o StrictHostKeyChecking=no -i private_key "$SERVER_USER@$SERVER_HOST" "mkdir -p /opt/restoos"
+          ENV_FILE_CONTENT=$(cat <<EOF
+          LANDING_PUBLIC_URL=${LANDING_PUBLIC_URL:-https://restoos.optimizesolux.com}
+          FRONTEND_PUBLIC_URL=${FRONTEND_PUBLIC_URL:-https://restoos.optimizesolux.com}
+          API_PUBLIC_URL=${API_PUBLIC_URL:-https://restoos.optimizesolux.com/api}
+          APP_HOSTNAME=${PROD_APP_HOSTNAME:-restoos.optimizesolux.com}
+          GHCR_USERNAME=${GHCR_USERNAME}
+          GHCR_TOKEN=${GHCR_TOKEN}
+          DB_ADMIN_USER=${DB_ADMIN_USER:-restoos_admin}
+          DB_APP_USER=${DB_APP_USER:-restoos_app}
+          DB_PASSWORD=${PROD_DB_PASSWORD}
+          DB_APP_PASSWORD=${PROD_DB_APP_PASSWORD}
+          DB_NAME=${PROD_DB_NAME:-restoos}
+          JWT_SECRET=${JWT_SECRET}
+          OIDC_ISSUER_URI=${OIDC_ISSUER_URI:-https://auth.optimizesolux.com/realms/restoos}
+          OIDC_CLIENT_ID=${OIDC_CLIENT_ID:-restoos-frontend}
+          KEYCLOAK_URL=${KEYCLOAK_URL:-https://auth.optimizesolux.com}
+          KEYCLOAK_ADMIN_CLIENT_ID=${KEYCLOAK_ADMIN_CLIENT_ID:-restoos-backend}
+          KEYCLOAK_ADMIN_CLIENT_SECRET=${KEYCLOAK_ADMIN_CLIENT_SECRET}
+          REDIS_HOST=redis
+          REDIS_PORT=6379
+          REDIS_DATABASE=9
+          REDIS_PASSWORD=${REDIS_PASSWORD}
+          RESTOOS_REDIS_BROKER=true
+          RESTOOS_HMAC_SESSION_ENABLED=false
+          OPTIMIZE_NOTIFICATION_HUB_ENABLED=true
+          OPTIMIZE_NOTIFICATION_HUB_BASE_URL=https://notification-api.optimizesolux.com
+          OPTIMIZE_NOTIFICATION_HUB_OAUTH2_TOKEN_URI=https://auth.optimizesolux.com/realms/notification-hub/protocol/openid-connect/token
+          OPTIMIZE_NOTIFICATION_HUB_OAUTH2_CLIENT_ID=restoos
+          OPTIMIZE_NOTIFICATION_HUB_OAUTH2_CLIENT_SECRET=${OPTIMIZE_NOTIFICATION_HUB_OAUTH2_CLIENT_SECRET}
+          OPTIMIZE_NOTIFICATION_HUB_FROM=noreply@optimizesolux.com
+          RESTOOS_ACTIVATION_BASE_URL=https://restoos.optimizesolux.com/activate
+          EOF
+          )
+          ssh -o StrictHostKeyChecking=no -i private_key "$SERVER_USER@$SERVER_HOST" \
+            "curl -sSL https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/main/deploy/init.sh -o /opt/restoos/init.sh && chmod +x /opt/restoos/init.sh && RESTOOS_GITHUB_REPO=${GITHUB_REPOSITORY} /opt/restoos/init.sh prod ${API_IMAGE} ${FRONTEND_IMAGE} --github-repo ${GITHUB_REPOSITORY} --env-file-content '$ENV_FILE_CONTENT'"
+      - if: always()
+        run: rm -f private_key

@@ -83,7 +83,11 @@
       "publicClient": true,
       "directAccessGrantsEnabled": true,
       "standardFlowEnabled": true,
-      "redirectUris": ["http://localhost:4200/*", "http://127.0.0.1:4200/*"],
+      "redirectUris": [
+        "https://restoos.optimizesolux.com/auth/callback",
+        "http://localhost:4200/auth/callback",
+        "http://127.0.0.1:4200/auth/callback"
+      ],
       "webOrigins": ["*"],
       "protocol": "openid-connect"
     }

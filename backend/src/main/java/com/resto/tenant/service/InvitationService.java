@@ -1,5 +1,6 @@
 package com.resto.tenant.service;
 
+import com.resto.core.notification.NotificationHubClient;
 import com.resto.core.security.TenantContext;
 import com.resto.tenant.domain.InvitationToken;
 import com.resto.tenant.domain.Membership;
@@ -24,6 +25,7 @@ public class InvitationService {
     private final UserRepository userRepository;
     private final InvitationTokenRepository invitationTokenRepository;
     private final JavaMailSender mailSender;
+    private final NotificationHubClient notificationHubClient;
     private final String activationBaseUrl;
     private final String mailFrom;
 
@@ -31,12 +33,14 @@ public class InvitationService {
                              UserRepository userRepository,
                              InvitationTokenRepository invitationTokenRepository,
                              JavaMailSender mailSender,
+                             NotificationHubClient notificationHubClient,
                              @Value("${restoos.app.activation-base-url}") String activationBaseUrl,
                              @Value("${restoos.mail.from:noreply@restoos.local}") String mailFrom) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.invitationTokenRepository = invitationTokenRepository;
         this.mailSender = mailSender;
+        this.notificationHubClient = notificationHubClient;
         this.activationBaseUrl = activationBaseUrl;
         this.mailFrom = mailFrom;
     }
@@ -73,7 +77,6 @@ public class InvitationService {
             throw new IllegalStateException("Invitation already consumed");
         }
 
-        // Bind RLS tenant context for any follow-on tenant-scoped writes
         TenantContext.setOrgId(invitation.getOrganizationId());
 
         User user = userRepository.findById(invitation.getUserId())
@@ -99,18 +102,21 @@ public class InvitationService {
         String link = base.contains("?")
                 ? base + "&token=" + token
                 : base + "?token=" + token;
+        String subject = "Invitation à rejoindre RestoOS";
+        String html = "<p>Vous êtes invité à rejoindre RestoOS.</p>"
+                + "<p><a href=\"" + link + "\">Activer mon compte</a></p>";
 
         try {
+            if (notificationHubClient.isEnabled()) {
+                notificationHubClient.sendEmail(email, subject, html, "invite-" + token);
+                return;
+            }
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
             helper.setFrom(mailFrom);
             helper.setTo(email);
-            helper.setSubject("Invitation à rejoindre RestoOS");
-            helper.setText(
-                    "<p>Vous êtes invité à rejoindre RestoOS.</p>"
-                            + "<p><a href=\"" + link + "\">Activer mon compte</a></p>",
-                    true
-            );
+            helper.setSubject(subject);
+            helper.setText(html, true);
             mailSender.send(message);
         } catch (Exception e) {
             throw new IllegalStateException("Failed to send invitation email", e);

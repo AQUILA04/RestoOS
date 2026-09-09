@@ -1,18 +1,28 @@
 import { Routes } from '@angular/router';
+import { LandingPageComponent } from './pages/landing/landing-page.component';
+import { SignupPageComponent } from './pages/signup/signup-page.component';
+import { LoginPageComponent } from './pages/login/login-page.component';
+import { AuthCallbackPageComponent } from './pages/auth-callback/auth-callback-page.component';
 import { PosPageComponent } from './pages/pos/pos-page.component';
 import { PosOrderPageComponent } from './pages/pos/pos-order-page.component';
 import { KdsPageComponent } from './pages/kds/kds-page.component';
 import { AdminCatalogPageComponent } from './pages/admin/admin-catalog-page.component';
 import { AdminDashboardPageComponent } from './pages/admin/admin-dashboard-page.component';
+import { AdminStoresPageComponent } from './pages/admin/admin-stores-page.component';
 import { ActivatePageComponent } from './pages/activate/activate-page.component';
 
 export const APP_ROUTES: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'pos' },
+  { path: '', component: LandingPageComponent },
+  { path: 'home', component: LandingPageComponent },
+  { path: 'signup', component: SignupPageComponent },
+  { path: 'login', component: LoginPageComponent },
+  { path: 'auth/callback', component: AuthCallbackPageComponent },
   { path: 'activate', component: ActivatePageComponent },
   { path: 'pos', component: PosPageComponent },
   { path: 'pos/orders/:orderNumber', component: PosOrderPageComponent },
   { path: 'kds', component: KdsPageComponent },
   { path: 'admin/catalog', component: AdminCatalogPageComponent },
   { path: 'admin/dashboard', component: AdminDashboardPageComponent },
-  { path: '**', redirectTo: 'pos' },
+  { path: 'admin/etablissements', component: AdminStoresPageComponent },
+  { path: '**', redirectTo: '' },
 ];

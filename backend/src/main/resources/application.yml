@@ -56,14 +56,30 @@ restoos:
     secret: ${RESTOOS_JWT_SECRET:restoos-dev-hmac-secret-key-32chars-min}
     station-ttl-minutes: ${RESTOOS_JWT_STATION_TTL:480}
     audience: ${JWT_AUDIENCE:${RESTOOS_AUDIENCE:restoos-api}}
+  auth:
+    hmac-session-enabled: ${RESTOOS_HMAC_SESSION_ENABLED:true}
+  keycloak:
+    base-url: ${RESTOOS_KEYCLOAK_BASE_URL:${KEYCLOAK_URL:}}
+    realm: ${RESTOOS_KEYCLOAK_REALM:restoos}
+    admin-client-id: ${RESTOOS_KEYCLOAK_ADMIN_CLIENT_ID:restoos-backend}
+    admin-client-secret: ${RESTOOS_KEYCLOAK_ADMIN_CLIENT_SECRET:}
+    public-client-id: ${RESTOOS_KEYCLOAK_PUBLIC_CLIENT_ID:restoos-frontend}
   app:
-    activation-base-url: ${RESTOOS_ACTIVATION_BASE_URL:${RESTOOS_FRONTEND_BASE_URL:http://localhost:4200}/activate}
+    activation-base-url: ${RESTOOS_ACTIVATION_BASE_URL:${RESTOOS_FRONTEND_BASE_URL:${FRONTEND_PUBLIC_URL:http://localhost:4200}}/activate}
   redis:
     broker-enabled: ${RESTOOS_REDIS_BROKER:false}
   outbox:
     poll-ms: ${RESTOOS_OUTBOX_POLL_MS:500}
   mail:
     from: ${RESTOOS_MAIL_FROM:noreply@restoos.local}
+  notification:
+    hub:
+      enabled: ${OPTIMIZE_NOTIFICATION_HUB_ENABLED:false}
+      base-url: ${OPTIMIZE_NOTIFICATION_HUB_BASE_URL:https://notification-api.optimizesolux.com}
+      oauth2-token-uri: ${OPTIMIZE_NOTIFICATION_HUB_OAUTH2_TOKEN_URI:https://auth.optimizesolux.com/realms/notification-hub/protocol/openid-connect/token}
+      oauth2-client-id: ${OPTIMIZE_NOTIFICATION_HUB_OAUTH2_CLIENT_ID:restoos}
+      oauth2-client-secret: ${OPTIMIZE_NOTIFICATION_HUB_OAUTH2_CLIENT_SECRET:}
+      from: ${OPTIMIZE_NOTIFICATION_HUB_FROM:noreply@optimizesolux.com}
 
 ---
 # Profile: test — H2 in-memory, HS256 JWT, no Liquibase/RLS

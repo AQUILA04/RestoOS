@@ -69,6 +69,19 @@ public class StoreController {
                 .build();
     }
 
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    public Response<Store> updateStore(@PathVariable("id") UUID id, @RequestBody UpdateStoreRequest request) {
+        Store store = tenantService.updateStoreName(id, request.getName());
+        return Response.<Store>builder()
+                .status(HttpStatus.OK)
+                .statusCode(HttpStatus.OK.value())
+                .message("default.message.success")
+                .service("RESTO-OS")
+                .data(store)
+                .build();
+    }
+
     public static class CreateStoreRequest {
         private UUID organizationId;
         private String name;
@@ -89,5 +102,12 @@ public class StoreController {
         public void setCurrency(String currency) { this.currency = currency; }
         public String getCity() { return city; }
         public void setCity(String city) { this.city = city; }
+    }
+
+    public static class UpdateStoreRequest {
+        private String name;
+
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
     }
 }

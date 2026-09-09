@@ -1,0 +1,88 @@
+.stores-page {
+  padding: 24px;
+  background: #f8f9fa;
+  min-height: calc(100dvh - var(--shell-header-height, 52px));
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-family: Outfit, sans-serif;
+}
+
+.hint {
+  color: #607d8b;
+  margin: 0 0 16px;
+}
+
+.ok {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.err {
+  color: #c62828;
+  font-weight: 600;
+}
+
+.store-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px;
+  display: grid;
+  gap: 12px;
+  max-width: 720px;
+}
+
+.store-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.store-list li.active {
+  outline: 2px solid #d84315;
+}
+
+.store-list input,
+.add-store input {
+  flex: 1 1 180px;
+  min-height: 48px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid #cfd8dc;
+}
+
+.store-list button,
+.add-store button {
+  min-height: 48px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 8px;
+  background: #d84315;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.add-store {
+  max-width: 520px;
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.add-store h2 {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

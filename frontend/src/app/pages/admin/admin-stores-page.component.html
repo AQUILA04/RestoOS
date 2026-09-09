@@ -1,0 +1,37 @@
+<div class="stores-page">
+  <h1>Établissements</h1>
+  <p class="hint">Renommez votre restaurant ou ajoutez d’autres adresses à l’enseigne.</p>
+
+  <p class="ok" *ngIf="message" id="stores-message">{{ message }}</p>
+  <p class="err" *ngIf="error">{{ error }}</p>
+
+  <ul class="store-list" id="store-list">
+    <li *ngFor="let store of stores" [class.active]="store.id === activeStoreId">
+      <input
+        type="text"
+        [id]="'store-name-' + store.id"
+        [(ngModel)]="editName[store.id]"
+        [attr.aria-label]="'Nom de ' + store.name"
+      />
+      <button type="button" [attr.data-testid]="'rename-' + store.id" (click)="rename(store)">
+        Enregistrer
+      </button>
+      <button type="button" [attr.data-testid]="'select-' + store.id" (click)="selectStore(store)">
+        Activer
+      </button>
+    </li>
+  </ul>
+
+  <section class="add-store">
+    <h2>Ajouter un restaurant</h2>
+    <div class="row">
+      <input
+        id="new-store-name"
+        type="text"
+        [(ngModel)]="newStoreName"
+        placeholder="Nom du restaurant"
+      />
+      <button type="button" id="btn-add-store" (click)="addStore()">Ajouter</button>
+    </div>
+  </section>
+</div>

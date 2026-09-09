@@ -113,18 +113,7 @@ public class AuthService {
 
         pinAttempts.remove(userId);
 
-        Instant now = Instant.now();
-        String token = Jwts.builder()
-                .subject(userId.toString())
-                .claim("user_id", userId.toString())
-                .claim("organization_id", orgId.toString())
-                .claim("store_id", resolvedStoreId != null ? resolvedStoreId.toString() : null)
-                .claim("roles", List.of(role))
-                .audience().add(audience).and()
-                .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plus(stationTtlMinutes, ChronoUnit.MINUTES)))
-                .signWith(jwtSecret)
-                .compact();
+        String token = issueSessionToken(userId, orgId, resolvedStoreId, role);
 
         return Map.of(
                 "authenticated", true,
@@ -135,6 +124,31 @@ public class AuthService {
                 "storeId", resolvedStoreId != null ? resolvedStoreId.toString() : "",
                 "roles", List.of(role)
         );
+    }
+
+    public String issueSessionToken(UUID userId, UUID organizationId, UUID storeId, String role) {
+        Instant now = Instant.now();
+        return Jwts.builder()
+                .subject(userId.toString())
+                .claim("user_id", userId.toString())
+                .claim("organization_id", organizationId != null ? organizationId.toString() : null)
+                .claim("store_id", storeId != null ? storeId.toString() : null)
+                .claim("roles", List.of(role != null ? role : "OWNER"))
+                .audience().add(audience).and()
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plus(stationTtlMinutes, ChronoUnit.MINUTES)))
+                .signWith(jwtSecret)
+                .compact();
+    }
+
+    public void bindRls(UUID organizationId, UUID storeId) {
+        if (organizationId != null) {
+            TenantContext.setOrgId(organizationId);
+        }
+        if (storeId != null) {
+            TenantContext.setStoreId(storeId);
+        }
+        applyRlsSession(organizationId, storeId);
     }
 
     private void applyRlsSession(UUID organizationId, UUID storeId) {

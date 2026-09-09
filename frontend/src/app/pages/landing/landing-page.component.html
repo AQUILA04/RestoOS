@@ -1,0 +1,102 @@
+<div class="lp">
+  <div class="lp-grain" aria-hidden="true"></div>
+  <div class="lp-glow" aria-hidden="true"></div>
+
+  <header class="lp-header">
+    <a class="lp-brand" routerLink="/">RestoOS</a>
+    <nav class="lp-nav" aria-label="Navigation">
+      <a href="#produit">Produit</a>
+      <a href="#equipes">Équipes</a>
+      <button type="button" class="lp-link" (click)="connect()">Se connecter</button>
+      <a class="lp-btn lp-btn-primary" routerLink="/signup">Créer mon espace</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="lp-hero">
+      <p class="lp-eyebrow reveal">Édité par OptimizeSolux</p>
+      <h1 class="reveal delay-1">
+        La salle, la cuisine, le service
+        <span class="lp-accent">— le même niveau d’exigence qu’en salle.</span>
+      </h1>
+      <p class="lp-lead reveal delay-2">
+        Ouvrez votre espace, enregistrez les premières commandes et faites tourner la cuisine
+        au rythme du service — pour une adresse ou toute une enseigne.
+      </p>
+      <div class="lp-cta reveal delay-3">
+        <a class="lp-btn lp-btn-primary lp-btn-lg" routerLink="/signup" id="cta-create-space">
+          Créer mon espace
+        </a>
+        <button type="button" class="lp-btn lp-btn-ghost lp-btn-lg" id="cta-connect" (click)="connect()">
+          Se connecter
+        </button>
+      </div>
+
+      <div class="lp-mock reveal delay-4" aria-hidden="true">
+        <div class="lp-mock-card">
+          <span class="lp-mock-label">Salle</span>
+          <strong>Table 12 · Occupée</strong>
+          <em>Deux couverts · En cuisine</em>
+        </div>
+        <div class="lp-mock-card lp-mock-card-dark">
+          <span class="lp-mock-label">Cuisine</span>
+          <strong>Ticket #184</strong>
+          <em>Prêt · Serving</em>
+        </div>
+      </div>
+    </section>
+
+    <section class="lp-strip reveal" aria-label="Points forts">
+      <div>Prise de commande fluide</div>
+      <div>Cuisine au rythme</div>
+      <div>86 en un geste</div>
+      <div>Plan de salle vivant</div>
+    </section>
+
+    <section class="lp-section" id="produit">
+      <div class="lp-section-head reveal">
+        <p class="lp-eyebrow">Produit</p>
+        <h2>Tout ce qu’il faut pour servir, sans friction</h2>
+      </div>
+      <div class="lp-grid">
+        <article class="lp-card reveal">
+          <h3>Caisse tactile</h3>
+          <p>Commandes, tables et envoi en cuisine en quelques taps — pensé pour le rush.</p>
+        </article>
+        <article class="lp-card reveal delay-1">
+          <h3>Écran cuisine</h3>
+          <p>Tickets clairs, chronos visibles, passage Prêt dès que la ligne est prête.</p>
+        </article>
+        <article class="lp-card reveal delay-2">
+          <h3>Carte &amp; ruptures</h3>
+          <p>Prix locaux, options, et un 86 immédiat qui se propage à toute la salle.</p>
+        </article>
+        <article class="lp-card reveal delay-3">
+          <h3>Plusieurs adresses</h3>
+          <p>Une enseigne, plusieurs restaurants — vos équipes passent d’un site à l’autre.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="lp-section lp-section-alt" id="equipes">
+      <div class="lp-section-head reveal">
+        <p class="lp-eyebrow">Équipes</p>
+        <h2>Le service, pas l’admin</h2>
+        <p class="lp-section-lead">
+          Créez votre espace en quelques minutes, invitez l’équipe, et concentrez-vous sur
+          l’expérience en salle.
+        </p>
+      </div>
+      <div class="lp-cta reveal">
+        <a class="lp-btn lp-btn-primary lp-btn-lg" routerLink="/signup">Créer mon espace</a>
+        <button type="button" class="lp-btn lp-btn-ghost lp-btn-lg" (click)="connect()">
+          Déjà un compte ? Se connecter
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="lp-footer">
+    <p>RestoOS — Édité par <a href="https://www.optimizesolux.com/" rel="noopener">OptimizeSolux</a></p>
+  </footer>
+</div>

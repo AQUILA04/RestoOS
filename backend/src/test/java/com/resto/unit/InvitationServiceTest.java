@@ -1,5 +1,6 @@
 package com.resto.unit;
 
+import com.resto.core.notification.NotificationHubClient;
 import com.resto.tenant.domain.InvitationToken;
 import com.resto.tenant.domain.Membership;
 import com.resto.tenant.domain.User;
@@ -35,6 +36,7 @@ class InvitationServiceTest {
     @Mock UserRepository userRepository;
     @Mock InvitationTokenRepository invitationTokenRepository;
     @Mock JavaMailSender mailSender;
+    @Mock NotificationHubClient notificationHubClient;
 
     InvitationService invitationService;
 
@@ -43,11 +45,13 @@ class InvitationServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(notificationHubClient.isEnabled()).thenReturn(false);
         invitationService = new InvitationService(
                 userService,
                 userRepository,
                 invitationTokenRepository,
                 mailSender,
+                notificationHubClient,
                 "http://localhost:4200/activate",
                 "noreply@restoos.local"
         );

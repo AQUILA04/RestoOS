@@ -70,6 +70,22 @@ public class TenantService {
         return storeRepository.save(store);
     }
 
+    public Store updateStoreName(UUID storeId, String name) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Store name is required");
+        }
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new IllegalArgumentException("Store not found with id: " + storeId));
+        store.setName(name.trim());
+        return storeRepository.save(store);
+    }
+
+    @Transactional(readOnly = true)
+    public Store getStoreById(UUID storeId) {
+        return storeRepository.findById(storeId)
+                .orElseThrow(() -> new IllegalArgumentException("Store not found with id: " + storeId));
+    }
+
     @Transactional(readOnly = true)
     public List<Store> getStoresByOrganization(UUID organizationId) {
         return storeRepository.findByOrganizationId(organizationId);

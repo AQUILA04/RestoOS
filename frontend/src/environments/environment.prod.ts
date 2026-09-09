@@ -1,5 +1,11 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://localhost:8080',
-  wsUrl: 'http://localhost:8080/ws',
+  apiUrl: '',
+  wsUrl: '/ws',
+  keycloakUrl: 'https://auth.optimizesolux.com',
+  keycloakRealm: 'restoos',
+  keycloakClientId: 'restoos-frontend',
+  landingPublicUrl: 'https://restoos.optimizesolux.com',
+  frontendPublicUrl: 'https://restoos.optimizesolux.com',
+  apiPublicUrl: 'https://restoos.optimizesolux.com/api',
 };

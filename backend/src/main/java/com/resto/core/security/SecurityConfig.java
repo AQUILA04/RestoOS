@@ -47,7 +47,12 @@ public class SecurityConfig implements WebMvcConfigurer {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/auth/pin-login", "/api/v1/auth/activate").permitAll()
+                .requestMatchers(
+                        "/api/v1/auth/pin-login",
+                        "/api/v1/auth/activate",
+                        "/api/v1/auth/signup",
+                        "/api/v1/auth/oidc/callback"
+                ).permitAll()
                 .requestMatchers("/actuator/health", "/actuator/info", "/error").permitAll()
                 .requestMatchers("/ws/**").permitAll()
                 .anyRequest().authenticated()
@@ -61,7 +66,11 @@ public class SecurityConfig implements WebMvcConfigurer {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("http://localhost:*", "http://127.0.0.1:*"));
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:*",
+                "http://127.0.0.1:*",
+                "https://restoos.optimizesolux.com"
+        ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setExposedHeaders(List.of("*"));

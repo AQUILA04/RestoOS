@@ -1,0 +1,120 @@
+# PROD stack — project name: restoos-prod
+# Host: restoos.optimizesolux.com
+#   / and SPA routes → frontend
+#   /api and /ws → backend
+#
+# Prerequisite: optimize-common-infra + shared-traefik
+# Start:
+#   docker compose -f docker-compose.prod.yml --project-name restoos-prod \
+#     --env-file /opt/restoos/prod/.env up -d
+
+services:
+  postgres:
+    image: postgres:16.4-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-restoos}
+      POSTGRES_USER: ${DB_ADMIN_USER:-restoos_admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init-app-role.sql:/docker-entrypoint-initdb.d/01-init-app-role.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_ADMIN_USER:-restoos_admin} -d ${DB_NAME:-restoos} || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      optimizesolux-common:
+        aliases: ["restoos-db"]
+
+  api:
+    image: ${API_IMAGE:?API_IMAGE is required}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
+      SERVER_PORT: "8080"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-restoos}
+      SPRING_DATASOURCE_USERNAME: ${DB_APP_USER:-restoos_app}
+      SPRING_DATASOURCE_PASSWORD: ${DB_APP_PASSWORD:-${DB_PASSWORD}}
+      SPRING_LIQUIBASE_USER: ${DB_ADMIN_USER:-restoos_admin}
+      SPRING_LIQUIBASE_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATA_REDIS_HOST: ${REDIS_HOST:-redis}
+      SPRING_DATA_REDIS_PORT: ${REDIS_PORT:-6379}
+      SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      SPRING_DATA_REDIS_DATABASE: ${REDIS_DATABASE:-9}
+      JWT_ISSUER_URI: ${OIDC_ISSUER_URI:-https://auth.optimizesolux.com/realms/restoos}
+      JWT_AUDIENCE: ${OIDC_AUDIENCE:-restoos-api}
+      RESTOOS_JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      RESTOOS_HMAC_SESSION_ENABLED: ${RESTOOS_HMAC_SESSION_ENABLED:-false}
+      RESTOOS_REDIS_BROKER: ${RESTOOS_REDIS_BROKER:-true}
+      RESTOOS_KEYCLOAK_BASE_URL: ${KEYCLOAK_URL:-https://auth.optimizesolux.com}
+      RESTOOS_KEYCLOAK_REALM: restoos
+      RESTOOS_KEYCLOAK_ADMIN_CLIENT_ID: ${KEYCLOAK_ADMIN_CLIENT_ID:-restoos-backend}
+      RESTOOS_KEYCLOAK_ADMIN_CLIENT_SECRET: ${KEYCLOAK_ADMIN_CLIENT_SECRET:-}
+      RESTOOS_KEYCLOAK_PUBLIC_CLIENT_ID: ${OIDC_CLIENT_ID:-restoos-frontend}
+      LANDING_PUBLIC_URL: ${LANDING_PUBLIC_URL:-https://restoos.optimizesolux.com}
+      FRONTEND_PUBLIC_URL: ${FRONTEND_PUBLIC_URL:-https://restoos.optimizesolux.com}
+      API_PUBLIC_URL: ${API_PUBLIC_URL:-https://restoos.optimizesolux.com/api}
+      RESTOOS_FRONTEND_BASE_URL: ${FRONTEND_PUBLIC_URL:-https://restoos.optimizesolux.com}
+      RESTOOS_ACTIVATION_BASE_URL: ${RESTOOS_ACTIVATION_BASE_URL:-https://restoos.optimizesolux.com/activate}
+      OPTIMIZE_NOTIFICATION_HUB_ENABLED: ${OPTIMIZE_NOTIFICATION_HUB_ENABLED:-true}
+      OPTIMIZE_NOTIFICATION_HUB_BASE_URL: ${OPTIMIZE_NOTIFICATION_HUB_BASE_URL:-https://notification-api.optimizesolux.com}
+      OPTIMIZE_NOTIFICATION_HUB_OAUTH2_TOKEN_URI: ${OPTIMIZE_NOTIFICATION_HUB_OAUTH2_TOKEN_URI:-https://auth.optimizesolux.com/realms/notification-hub/protocol/openid-connect/token}
+      OPTIMIZE_NOTIFICATION_HUB_OAUTH2_CLIENT_ID: ${OPTIMIZE_NOTIFICATION_HUB_OAUTH2_CLIENT_ID:-restoos}
+      OPTIMIZE_NOTIFICATION_HUB_OAUTH2_CLIENT_SECRET: ${OPTIMIZE_NOTIFICATION_HUB_OAUTH2_CLIENT_SECRET:-}
+      OPTIMIZE_NOTIFICATION_HUB_FROM: ${OPTIMIZE_NOTIFICATION_HUB_FROM:-noreply@optimizesolux.com}
+      RESTOOS_MAIL_FROM: ${RESTOOS_MAIL_FROM:-noreply@optimizesolux.com}
+      OTEL_SERVICE_NAME: restoos-api
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
+    networks:
+      - optimizesolux-common
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-public"
+      - "traefik.http.routers.restoos-prod-api.rule=Host(`${APP_HOSTNAME:-restoos.optimizesolux.com}`) && (PathPrefix(`/api`) || PathPrefix(`/ws`))"
+      - "traefik.http.routers.restoos-prod-api.entrypoints=websecure"
+      - "traefik.http.routers.restoos-prod-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.restoos-prod-api.priority=20"
+      - "traefik.http.routers.restoos-prod-api.service=restoos-prod-api"
+      - "traefik.http.services.restoos-prod-api.loadbalancer.server.port=8080"
+      - "traefik.http.services.restoos-prod-api.loadbalancer.responseforwarding.flushinterval=1ms"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/actuator/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+
+  frontend:
+    image: ${FRONTEND_IMAGE:?FRONTEND_IMAGE is required}
+    restart: unless-stopped
+    networks:
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-public"
+      - "traefik.http.routers.restoos-prod-fe.rule=Host(`${APP_HOSTNAME:-restoos.optimizesolux.com}`)"
+      - "traefik.http.routers.restoos-prod-fe.entrypoints=websecure"
+      - "traefik.http.routers.restoos-prod-fe.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.restoos-prod-fe.priority=10"
+      - "traefik.http.routers.restoos-prod-fe.service=restoos-prod-fe"
+      - "traefik.http.services.restoos-prod-fe.loadbalancer.server.port=80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+
+networks:
+  optimizesolux-common:
+    external: true
+  traefik-public:
+    external: true
