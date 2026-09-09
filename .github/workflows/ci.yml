@@ -137,25 +137,34 @@ jobs:
 
       - name: Install frontend & Playwright
         run: |
+          # GitHub ubuntu runners often include a Google Chrome apt source that
+          # intermittently fails with "Hash Sum mismatch" during --with-deps.
+          sudo rm -f /etc/apt/sources.list.d/google-chrome*.list \
+                     /etc/apt/sources.list.d/*google*chrome*.list || true
           cd frontend
           npm ci
           npx playwright install --with-deps chromium
-
       - name: Build & serve frontend
         run: |
           cd frontend
-          npm run build -- --configuration=development
-          # serve -s provides SPA fallback so /admin/catalog and /pos resolve to index.html
-          npx --yes serve@14.2.4 -s dist/restoos-shell/browser -l 4200 > frontend.log 2>&1 &
-          for i in $(seq 1 30); do
+          # ng serve + proxy.conf.json → same-origin /api+/ws (matches Contabo Traefik + apiUrl: '')
+          npm run serve:e2e > frontend.log 2>&1 &
+          for i in $(seq 1 60); do
             CODE=$(curl -sf -o /tmp/spa-catalog.html -w '%{http_code}' http://localhost:4200/admin/catalog || true)
-            if [ "$CODE" = "200" ] && grep -q 'resto-root' /tmp/spa-catalog.html; then
-              echo "Frontend UP (SPA deep link OK)"
+            # Without proxy, SPA fallback would return index.html for /api; require a real API response.
+            API_CODE=$(curl -s -o /tmp/api-probe.txt -w '%{http_code}' \
+              -X POST http://localhost:4200/api/v1/auth/signup \
+              -H 'Content-Type: application/json' \
+              -d '{}' || true)
+            if [ "$CODE" = "200" ] && grep -q 'resto-root' /tmp/spa-catalog.html \
+              && [ "$API_CODE" != "000" ] && [ "$API_CODE" != "200" ] \
+              && ! grep -q 'resto-root' /tmp/api-probe.txt; then
+              echo "Frontend UP (SPA deep link OK, /api proxied → HTTP $API_CODE)"
               exit 0
             fi
             sleep 2
           done
-          echo "Frontend failed"; cat frontend.log; exit 1
+          echo "Frontend failed"; cat frontend.log; echo "--- spa ---"; head -c 200 /tmp/spa-catalog.html; echo; echo "--- api $API_CODE ---"; head -c 400 /tmp/api-probe.txt; exit 1
 
       - name: Golden path E2E
         env:
