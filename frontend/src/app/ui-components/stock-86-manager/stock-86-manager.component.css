@@ -1,8 +1,9 @@
 .stock-86-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr));
   gap: 16px;
   padding: 16px;
+  width: 100%;
 }
 
 .product-card {
@@ -28,6 +29,7 @@
   font-weight: 600;
   font-size: 16px;
   color: #333333;
+  word-break: break-word;
 }
 
 .status-badge {
@@ -45,4 +47,12 @@
 .status-badge.badge-epuise {
   background: #FFEBEE;
   color: var(--color-status-occupied);
+}
+
+@media (max-width: 480px) {
+  .stock-86-grid {
+    grid-template-columns: 1fr;
+    padding: 12px;
+    gap: 12px;
+  }
 }

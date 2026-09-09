@@ -25,6 +25,8 @@ export class PosLayoutComponent {
   @Output() productSelect = new EventEmitter<any>();
   @Output() checkout = new EventEmitter<void>();
 
+  cartOpen = false;
+
   selectCategory(id: string): void {
     this.activeCategoryId = id;
     this.categorySelect.emit(id);
@@ -36,7 +38,15 @@ export class PosLayoutComponent {
     }
   }
 
+  onCheckout(): void {
+    this.checkout.emit();
+  }
+
   get cartTotal(): number {
     return this.cartItems.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+  }
+
+  get cartItemCount(): number {
+    return this.cartItems.reduce((sum, item) => sum + item.quantity, 0);
   }
 }

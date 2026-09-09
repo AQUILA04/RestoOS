@@ -1,16 +1,21 @@
 .floor-plan-container {
   padding: 16px;
   background-color: var(--color-light-surface);
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 .zone-tabs {
   display: flex;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-bottom: 24px;
 }
 
 .zone-tab {
-  padding: 10px 24px;
+  padding: 10px 20px;
+  min-height: 44px;
   font-family: var(--font-body);
   font-size: 16px;
   font-weight: 600;
@@ -29,13 +34,15 @@
 
 .tables-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100px, 100%), 1fr));
+  gap: 16px;
+  justify-items: center;
 }
 
 .table-node {
-  width: 100px;
-  height: 100px;
+  width: min(100px, 100%);
+  aspect-ratio: 1;
+  max-width: 100px;
   border-radius: 12px;
   background-color: #FFFFFF;
   display: flex;
@@ -55,16 +62,16 @@
 
 /* UX-DR5: 3px status borders and colors */
 .table-node.status-available {
-  border-color: #2E7D32; /* Available Green */
+  border-color: #2E7D32;
 }
 
 .table-node.status-occupied {
-  border-color: #C62828; /* Occupied Ruby Red */
+  border-color: #C62828;
   background-color: #FFEBEE;
 }
 
 .table-node.status-reserved {
-  border-color: #0277BD; /* Reserved Blue */
+  border-color: #0277BD;
   background-color: #E1F5FE;
 }
 
@@ -94,4 +101,34 @@
   margin-top: 4px;
   text-transform: uppercase;
   font-weight: bold;
+}
+
+@media (max-width: 767px) {
+  .floor-plan-container {
+    padding: 8px 4px;
+  }
+
+  .zone-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 16px;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+  }
+
+  .zone-tab {
+    flex: 0 0 auto;
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+
+  .tables-grid {
+    grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+    gap: 12px;
+  }
+
+  .table-node {
+    max-width: 96px;
+  }
 }
