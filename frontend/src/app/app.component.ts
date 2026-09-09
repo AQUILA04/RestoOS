@@ -40,11 +40,10 @@ import { Component } from '@angular/core';
       position: sticky;
       top: 0;
       z-index: 200;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: 1fr auto;
       align-items: center;
-      gap: 12px;
+      gap: 8px 12px;
       min-height: var(--shell-header-height, 52px);
       padding: 10px 16px;
       background: #1A1A1A;
@@ -57,6 +56,8 @@ import { Component } from '@angular/core';
       font-size: 1.25rem;
       color: #FF6E40;
       letter-spacing: -0.02em;
+      grid-column: 1;
+      grid-row: 1;
     }
 
     .nav-toggle {
@@ -72,6 +73,8 @@ import { Component } from '@angular/core';
       border-radius: 8px;
       background: transparent;
       color: #F5F5F5;
+      grid-column: 2;
+      grid-row: 1;
     }
 
     .nav-toggle-bar {
@@ -87,6 +90,9 @@ import { Component } from '@angular/core';
       flex-wrap: wrap;
       gap: 8px 16px;
       align-items: center;
+      grid-column: 2;
+      grid-row: 1;
+      justify-self: end;
     }
 
     .shell-nav a {
@@ -106,20 +112,18 @@ import { Component } from '@angular/core';
     }
 
     @media (max-width: 767px) {
-      .shell-header {
-        flex-wrap: nowrap;
-      }
-
       .nav-toggle {
         display: inline-flex;
-        margin-left: auto;
       }
 
       .shell-nav {
         display: none;
+        grid-column: 1 / -1;
+        grid-row: 2;
         width: 100%;
         flex-direction: column;
         align-items: stretch;
+        justify-self: stretch;
         gap: 4px;
         padding: 8px 0 4px;
         border-top: 1px solid rgba(255, 255, 255, 0.12);
