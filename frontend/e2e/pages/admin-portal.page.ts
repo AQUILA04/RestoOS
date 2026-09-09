@@ -36,7 +36,7 @@ export class AdminPortalPage {
     this.staffPinInput = page.locator('#staff-pin');
     this.dashboardRevWidget = page.locator('#kpi-declared-revenue');
     this.dashboardOrdersWidget = page.locator('#kpi-total-orders');
-    this.toastMessage = page.locator('.toast-notification');
+    this.toastMessage = page.locator('#catalog-toast');
   }
 
   async gotoDashboard() {
