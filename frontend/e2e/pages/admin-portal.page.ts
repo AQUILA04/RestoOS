@@ -114,4 +114,12 @@ export class AdminPortalPage {
     await this.page.reload();
     await this.verifyDashboardMetrics(expectedRevenue, ordersCount);
   }
+
+  async setMobileMoneyLabel(label: string) {
+    await this.gotoDashboard();
+    await expect(this.page.locator('#org-payment-settings')).toBeVisible({ timeout: 15000 });
+    await this.page.locator('#mobile-money-label-input').fill(label);
+    await this.page.locator('#btn-save-mobile-money-label').click();
+    await expect(this.page.locator('.toast')).toContainText('Libellé enregistré', { timeout: 10000 });
+  }
 }

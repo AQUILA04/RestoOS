@@ -6,16 +6,24 @@ export class PosTerminalPage {
   readonly pinDisplay: Locator;
   readonly floorPlanTab: Locator;
   readonly posCatalogTab: Locator;
+  readonly ordersTab: Locator;
   readonly cartItems: Locator;
   readonly cartTotal: Locator;
   readonly submitOrderBtn: Locator;
   readonly modifierModal: Locator;
   readonly modifierSubmitBtn: Locator;
   readonly markDeliveredBtn: Locator;
+  readonly openPaymentBtn: Locator;
   readonly markPaidCashBtn: Locator;
+  readonly payCardBtn: Locator;
+  readonly payMobileBtn: Locator;
+  readonly payCashToggleBtn: Locator;
+  readonly cashAmountInput: Locator;
+  readonly cashChangeDisplay: Locator;
   readonly clientEmailInput: Locator;
   readonly sendReceiptBtn: Locator;
   readonly orderStatusBadge: Locator;
+  readonly orderWithoutTableBtn: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -23,16 +31,24 @@ export class PosTerminalPage {
     this.pinDisplay = page.locator('#pin-display');
     this.floorPlanTab = page.locator('#tab-floor-plan');
     this.posCatalogTab = page.locator('#tab-pos-catalog');
+    this.ordersTab = page.locator('#tab-ready-orders');
     this.cartItems = page.locator('.cart-item-row');
     this.cartTotal = page.locator('#cart-total-amount');
     this.submitOrderBtn = page.locator('#submit-order-btn');
     this.modifierModal = page.locator('#modifier-selection-modal');
     this.modifierSubmitBtn = page.locator('#modifier-confirm-btn');
     this.markDeliveredBtn = page.locator('#btn-mark-delivered');
+    this.openPaymentBtn = page.locator('#btn-open-payment');
     this.markPaidCashBtn = page.locator('#btn-pay-cash');
+    this.payCardBtn = page.locator('#btn-pay-card');
+    this.payMobileBtn = page.locator('#btn-pay-mobile');
+    this.payCashToggleBtn = page.locator('#btn-pay-cash-toggle');
+    this.cashAmountInput = page.locator('#cash-amount-received');
+    this.cashChangeDisplay = page.locator('#cash-change-display');
     this.clientEmailInput = page.locator('#receipt-client-email');
     this.sendReceiptBtn = page.locator('#btn-send-email-receipt');
     this.orderStatusBadge = page.locator('.order-status-badge');
+    this.orderWithoutTableBtn = page.locator('#btn-order-without-table');
   }
 
   async gotoPos() {
@@ -59,12 +75,23 @@ export class PosTerminalPage {
     await this.page.locator(`.table-node:has-text("${tableName}")`).click();
   }
 
+  async startOrderWithoutTable() {
+    await this.floorPlanTab.click();
+    await this.orderWithoutTableBtn.click();
+    await expect(this.posCatalogTab).toBeVisible();
+  }
+
   async addProductWithModifier(productName: string, modifierOptionName: string) {
     await this.posCatalogTab.click();
     await this.page.locator(`.product-card:has-text("${productName}")`).click();
     await expect(this.modifierModal).toBeVisible();
     await this.page.locator(`.modifier-option:has-text("${modifierOptionName}")`).click();
     await this.modifierSubmitBtn.click();
+  }
+
+  async addProduct(productName: string) {
+    await this.posCatalogTab.click();
+    await this.page.locator(`.product-card:has-text("${productName}")`).click();
   }
 
   async submitOrder(): Promise<string> {
@@ -77,16 +104,58 @@ export class PosTerminalPage {
     return orderNum.trim();
   }
 
-  async deliverAndPayOrder(orderNum: string, clientEmail: string) {
+  async openOrdersTab() {
+    await this.ordersTab.click();
+    await expect(this.page.locator('#ready-orders-panel')).toBeVisible();
+  }
+
+  async openOrderFromList(orderNum: string) {
+    const numeric = String(orderNum).replace(/^#/, '');
+    await this.openOrdersTab();
+    await this.page.locator(`.ready-card[data-order-number="${numeric}"]`).click();
+    await expect(this.page.locator('#order-number-display')).toContainText(`#${numeric}`);
+  }
+
+  async gotoOrder(orderNum: string) {
     const numeric = String(orderNum).replace(/^#/, '');
     await this.page.goto(`/pos/orders/${numeric}`);
+    await expect(this.page.locator('#order-number-display')).toContainText(`#${numeric}`);
+  }
+
+  async assignTableOnOrder(tableName: string) {
+    await this.page.locator('#order-table-select').selectOption({ label: tableName });
+    await this.page.locator('#btn-assign-table').click();
+  }
+
+  async payWithCard() {
+    await this.openPaymentBtn.click();
+    await this.payCardBtn.click();
+    await expect(this.orderStatusBadge).toContainText(/PAYÉ/);
+  }
+
+  async payWithMobile() {
+    await this.openPaymentBtn.click();
+    await this.payMobileBtn.click();
+    await expect(this.orderStatusBadge).toContainText(/PAYÉ/);
+  }
+
+  async payWithCash(amountReceived?: number) {
+    await this.openPaymentBtn.click();
+    await this.payCashToggleBtn.click();
+    if (amountReceived != null) {
+      await this.cashAmountInput.fill(String(amountReceived));
+      await expect(this.cashChangeDisplay).toBeVisible();
+    }
+    await this.markPaidCashBtn.click();
+    await expect(this.orderStatusBadge).toContainText(/PAYÉ/);
+  }
+
+  async deliverAndPayOrder(orderNum: string, clientEmail: string) {
+    await this.gotoOrder(orderNum);
     await this.markDeliveredBtn.click();
     await expect(this.orderStatusBadge).toContainText('LIVRÉ');
 
     await this.clientEmailInput.fill(clientEmail);
-    await this.page.locator('#btn-open-payment').click();
-    await this.page.locator('#btn-pay-cash-toggle').click();
-    await this.markPaidCashBtn.click();
-    await expect(this.orderStatusBadge).toContainText('PAYÉ');
+    await this.payWithCash();
   }
 }
