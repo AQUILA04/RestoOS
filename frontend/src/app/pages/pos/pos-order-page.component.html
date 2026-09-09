@@ -23,17 +23,17 @@
   <div class="actions">
     <button
       type="button"
+      id="btn-open-payment"
+      [disabled]="!canPay"
+      (click)="openPayment()">
+      {{ canPay ? 'Encaisser' : (order.paymentStatus === 'PAID' ? 'Déjà payé' : 'Encaissement indisponible') }}
+    </button>
+    <button
+      type="button"
       id="btn-mark-delivered"
       [disabled]="!canDeliver"
       (click)="deliver()">
       {{ canDeliver ? 'Marquer livré' : (order.status === 'DELIVERED' || order.status === 'CLOSED' ? 'Déjà livré' : 'En attente cuisine') }}
-    </button>
-    <button
-      type="button"
-      id="btn-open-payment"
-      [disabled]="!canPay"
-      (click)="openPayment()">
-      Encaisser
     </button>
     <button type="button" id="btn-send-email-receipt" disabled title="V2 — reçu numérique différé">Envoyer reçu</button>
   </div>

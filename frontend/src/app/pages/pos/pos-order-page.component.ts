@@ -35,7 +35,7 @@ export class PosOrderPageComponent implements OnInit {
     this.api.getData<any[]>('/api/v1/orders', { storeId }).subscribe((orders) => {
       this.order = orders.find((o) => String(o.orderNumber) === String(orderNumber)?.replace('#', ''));
       if (this.order) {
-        this.orderStatus = this.mapStatus(this.order.status, this.order.paymentStatus);
+        this.refreshStatus();
         this.selectedTableId = this.order.tableId || '';
       }
     });
@@ -60,18 +60,25 @@ export class PosOrderPageComponent implements OnInit {
     });
   }
 
+  /** Livraison possible dès que la cuisine a marqué PRÊT (caissier ou serveur). */
   get canDeliver(): boolean {
-    return !!this.order && this.order.status === 'READY' && this.order.paymentStatus !== 'PAID';
+    return !!this.order
+      && this.order.status === 'READY'
+      && this.order.status !== 'CLOSED'
+      && this.order.status !== 'CANCELLED';
   }
 
+  /** Encaissement libre à tout moment tant que non payée / non annulée. */
   get canPay(): boolean {
-    return !!this.order && this.order.paymentStatus !== 'PAID' && this.order.status !== 'CANCELLED';
+    return !!this.order
+      && this.order.paymentStatus !== 'PAID'
+      && this.order.status !== 'CANCELLED'
+      && this.order.status !== 'CLOSED';
   }
 
   get canAssignTable(): boolean {
     return !!this.order
       && this.order.orderType === 'DINE_IN'
-      && this.order.paymentStatus !== 'PAID'
       && this.order.status !== 'CANCELLED'
       && this.order.status !== 'CLOSED';
   }
@@ -104,8 +111,8 @@ export class PosOrderPageComponent implements OnInit {
     if (!this.order || !this.canDeliver) return;
     this.api.deliverOrder(this.order.id).subscribe({
       next: (order) => {
-        this.order = { ...this.order, ...order, status: order?.status || 'DELIVERED' };
-        this.orderStatus = 'LIVRÉ';
+        this.order = { ...this.order, ...order };
+        this.refreshStatus();
         this.errorMessage = '';
       },
       error: (err) => {
@@ -115,6 +122,7 @@ export class PosOrderPageComponent implements OnInit {
   }
 
   openPayment(): void {
+    if (!this.canPay) return;
     this.paymentPanelOpen = true;
     this.cashAmountReceived = null;
     this.lastChange = null;
@@ -122,7 +130,7 @@ export class PosOrderPageComponent implements OnInit {
   }
 
   payWith(method: PaymentMethod): void {
-    if (!this.order) return;
+    if (!this.order || !this.canPay) return;
     if (method === 'CASH') {
       if (!this.cashEnough || this.cashAmountReceived == null) {
         this.errorMessage = 'Montant reçu insuffisant';
@@ -144,18 +152,25 @@ export class PosOrderPageComponent implements OnInit {
     if (method === 'CASH' && amountTendered != null) {
       body['amountTendered'] = amountTendered;
     }
+    const changeSnapshot = method === 'CASH' ? this.cashChange : null;
     this.api.markPaid(this.order.id, body, key).subscribe({
-      next: (payment) => {
-        this.order = {
-          ...this.order,
-          ...(payment.order || {}),
-          paymentStatus: 'PAID',
-          status: 'CLOSED',
-        };
-        this.orderStatus = 'PAYÉ';
-        this.paymentPanelOpen = false;
-        this.lastChange = method === 'CASH' ? this.cashChange : null;
-        this.errorMessage = '';
+      next: () => {
+        // Reload order: early pay keeps kitchen status; pay after delivery closes
+        this.api.getData<any>(`/api/v1/orders/${this.order.id}`).subscribe({
+          next: (fresh) => {
+            this.order = { ...this.order, ...fresh, paymentStatus: fresh?.paymentStatus || 'PAID' };
+            this.refreshStatus();
+            this.paymentPanelOpen = false;
+            this.lastChange = changeSnapshot;
+            this.errorMessage = '';
+          },
+          error: () => {
+            this.order = { ...this.order, paymentStatus: 'PAID' };
+            this.refreshStatus();
+            this.paymentPanelOpen = false;
+            this.lastChange = changeSnapshot;
+          },
+        });
       },
       error: (err) => {
         this.errorMessage = err?.error?.message || 'Paiement impossible';
@@ -163,8 +178,22 @@ export class PosOrderPageComponent implements OnInit {
     });
   }
 
+  private refreshStatus(): void {
+    if (!this.order) {
+      this.orderStatus = '';
+      return;
+    }
+    this.orderStatus = this.mapStatus(this.order.status, this.order.paymentStatus);
+  }
+
   private mapStatus(status: string, paymentStatus: string): string {
-    if (paymentStatus === 'PAID') return 'PAYÉ';
+    if (status === 'CLOSED' || (paymentStatus === 'PAID' && status === 'CLOSED')) return 'PAYÉ';
+    if (paymentStatus === 'PAID') {
+      if (status === 'DELIVERED') return 'LIVRÉ · PAYÉ';
+      if (status === 'READY') return 'PRÊT À LIVRER · PAYÉ';
+      if (status === 'SENT_TO_KITCHEN' || status === 'PREPARING' || status === 'CREATED') return 'EN CUISINE · PAYÉ';
+      return 'PAYÉ';
+    }
     if (status === 'DELIVERED') return 'LIVRÉ';
     if (status === 'READY') return 'PRÊT À LIVRER';
     if (status === 'SENT_TO_KITCHEN' || status === 'PREPARING') return 'EN CUISINE';

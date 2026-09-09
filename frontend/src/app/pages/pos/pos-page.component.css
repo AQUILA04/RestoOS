@@ -55,10 +55,17 @@
   text-align: left;
   cursor: pointer;
 }
+.ready-card.ready-highlight { background: #37474F; box-shadow: inset 4px 0 0 #FF6E40; }
+.ready-card.paid-badge { opacity: 0.92; }
 .ready-num { font-size: 1.4rem; font-weight: 700; font-family: ui-monospace, monospace; }
 .ready-meta { flex: 1; opacity: 0.85; }
 .ready-cta { font-weight: 700; color: #FF6E40; }
-.order-feedback { margin-top: 12px; display: flex; gap: 12px; align-items: center; }
+.order-feedback { margin-top: 12px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.order-link {
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-family: ui-monospace, monospace;
+}
 .order-status-badge {
   background: #FF6E40;
   color: white;

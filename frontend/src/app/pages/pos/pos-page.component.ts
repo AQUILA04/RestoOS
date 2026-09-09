@@ -18,7 +18,7 @@ import { ModifierGroupItem, ModifierOptionItem } from '../../ui-components/modif
 })
 export class PosPageComponent implements OnInit, OnDestroy {
   authenticated = false;
-  activeTab: 'floor' | 'catalog' | 'ready' = 'floor';
+  activeTab: 'floor' | 'catalog' | 'orders' = 'floor';
   staff: Array<{ id: string; name: string }> = [];
   zones: ZoneTab[] = [];
   tables: TableNode[] = [];
@@ -34,11 +34,19 @@ export class PosPageComponent implements OnInit, OnDestroy {
   modifierGroups: ModifierGroupItem[] = [];
   pendingProduct: any = null;
   orderNumberDisplay = '';
+  lastCreatedOrderNumber: number | null = null;
   orderStatus = '';
   errorMessage = '';
   isOnline = true;
   pendingCount = 0;
-  readyOrders: Array<{ id: string; orderNumber: number; tableId?: string; totalAmount?: number }> = [];
+  openOrders: Array<{
+    id: string;
+    orderNumber: number;
+    tableId?: string;
+    totalAmount?: number;
+    status: string;
+    paymentStatus: string;
+  }> = [];
   private wsSub?: Subscription;
 
   constructor(
@@ -167,32 +175,50 @@ export class PosPageComponent implements OnInit, OnDestroy {
       error: () => (this.allProducts = []),
     });
 
-    this.reloadReadyOrders(storeId);
+    this.reloadOpenOrders(storeId);
     this.ws.connect(storeId, 'pos');
     this.wsSub?.unsubscribe();
-    this.wsSub = this.ws.getMessages().subscribe((msg) => {
-      if (msg?.status === 'READY' || msg?.type === 'KITCHEN_ORDER_UPDATE' || msg?.type === 'ORDER_DELIVERED') {
-        this.reloadReadyOrders(storeId);
-      }
+    this.wsSub = this.ws.getMessages().subscribe(() => {
+      this.reloadOpenOrders(storeId);
     });
   }
 
-  reloadReadyOrders(storeId?: string): void {
+  get readyCount(): number {
+    return this.openOrders.filter((o) => o.status === 'READY').length;
+  }
+
+  get unpaidCount(): number {
+    return this.openOrders.filter((o) => o.paymentStatus !== 'PAID').length;
+  }
+
+  reloadOpenOrders(storeId?: string): void {
     const sid = storeId || this.storeContext.storeId;
     if (!sid) return;
     this.api.getData<any[]>('/api/v1/orders', { storeId: sid }).subscribe({
       next: (orders) => {
-        this.readyOrders = (orders || [])
-          .filter((o) => o.status === 'READY')
+        this.openOrders = (orders || [])
+          .filter((o) => o.status !== 'CLOSED' && o.status !== 'CANCELLED')
           .map((o) => ({
             id: o.id,
             orderNumber: o.orderNumber,
             tableId: o.tableId,
             totalAmount: o.totalAmount,
-          }));
+            status: o.status,
+            paymentStatus: o.paymentStatus || 'UNPAID',
+          }))
+          .sort((a, b) => {
+            const rank = (s: string) => (s === 'READY' ? 0 : s === 'DELIVERED' ? 1 : 2);
+            const byStatus = rank(a.status) - rank(b.status);
+            return byStatus !== 0 ? byStatus : b.orderNumber - a.orderNumber;
+          });
       },
-      error: () => (this.readyOrders = []),
+      error: () => (this.openOrders = []),
     });
+  }
+
+  /** @deprecated use reloadOpenOrders — kept for template compatibility during rename */
+  reloadReadyOrders(storeId?: string): void {
+    this.reloadOpenOrders(storeId);
   }
 
   onCategorySelect(categoryId: string): void {
@@ -223,8 +249,26 @@ export class PosPageComponent implements OnInit, OnDestroy {
     this.activeTab = 'catalog';
   }
 
-  openReadyOrder(order: { orderNumber: number }): void {
+  openOrder(order: { orderNumber: number }): void {
     void this.router.navigate(['/pos/orders', order.orderNumber]);
+  }
+
+  openLastCreatedOrder(): void {
+    if (this.lastCreatedOrderNumber != null) {
+      void this.router.navigate(['/pos/orders', this.lastCreatedOrderNumber]);
+    }
+  }
+
+  statusLabel(status: string, paymentStatus: string): string {
+    if (paymentStatus === 'PAID' && status !== 'CLOSED') return `${this.opsLabel(status)} · PAYÉ`;
+    return this.opsLabel(status);
+  }
+
+  private opsLabel(status: string): string {
+    if (status === 'READY') return 'PRÊT';
+    if (status === 'DELIVERED') return 'LIVRÉ';
+    if (status === 'PREPARING' || status === 'SENT_TO_KITCHEN' || status === 'CREATED') return 'EN CUISINE';
+    return status;
   }
 
   onProductSelect(product: any): void {
@@ -305,9 +349,11 @@ export class PosPageComponent implements OnInit, OnDestroy {
     this.api.createOrder(payload, idempotencyKey).subscribe({
       next: (order) => {
         this.orderNumberDisplay = `#${order.orderNumber}`;
+        this.lastCreatedOrderNumber = order.orderNumber;
         this.orderStatus = 'EN CUISINE';
         this.cartItems = [];
         this.errorMessage = '';
+        this.reloadOpenOrders();
       },
       error: async (err) => {
         await this.offlineQueue.enqueueOrder({ ...payload, idempotencyKey });

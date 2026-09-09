@@ -205,6 +205,13 @@ public class OrderService {
                 .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
         OrderStateMachine.assertTransition(order.getStatus(), "DELIVERED");
         order.setStatus("DELIVERED");
+        // If already paid (encaissement anticipé), close and free the table
+        if ("PAID".equals(order.getPaymentStatus())) {
+            order.setStatus("CLOSED");
+            if (order.getTableId() != null) {
+                releaseTableIfIdle(order.getStoreId(), order.getTableId());
+            }
+        }
         Order saved = orderRepository.save(order);
         auditService.record(order.getOrganizationId(), order.getStoreId(), actorUserId,
                 "ORDER_DELIVERED", "ORDER", orderId, "Marked delivered");

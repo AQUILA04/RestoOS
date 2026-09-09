@@ -36,7 +36,9 @@ public class PaymentService {
     }
 
     /**
-     * Mark order paid (declarative). When amount covers total → PAID + CLOSED.
+     * Mark order paid (declarative). Full cover → PAID.
+     * CLOSED only when already DELIVERED (payment is allowed at any operational step;
+     * kitchen/service flow continues until delivery).
      * Invariant: CLOSED + UNPAID is forbidden.
      * For CASH, optional amountTendered records cash received and computes change.
      */
@@ -89,15 +91,12 @@ public class PaymentService {
 
         if (order.getTotalAmount() != null && totalPaid.compareTo(order.getTotalAmount()) >= 0) {
             order.setPaymentStatus("PAID");
-            // Fully paid → close (from DELIVERED or READY/earlier operational states after payment)
-            if ("DELIVERED".equals(order.getStatus()) || "READY".equals(order.getStatus())
-                    || "PREPARING".equals(order.getStatus()) || "SENT_TO_KITCHEN".equals(order.getStatus())
-                    || "CREATED".equals(order.getStatus())) {
-                // Prefer CLOSED only when paid; skip invalid machine edges by setting directly when paid
+            // Close only after delivery; early payment must not abort kitchen/service flow
+            if ("DELIVERED".equals(order.getStatus())) {
                 order.setStatus("CLOSED");
-            }
-            if (order.getTableId() != null) {
-                orderService.releaseTableIfIdle(order.getStoreId(), order.getTableId());
+                if (order.getTableId() != null) {
+                    orderService.releaseTableIfIdle(order.getStoreId(), order.getTableId());
+                }
             }
         } else {
             // Partial payments stay UNPAID until fully covered (contract: UNPAID | PAID only)
