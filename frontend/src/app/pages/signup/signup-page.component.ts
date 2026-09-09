@@ -59,7 +59,12 @@ export class SignupPageComponent {
         },
         error: (err) => {
           this.submitting = false;
-          const msg = err?.error?.message || err?.error?.data || err?.message;
+          const details = err?.error?.data?.details;
+          const msg =
+            (typeof details === 'string' && details) ||
+            err?.error?.message ||
+            err?.error?.data ||
+            err?.message;
           if (typeof msg === 'string' && /already|existe|exists|email/i.test(msg)) {
             this.error = 'Cet e-mail est déjà utilisé.';
           } else {

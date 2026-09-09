@@ -70,9 +70,17 @@ test.describe('Onboarding self-serve', () => {
     await expect(page.locator('#signup-error')).toContainText(/déjà utilisé/i);
   });
 
-  test('login route bounces toward Keycloak authorize URL', async ({ page }) => {
-    await page.goto('/login');
-    // In CI without Keycloak reachable, navigation may fail; assert authorize path construction via page content then navigation attempt
-    await expect(page.getByText(/Redirection/i)).toBeVisible({ timeout: 5_000 });
+  test('Se connecter builds Keycloak authorize URL', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('#cta-connect')).toBeVisible();
+    const [req] = await Promise.all([
+      page.waitForRequest((r) =>
+        /\/realms\/restoos\/protocol\/openid-connect\/auth/.test(r.url()),
+      ),
+      page.locator('#cta-connect').click(),
+    ]);
+    expect(req.url()).toContain('client_id=restoos-frontend');
+    expect(req.url()).toContain('code_challenge');
+    expect(req.url()).toContain('redirect_uri=');
   });
 });
