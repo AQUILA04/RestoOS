@@ -1,16 +1,21 @@
-<div class="kds-obsidian-surface">
+<div class="kds-obsidian-surface kds-obsidian-grid">
   <div class="kds-cards-grid">
-    <div *ngFor="let t of tickets" class="kds-card" (click)="advance(t)">
+    <div *ngFor="let t of tickets" class="kds-card kds-ticket-card" [attr.data-order-number]="t.orderNumber">
       <div class="card-header">
         <div class="ticket-number">#{{ t.orderNumber }}</div>
         <div class="order-type-badge">{{ t.orderType }}</div>
         <div class="timer-badge" [ngClass]="getTimerTier(t.createdAt)">
-          ⏱️ {{ getElapsedMinutes(t.createdAt) }}m
+          {{ getElapsedMinutes(t.createdAt) }}m
         </div>
       </div>
 
       <div class="card-body">
-        <div *ngFor="let item of t.items" class="ticket-item-row">
+        <button
+          type="button"
+          *ngFor="let item of t.items; let i = index"
+          class="ticket-item ticket-item-row"
+          [class.item-done-strikethrough]="item.prepared"
+          (click)="toggleItem(t, i); $event.stopPropagation()">
           <div class="item-qty">{{ item.quantity }}x</div>
           <div class="item-details">
             <div class="item-name">{{ item.name }}</div>
@@ -18,13 +23,18 @@
               {{ item.modifiers?.join(', ') }}
             </div>
           </div>
-        </div>
+        </button>
       </div>
 
       <div class="card-footer">
-        <div class="status-btn" [class.status-prep]="t.status === 'PREPARING'">
-          {{ t.status === 'SENT_TO_KITCHEN' ? 'COMMANDER EN PREPA ➔' : 'MARQUER PRÊT ➔' }}
-        </div>
+        <button
+          type="button"
+          class="status-btn"
+          id="btn-ticket-ready"
+          [class.status-prep]="t.status === 'PREPARING'"
+          (click)="advance(t); $event.stopPropagation()">
+          {{ t.status === 'SENT_TO_KITCHEN' ? 'COMMANDER EN PREPA' : 'MARQUER PRÊT' }}
+        </button>
       </div>
     </div>
   </div>

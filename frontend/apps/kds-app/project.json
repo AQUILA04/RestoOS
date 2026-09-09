@@ -1,0 +1,22 @@
+{
+  "name": "kds-app",
+  "projectType": "application",
+  "sourceRoot": "src",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm run build -- --configuration=production",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx ng serve --port 4201 --host 0.0.0.0 --proxy-config proxy.conf.json",
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  },
+  "tags": ["type:app", "scope:kds"]
+}

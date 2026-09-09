@@ -1,0 +1,23 @@
+.order-page { padding: 24px; max-width: 480px; }
+.actions { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+.actions button {
+  min-height: 64px;
+  border: none;
+  border-radius: 12px;
+  background: #D84315;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.actions button:disabled { opacity: 0.5; }
+.order-status-badge {
+  display: inline-block;
+  margin: 8px 0;
+  padding: 6px 12px;
+  background: #263238;
+  color: white;
+  border-radius: 999px;
+}
+.error { color: #C62828; }
+label { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+input { min-height: 48px; padding: 8px 12px; border-radius: 8px; border: 1px solid #CFD8DC; }

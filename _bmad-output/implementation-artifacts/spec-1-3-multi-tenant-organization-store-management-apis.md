@@ -2,7 +2,7 @@
 title: 'Story 1.3: Multi-Tenant Organization & Store Management APIs'
 type: 'feature'
 created: '2026-09-08'
-status: 'done'
+status: 'verified'
 baseline_commit: '537c25e'
 route: 'dispatch'
 review_loop_iteration: 0

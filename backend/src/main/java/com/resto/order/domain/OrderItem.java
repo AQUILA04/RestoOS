@@ -1,7 +1,7 @@
 package com.resto.order.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -11,11 +11,6 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "order_items")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class OrderItem {
 
     @Id
@@ -30,6 +25,7 @@ public class OrderItem {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
+    @JsonIgnore
     private Order order;
 
     @Column(name = "product_id", nullable = false)
@@ -53,9 +49,14 @@ public class OrderItem {
     @Column(name = "line_notes")
     private String lineNotes;
 
+    @Column(nullable = false)
+    private Boolean prepared = false;
+
     @OneToMany(mappedBy = "orderItem", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
     private List<OrderItemModifier> modifiers = new ArrayList<>();
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private OffsetDateTime createdAt;
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -79,17 +80,19 @@ public class OrderItem {
     public void setSubtotal(BigDecimal subtotal) { this.subtotal = subtotal; }
     public String getLineNotes() { return lineNotes; }
     public void setLineNotes(String lineNotes) { this.lineNotes = lineNotes; }
+    public Boolean getPrepared() { return prepared; }
+    public void setPrepared(Boolean prepared) { this.prepared = prepared; }
     public List<OrderItemModifier> getModifiers() { return modifiers; }
     public void setModifiers(List<OrderItemModifier> modifiers) { this.modifiers = modifiers; }
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
-
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
 
     @PrePersist
     protected void onCreate() {
         createdAt = OffsetDateTime.now();
+        if (prepared == null) {
+            prepared = false;
+        }
     }
 
     public static OrderItemBuilder builder() {
@@ -108,6 +111,7 @@ public class OrderItem {
         private Integer quantity;
         private BigDecimal subtotal;
         private String lineNotes;
+        private Boolean prepared = false;
         private List<OrderItemModifier> modifiers = new ArrayList<>();
         private OffsetDateTime createdAt;
 
@@ -122,6 +126,7 @@ public class OrderItem {
         public OrderItemBuilder quantity(Integer quantity) { this.quantity = quantity; return this; }
         public OrderItemBuilder subtotal(BigDecimal subtotal) { this.subtotal = subtotal; return this; }
         public OrderItemBuilder lineNotes(String lineNotes) { this.lineNotes = lineNotes; return this; }
+        public OrderItemBuilder prepared(Boolean prepared) { this.prepared = prepared; return this; }
         public OrderItemBuilder modifiers(List<OrderItemModifier> modifiers) { this.modifiers = modifiers; return this; }
         public OrderItemBuilder createdAt(OffsetDateTime createdAt) { this.createdAt = createdAt; return this; }
 
@@ -138,6 +143,7 @@ public class OrderItem {
             item.setQuantity(this.quantity);
             item.setSubtotal(this.subtotal);
             item.setLineNotes(this.lineNotes);
+            item.setPrepared(this.prepared != null ? this.prepared : false);
             item.setModifiers(this.modifiers != null ? this.modifiers : new ArrayList<>());
             item.setCreatedAt(this.createdAt);
             return item;

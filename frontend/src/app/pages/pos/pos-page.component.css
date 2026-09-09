@@ -1,0 +1,20 @@
+.pos-shell { padding: 12px; }
+.pos-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+.pos-tabs button {
+  min-height: 48px;
+  padding: 8px 16px;
+  border: 2px solid #D84315;
+  background: white;
+  border-radius: 8px;
+  font-weight: 600;
+}
+.pos-tabs button.active { background: #D84315; color: white; }
+.order-feedback { margin-top: 12px; display: flex; gap: 12px; align-items: center; }
+.order-status-badge {
+  background: #FF6E40;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.error { color: #C62828; text-align: center; }

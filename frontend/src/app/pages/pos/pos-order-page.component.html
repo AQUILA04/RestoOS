@@ -1,0 +1,17 @@
+<div class="order-page" *ngIf="order">
+  <h1>Commande <span id="order-number-display">#{{ order.orderNumber }}</span></h1>
+  <div class="order-status-badge">{{ orderStatus }}</div>
+  <p>Total: {{ order.totalAmount | currency:'EUR' }}</p>
+
+  <label>
+    Email client (optionnel)
+    <input id="receipt-client-email" [(ngModel)]="clientEmail" type="email" />
+  </label>
+
+  <div class="actions">
+    <button type="button" id="btn-mark-delivered" (click)="deliver()">LIVRÉ</button>
+    <button type="button" id="btn-pay-cash" (click)="payCash()">Payer cash</button>
+    <button type="button" id="btn-send-email-receipt" disabled title="V2 — reçu numérique différé">Envoyer reçu</button>
+  </div>
+  <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+</div>

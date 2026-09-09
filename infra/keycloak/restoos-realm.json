@@ -1,0 +1,173 @@
+{
+  "realm": "restoos",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "roles": {
+    "realm": [
+      { "name": "OWNER", "description": "Organization owner" },
+      { "name": "ADMIN", "description": "Organization admin" },
+      { "name": "STORE_MANAGER", "description": "Store manager" },
+      { "name": "CASHIER", "description": "Cashier" },
+      { "name": "WAITER", "description": "Waiter" },
+      { "name": "KITCHEN", "description": "Kitchen staff" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "restoos-backend",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "restoos-backend-secret",
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": true,
+      "redirectUris": ["*"],
+      "webOrigins": ["*"],
+      "protocol": "openid-connect",
+      "attributes": {
+        "access.token.lifespan": "3600"
+      },
+      "protocolMappers": [
+        {
+          "name": "organization_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "organization_id",
+            "claim.name": "organization_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "store_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "store_id",
+            "claim.name": "store_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "realm-roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "roles",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "restoos-frontend",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "redirectUris": ["http://localhost:4200/*", "http://127.0.0.1:4200/*"],
+      "webOrigins": ["*"],
+      "protocol": "openid-connect"
+    }
+  ],
+  "users": [
+    {
+      "username": "owner@restoos.test",
+      "enabled": true,
+      "email": "owner@restoos.test",
+      "emailVerified": true,
+      "firstName": "Olivia",
+      "lastName": "Owner",
+      "credentials": [
+        { "type": "password", "value": "OwnerPass123!", "temporary": false }
+      ],
+      "realmRoles": ["OWNER"],
+      "attributes": {
+        "organization_id": ["00000000-0000-0000-0000-000000000001"],
+        "store_id": ["00000000-0000-0000-0000-000000000011"]
+      }
+    },
+    {
+      "username": "manager@restoos.test",
+      "enabled": true,
+      "email": "manager@restoos.test",
+      "emailVerified": true,
+      "firstName": "Morgan",
+      "lastName": "Manager",
+      "credentials": [
+        { "type": "password", "value": "ManagerPass123!", "temporary": false }
+      ],
+      "realmRoles": ["STORE_MANAGER"],
+      "attributes": {
+        "organization_id": ["00000000-0000-0000-0000-000000000001"],
+        "store_id": ["00000000-0000-0000-0000-000000000011"]
+      }
+    },
+    {
+      "username": "waiter@restoos.test",
+      "enabled": true,
+      "email": "waiter@restoos.test",
+      "emailVerified": true,
+      "firstName": "Wendy",
+      "lastName": "Waiter",
+      "credentials": [
+        { "type": "password", "value": "WaiterPass123!", "temporary": false }
+      ],
+      "realmRoles": ["WAITER"],
+      "attributes": {
+        "organization_id": ["00000000-0000-0000-0000-000000000001"],
+        "store_id": ["00000000-0000-0000-0000-000000000011"]
+      }
+    },
+    {
+      "username": "kitchen@restoos.test",
+      "enabled": true,
+      "email": "kitchen@restoos.test",
+      "emailVerified": true,
+      "firstName": "Casey",
+      "lastName": "Cook",
+      "credentials": [
+        { "type": "password", "value": "KitchenPass123!", "temporary": false }
+      ],
+      "realmRoles": ["KITCHEN"],
+      "attributes": {
+        "organization_id": ["00000000-0000-0000-0000-000000000001"],
+        "store_id": ["00000000-0000-0000-0000-000000000011"]
+      }
+    },
+    {
+      "username": "cashier@restoos.test",
+      "enabled": true,
+      "email": "cashier@restoos.test",
+      "emailVerified": true,
+      "firstName": "Chris",
+      "lastName": "Cashier",
+      "credentials": [
+        { "type": "password", "value": "CashierPass123!", "temporary": false }
+      ],
+      "realmRoles": ["CASHIER"],
+      "attributes": {
+        "organization_id": ["00000000-0000-0000-0000-000000000001"],
+        "store_id": ["00000000-0000-0000-0000-000000000011"]
+      }
+    }
+  ]
+}

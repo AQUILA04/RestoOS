@@ -2,7 +2,7 @@
 title: 'Story 1.6: Quick 4-Digit PIN Lockscreen & Employee Station Switcher'
 type: 'feature'
 created: '2026-09-08'
-status: 'done'
+status: 'verified'
 baseline_commit: 'bf6e6de'
 route: 'dispatch'
 review_loop_iteration: 0

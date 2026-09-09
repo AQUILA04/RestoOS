@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface ModifierOptionRepository extends JpaRepository<ModifierOption, UUID> {
     List<ModifierOption> findByModifierGroupIdOrderByDisplayOrderAsc(UUID modifierGroupId);
+    List<ModifierOption> findByModifierGroupIdInOrderByDisplayOrderAsc(List<UUID> modifierGroupIds);
 }

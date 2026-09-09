@@ -90,4 +90,15 @@ public class UserService {
     public List<Membership> getMembershipsByUser(UUID userId) {
         return membershipRepository.findByUserId(userId);
     }
+
+    @Transactional(readOnly = true)
+    public List<User> findUsersByStore(UUID storeId) {
+        return membershipStoreRepository.findByStoreId(storeId).stream()
+                .map(ms -> membershipRepository.findById(ms.getMembershipId()).orElse(null))
+                .filter(m -> m != null)
+                .map(m -> userRepository.findById(m.getUserId()).orElse(null))
+                .filter(u -> u != null)
+                .distinct()
+                .toList();
+    }
 }

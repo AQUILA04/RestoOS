@@ -1,41 +1,198 @@
 package com.resto.tenant.service;
 
+import com.resto.core.security.TenantContext;
+import com.resto.tenant.domain.Membership;
+import com.resto.tenant.domain.MembershipStore;
 import com.resto.tenant.domain.User;
+import com.resto.tenant.repository.MembershipRepository;
+import com.resto.tenant.repository.MembershipStoreRepository;
 import com.resto.tenant.repository.UserRepository;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final MembershipRepository membershipRepository;
+    private final MembershipStoreRepository membershipStoreRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SecretKey jwtSecret;
+    private final long stationTtlMinutes;
+    private final String audience;
 
-    public AuthService(UserRepository userRepository) {
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    /** Simple in-memory rate limit: userId → attempts in window */
+    private final ConcurrentHashMap<UUID, AttemptWindow> pinAttempts = new ConcurrentHashMap<>();
+
+    public AuthService(UserRepository userRepository,
+                       MembershipRepository membershipRepository,
+                       MembershipStoreRepository membershipStoreRepository,
+                       PasswordEncoder passwordEncoder,
+                       @Value("${restoos.jwt.secret}") String secret,
+                       @Value("${restoos.jwt.station-ttl-minutes:480}") long stationTtlMinutes,
+                       @Value("${restoos.jwt.audience:restoos-api}") String audience) {
         this.userRepository = userRepository;
-        this.passwordEncoder = new BCryptPasswordEncoder();
+        this.membershipRepository = membershipRepository;
+        this.membershipStoreRepository = membershipStoreRepository;
+        this.passwordEncoder = passwordEncoder;
+        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        if (keyBytes.length < 32) {
+            byte[] padded = new byte[32];
+            System.arraycopy(keyBytes, 0, padded, 0, Math.min(keyBytes.length, 32));
+            keyBytes = padded;
+        }
+        this.jwtSecret = Keys.hmacShaKeyFor(keyBytes);
+        this.stationTtlMinutes = stationTtlMinutes;
+        this.audience = audience;
     }
 
+    @Transactional(readOnly = true)
+    public Map<String, Object> pinLogin(UUID userId, UUID storeId, UUID organizationId, String rawPin) {
+        if (rawPin == null || !rawPin.matches("\\d{4}")) {
+            throw new IllegalArgumentException("PIN must be exactly 4 digits");
+        }
+        if (organizationId == null) {
+            throw new IllegalArgumentException("organizationId is required for PIN login");
+        }
+        checkRateLimit(userId);
+
+        // PIN login is unauthenticated: bind RLS from the station/org payload before membership reads.
+        TenantContext.setOrgId(organizationId);
+        if (storeId != null) {
+            TenantContext.setStoreId(storeId);
+        }
+        applyRlsSession(organizationId, storeId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
+        if (user.getPinHash() == null || !passwordEncoder.matches(rawPin, user.getPinHash())) {
+            recordFailure(userId);
+            return Map.of("authenticated", false);
+        }
+        if (Boolean.FALSE.equals(user.getActive())) {
+            throw new IllegalStateException("User account is not activated");
+        }
+
+        Membership membership = membershipRepository.findByUserId(userId).stream()
+                .filter(m -> organizationId.equals(m.getOrganizationId()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("No membership for user"));
+
+        UUID orgId = membership.getOrganizationId();
+        UUID resolvedStoreId = storeId;
+        String role = membership.getRole();
+
+        if (resolvedStoreId != null && !"OWNER".equals(role) && !"ADMIN".equals(role)) {
+            List<MembershipStore> stores = membershipStoreRepository.findByMembershipId(membership.getId());
+            boolean ok = stores.isEmpty() || stores.stream().anyMatch(ms -> resolvedStoreId.equals(ms.getStoreId()));
+            if (!ok) {
+                throw new IllegalArgumentException("User is not a member of store: " + resolvedStoreId);
+            }
+        }
+
+        pinAttempts.remove(userId);
+
+        Instant now = Instant.now();
+        String token = Jwts.builder()
+                .subject(userId.toString())
+                .claim("user_id", userId.toString())
+                .claim("organization_id", orgId.toString())
+                .claim("store_id", resolvedStoreId != null ? resolvedStoreId.toString() : null)
+                .claim("roles", List.of(role))
+                .audience().add(audience).and()
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plus(stationTtlMinutes, ChronoUnit.MINUTES)))
+                .signWith(jwtSecret)
+                .compact();
+
+        return Map.of(
+                "authenticated", true,
+                "accessToken", token,
+                "tokenType", "Bearer",
+                "userId", userId.toString(),
+                "organizationId", orgId.toString(),
+                "storeId", resolvedStoreId != null ? resolvedStoreId.toString() : "",
+                "roles", List.of(role)
+        );
+    }
+
+    private void applyRlsSession(UUID organizationId, UUID storeId) {
+        entityManager.createNativeQuery("SELECT set_config('app.current_org_id', :orgId, true)")
+                .setParameter("orgId", organizationId.toString())
+                .getSingleResult();
+        if (storeId != null) {
+            entityManager.createNativeQuery("SELECT set_config('app.current_store_id', :storeId, true)")
+                    .setParameter("storeId", storeId.toString())
+                    .getSingleResult();
+        }
+    }
+
+    @Transactional
+    public void setPin(UUID userId, String rawPin) {
+        if (rawPin == null || !rawPin.matches("\\d{4}")) {
+            throw new IllegalArgumentException("PIN must be exactly 4 digits");
+        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        user.setPinHash(passwordEncoder.encode(rawPin));
+        userRepository.save(user);
+    }
+
+    /** @deprecated prefer pinLogin returning station JWT */
+    @Deprecated
     public boolean validatePin(UUID userId, String rawPin) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
-
         if (user.getPinHash() == null) {
             return false;
         }
-
         return passwordEncoder.matches(rawPin, user.getPinHash());
     }
 
-    public void setPin(UUID userId, String rawPin) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+    private void checkRateLimit(UUID userId) {
+        AttemptWindow window = pinAttempts.get(userId);
+        if (window != null && window.isOpen() && window.count.get() >= 5) {
+            throw new IllegalStateException("Too many PIN attempts; try again later");
+        }
+    }
 
-        String hashedPin = passwordEncoder.encode(rawPin);
-        user.setPinHash(hashedPin);
-        userRepository.save(user);
+    private void recordFailure(UUID userId) {
+        pinAttempts.compute(userId, (id, existing) -> {
+            if (existing == null || !existing.isOpen()) {
+                return new AttemptWindow();
+            }
+            existing.count.incrementAndGet();
+            return existing;
+        });
+    }
+
+    private static final class AttemptWindow {
+        final long startedAt = System.currentTimeMillis();
+        final AtomicInteger count = new AtomicInteger(1);
+
+        boolean isOpen() {
+            return System.currentTimeMillis() - startedAt < 60_000;
+        }
     }
 }

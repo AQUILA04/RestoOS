@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 
 @Component({
   selector: 'resto-pin-lockscreen',
@@ -6,12 +6,22 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
   styleUrls: ['./pin-lockscreen.component.css'],
   standalone: false
 })
-export class PinLockscreenComponent {
+export class PinLockscreenComponent implements OnChanges {
   @Input() users: Array<{ id: string; name: string; avatarUrl?: string }> = [];
-  @Output() onLoginSuccess = new EventEmitter<{ userId: string; pin: string }>();
+  @Output() loginSuccess = new EventEmitter<{ userId: string; pin: string }>();
 
   selectedUserId: string | null = null;
-  enteredPin: string = '';
+  enteredPin = '';
+
+  get pinMask(): string {
+    return '•'.repeat(Math.min(this.enteredPin.length, 4));
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['users'] && this.users?.length && !this.selectedUserId) {
+      this.selectedUserId = this.users[0].id;
+    }
+  }
 
   selectUser(userId: string): void {
     this.selectedUserId = userId;
@@ -19,9 +29,13 @@ export class PinLockscreenComponent {
   }
 
   pressDigit(digit: string): void {
-    if (!this.selectedUserId || this.enteredPin.length >= 4) return;
+    if (this.enteredPin.length >= 4) {
+      return;
+    }
+    if (!this.selectedUserId && this.users.length) {
+      this.selectedUserId = this.users[0].id;
+    }
     this.enteredPin += digit;
-
     if (this.enteredPin.length === 4) {
       this.submitPin();
     }
@@ -32,9 +46,10 @@ export class PinLockscreenComponent {
   }
 
   submitPin(): void {
-    if (this.selectedUserId && this.enteredPin.length === 4) {
-      this.onLoginSuccess.emit({
-        userId: this.selectedUserId,
+    const userId = this.selectedUserId || this.users[0]?.id || localStorage.getItem('user_id');
+    if (userId && this.enteredPin.length === 4) {
+      this.loginSuccess.emit({
+        userId,
         pin: this.enteredPin
       });
     }

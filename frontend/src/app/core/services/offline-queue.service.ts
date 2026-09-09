@@ -1,65 +1,113 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
+import { openDB, IDBPDatabase } from 'idb';
+import { ApiService } from './api.service';
 
 export interface PendingOrder {
   tempUuid: string;
   payload: any;
   createdAt: string;
+  status: 'pending' | 'syncing' | 'failed';
+  lastError?: string;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class OfflineQueueService {
-  private STORAGE_KEY = 'resto_offline_queue';
-  private queueSubject = new BehaviorSubject<PendingOrder[]>(this.loadFromStorage());
-  private isOnlineSubject = new BehaviorSubject<boolean>(navigator.onLine);
+  private dbPromise: Promise<IDBPDatabase> | null = null;
+  private initialized = false;
+  private readonly queueSubject = new BehaviorSubject<PendingOrder[]>([]);
+  private readonly isOnlineSubject = new BehaviorSubject<boolean>(
+    typeof navigator !== 'undefined' ? navigator.onLine : true,
+  );
+  private readonly onOnline = () => {
+    this.isOnlineSubject.next(true);
+    void this.drain();
+  };
+  private readonly onOffline = () => this.isOnlineSubject.next(false);
 
-  constructor() {
-    window.addEventListener('online', () => this.isOnlineSubject.next(true));
-    window.addEventListener('offline', () => this.isOnlineSubject.next(false));
-  }
+  constructor(private readonly api: ApiService) {}
 
-  private loadFromStorage(): PendingOrder[] {
-    try {
-      const stored = localStorage.getItem(this.STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  }
-
-  private saveToStorage(queue: PendingOrder[]): void {
-    try {
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(queue));
-    } catch (e) {
-      console.error('Failed to persist offline queue to localStorage', e);
-    }
-  }
-
-  public isOnline(): Observable<boolean> {
+  isOnline(): Observable<boolean> {
+    this.ensureInitialized();
     return this.isOnlineSubject.asObservable();
   }
 
-  public getQueue(): Observable<PendingOrder[]> {
+  getQueue(): Observable<PendingOrder[]> {
+    this.ensureInitialized();
     return this.queueSubject.asObservable();
   }
 
-  public enqueueOrder(payload: any): PendingOrder {
-    const currentQueue = this.queueSubject.value;
+  async enqueueOrder(payload: any): Promise<PendingOrder> {
+    const db = await this.getDb();
     const pending: PendingOrder = {
       tempUuid: crypto.randomUUID(),
       payload,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      status: 'pending',
     };
-    const updated = [...currentQueue, pending];
-    this.queueSubject.next(updated);
-    this.saveToStorage(updated);
+    await db.put('orders', pending);
+    await this.refresh();
+    if (navigator.onLine) {
+      void this.drain();
+    }
     return pending;
   }
 
-  public clearQueue(): void {
-    this.queueSubject.next([]);
-    this.saveToStorage([]);
+  async drain(): Promise<void> {
+    if (!navigator.onLine) {
+      return;
+    }
+    const db = await this.getDb();
+    const all = (await db.getAll('orders')) as PendingOrder[];
+    for (const item of all) {
+      try {
+        item.status = 'syncing';
+        await db.put('orders', item);
+        const idempotencyKey = item.payload?.idempotencyKey || item.tempUuid;
+        await firstValueFrom(this.api.postData<any>('/api/v1/orders', item.payload, idempotencyKey));
+        await db.delete('orders', item.tempUuid);
+      } catch (e: any) {
+        item.status = 'failed';
+        item.lastError = e?.message || 'sync failed';
+        await db.put('orders', item);
+      }
+    }
+    await this.refresh();
+  }
+
+  async clearQueue(): Promise<void> {
+    const db = await this.getDb();
+    await db.clear('orders');
+    await this.refresh();
+  }
+
+  private ensureInitialized(): void {
+    if (this.initialized) {
+      return;
+    }
+    this.initialized = true;
+    this.dbPromise = openDB('restoos-offline', 1, {
+      upgrade(db) {
+        if (!db.objectStoreNames.contains('orders')) {
+          db.createObjectStore('orders', { keyPath: 'tempUuid' });
+        }
+      },
+    });
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', this.onOnline);
+      window.addEventListener('offline', this.onOffline);
+      void this.refresh();
+    }
+  }
+
+  private getDb(): Promise<IDBPDatabase> {
+    this.ensureInitialized();
+    return this.dbPromise!;
+  }
+
+  private async refresh(): Promise<void> {
+    const db = await this.getDb();
+    const all = (await db.getAll('orders')) as PendingOrder[];
+    this.queueSubject.next(all);
   }
 }

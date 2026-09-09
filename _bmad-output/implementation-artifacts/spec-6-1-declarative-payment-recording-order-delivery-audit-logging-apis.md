@@ -2,7 +2,7 @@
 title: 'Story 6.1: Declarative Payment Recording, Order Delivery & Audit Logging APIs'
 type: 'feature'
 created: '2026-09-08'
-status: 'done'
+status: 'verified'
 baseline_commit: '5bea999'
 route: 'dispatch'
 review_loop_iteration: 0

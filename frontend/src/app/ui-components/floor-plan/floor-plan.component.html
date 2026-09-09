@@ -18,8 +18,8 @@
       [class.status-reserved]="t.status === 'RESERVED'"
       [class.status-out-of-service]="t.status === 'OUT_OF_SERVICE'"
       (click)="selectTable(t)">
-      <div class="table-number">T-{{ t.tableNumber }}</div>
-      <div class="table-capacity">👥 {{ t.capacity }}</div>
+      <div class="table-number">{{ t.name || t.tableNumber }}</div>
+      <div class="table-capacity">{{ t.capacity }} places</div>
       <div class="table-status-label">{{ t.status }}</div>
     </div>
   </div>

@@ -6,6 +6,7 @@ export interface CartItem {
   unitPrice: number;
   quantity: number;
   modifiers: string[];
+  modifierOptionIds?: string[];
 }
 
 @Component({
@@ -20,18 +21,18 @@ export class PosLayoutComponent {
   @Input() cartItems: CartItem[] = [];
   @Input() activeCategoryId: string | null = null;
 
-  @Output() onCategorySelect = new EventEmitter<string>();
-  @Output() onProductSelect = new EventEmitter<any>();
-  @Output() onCheckout = new EventEmitter<void>();
+  @Output() categorySelect = new EventEmitter<string>();
+  @Output() productSelect = new EventEmitter<any>();
+  @Output() checkout = new EventEmitter<void>();
 
   selectCategory(id: string): void {
     this.activeCategoryId = id;
-    this.onCategorySelect.emit(id);
+    this.categorySelect.emit(id);
   }
 
   selectProduct(product: any): void {
     if (!product.is86) {
-      this.onProductSelect.emit(product);
+      this.productSelect.emit(product);
     }
   }
 

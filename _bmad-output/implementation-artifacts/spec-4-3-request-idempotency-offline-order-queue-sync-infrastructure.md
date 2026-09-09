@@ -2,7 +2,7 @@
 title: 'Story 4.3: Request Idempotency & Offline Order Queue Sync Infrastructure'
 type: 'feature'
 created: '2026-09-08'
-status: 'done'
+status: 'verified'
 baseline_commit: '5cd5b58'
 route: 'dispatch'
 review_loop_iteration: 0

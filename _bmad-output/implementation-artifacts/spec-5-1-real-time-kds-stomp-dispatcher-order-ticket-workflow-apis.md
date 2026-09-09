@@ -2,7 +2,7 @@
 title: 'Story 5.1: Real-Time KDS STOMP Dispatcher & Order Ticket Workflow APIs'
 type: 'feature'
 created: '2026-09-08'
-status: 'done'
+status: 'verified'
 baseline_commit: '3140b8a'
 route: 'dispatch'
 review_loop_iteration: 0
