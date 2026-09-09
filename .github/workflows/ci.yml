@@ -145,15 +145,11 @@ jobs:
           npm ci
           npx playwright install --with-deps chromium
       - name: Build & serve frontend
-        env:
-          API_URL: http://localhost:8080
-          PORT: '4200'
         run: |
           cd frontend
-          npm run build -- --configuration=development
-          # Same-origin /api+/ws proxy (matches Contabo Traefik + apiUrl: '')
+          # ng serve + proxy.conf.json → same-origin /api+/ws (matches Contabo Traefik + apiUrl: '')
           npm run serve:e2e > frontend.log 2>&1 &
-          for i in $(seq 1 30); do
+          for i in $(seq 1 60); do
             CODE=$(curl -sf -o /tmp/spa-catalog.html -w '%{http_code}' http://localhost:4200/admin/catalog || true)
             # Without proxy, SPA fallback would return index.html for /api; require a real API response.
             API_CODE=$(curl -s -o /tmp/api-probe.txt -w '%{http_code}' \
