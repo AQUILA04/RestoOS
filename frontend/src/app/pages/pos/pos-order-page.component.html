@@ -6,6 +6,7 @@
   <section class="table-assign" *ngIf="canAssignTable" id="table-assign-section">
     <h2>Table (optionnelle)</h2>
     <div class="table-row">
+      <label for="order-table-select">Table occupée</label>
       <select id="order-table-select" [(ngModel)]="selectedTableId">
         <option value="">Sans table</option>
         <option *ngFor="let t of tables" [value]="t.id">{{ t.name }}</option>
@@ -14,7 +15,7 @@
     </div>
   </section>
 
-  <label>
+  <label for="receipt-client-email">
     Email client (optionnel)
     <input id="receipt-client-email" [(ngModel)]="clientEmail" type="email" />
   </label>
@@ -50,7 +51,7 @@
     </div>
 
     <div class="cash-panel" *ngIf="cashAmountReceived !== null" id="cash-payment-panel">
-      <label>
+      <label for="cash-amount-received">
         Montant reçu
         <input
           id="cash-amount-received"
