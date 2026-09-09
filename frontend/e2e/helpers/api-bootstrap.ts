@@ -195,6 +195,89 @@ export async function createTakeawayOrder(
   return order;
 }
 
+export async function createDineInOrder(
+  request: APIRequestContext,
+  backendApiUrl: string,
+  token: string,
+  body: {
+    storeId: string;
+    productId: string;
+    tableId?: string | null;
+    quantity?: number;
+    sendToKitchen?: boolean;
+    notes?: string;
+    idempotencyKey?: string;
+  }
+): Promise<{
+  id: string;
+  orderNumber: number;
+  status: string;
+  totalAmount: number;
+  paymentStatus: string;
+  tableId?: string | null;
+  createdBy?: string;
+}> {
+  const idempotencyKey = body.idempotencyKey ?? randomUUID();
+  const payload: Record<string, unknown> = {
+    storeId: body.storeId,
+    orderType: 'DINE_IN',
+    sendToKitchen: body.sendToKitchen ?? true,
+    notes: body.notes,
+    items: [{ productId: body.productId, quantity: body.quantity ?? 1 }],
+  };
+  if (body.tableId) {
+    payload['tableId'] = body.tableId;
+  }
+  const res = await request.post(`${backendApiUrl}/api/v1/orders`, {
+    headers: {
+      ...authHeaders(token),
+      'Idempotency-Key': idempotencyKey,
+    },
+    data: payload,
+  });
+  expect(res.status(), 'create DINE_IN order').toBe(200);
+  const order = (await res.json()).data;
+  expect(order.orderNumber).toBeGreaterThan(100);
+  return order;
+}
+
+export async function assignOrderTable(
+  request: APIRequestContext,
+  backendApiUrl: string,
+  token: string,
+  orderId: string,
+  tableId: string | null
+) {
+  const res = await request.patch(`${backendApiUrl}/api/v1/orders/${orderId}/table`, {
+    headers: authHeaders(token),
+    data: { tableId },
+  });
+  expect(res.status(), 'assign order table').toBe(200);
+  return (await res.json()).data;
+}
+
+export async function markOrderPaid(
+  request: APIRequestContext,
+  backendApiUrl: string,
+  token: string,
+  orderId: string,
+  body: {
+    paymentMethod: 'CASH' | 'CARD' | 'MOBILE_MONEY' | 'OTHER';
+    amount: number;
+    amountTendered?: number;
+  }
+) {
+  const res = await request.post(`${backendApiUrl}/api/v1/orders/${orderId}/payment/mark-paid`, {
+    headers: {
+      ...authHeaders(token),
+      'Idempotency-Key': randomUUID(),
+    },
+    data: body,
+  });
+  expect(res.status(), `mark paid ${body.paymentMethod}`).toBe(200);
+  return (await res.json()).data;
+}
+
 export async function getOrder(
   request: APIRequestContext,
   backendApiUrl: string,

@@ -1,5 +1,5 @@
 .pos-shell { padding: 12px; }
-.pos-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+.pos-tabs { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
 .pos-tabs button {
   min-height: 48px;
   padding: 8px 16px;
@@ -9,7 +9,63 @@
   font-weight: 600;
 }
 .pos-tabs button.active { background: #D84315; color: white; }
-.order-feedback { margin-top: 12px; display: flex; gap: 12px; align-items: center; }
+.ready-count {
+  display: inline-block;
+  margin-left: 6px;
+  min-width: 22px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #1A1A1A;
+  color: white;
+  font-size: 0.85rem;
+}
+.pos-tabs button.active .ready-count { background: white; color: #D84315; }
+.floor-actions { margin-bottom: 12px; }
+.secondary-btn {
+  min-height: 48px;
+  padding: 8px 16px;
+  border: 2px solid #455A64;
+  background: white;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.table-context { margin-bottom: 8px; }
+.table-context .hint, .hint { color: #607D8B; font-size: 0.95rem; }
+.link-btn {
+  margin-left: 8px;
+  border: none;
+  background: none;
+  color: #D84315;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.ready-panel { display: flex; flex-direction: column; gap: 12px; }
+.ready-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 72px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 12px;
+  background: #263238;
+  color: white;
+  text-align: left;
+  cursor: pointer;
+}
+.ready-card.ready-highlight { background: #37474F; box-shadow: inset 4px 0 0 #FF6E40; }
+.ready-card.paid-badge { opacity: 0.92; }
+.ready-num { font-size: 1.4rem; font-weight: 700; font-family: ui-monospace, monospace; }
+.ready-meta { flex: 1; opacity: 0.85; }
+.ready-cta { font-weight: 700; color: #FF6E40; }
+.order-feedback { margin-top: 12px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.order-link {
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-family: ui-monospace, monospace;
+}
 .order-status-badge {
   background: #FF6E40;
   color: white;
@@ -18,3 +74,4 @@
   font-weight: 600;
 }
 .error { color: #C62828; text-align: center; }
+

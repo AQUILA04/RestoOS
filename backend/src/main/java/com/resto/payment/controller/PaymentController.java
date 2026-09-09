@@ -47,7 +47,8 @@ public class PaymentController {
                         orderId,
                         cashier,
                         request.getPaymentMethod() != null ? request.getPaymentMethod() : request.getMethod(),
-                        request.getAmount()
+                        request.getAmount(),
+                        request.getAmountTendered()
                 ),
                 Payment.class
         );
@@ -76,7 +77,7 @@ public class PaymentController {
                 organizationId, storeId, "POST /api/v1/payments", key, request,
                 () -> paymentService.markPaid(organizationId, storeId, request.getOrderId(), cashier,
                         request.getPaymentMethod() != null ? request.getPaymentMethod() : request.getMethod(),
-                        request.getAmount()),
+                        request.getAmount(), request.getAmountTendered()),
                 Payment.class
         );
 
@@ -95,6 +96,7 @@ public class PaymentController {
         private String method;
         private String paymentMethod;
         private BigDecimal amount;
+        private BigDecimal amountTendered;
 
         public UUID getOrderId() { return orderId; }
         public void setOrderId(UUID orderId) { this.orderId = orderId; }
@@ -106,5 +108,7 @@ public class PaymentController {
         public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
         public BigDecimal getAmount() { return amount; }
         public void setAmount(BigDecimal amount) { this.amount = amount; }
+        public BigDecimal getAmountTendered() { return amountTendered; }
+        public void setAmountTendered(BigDecimal amountTendered) { this.amountTendered = amountTendered; }
     }
 }

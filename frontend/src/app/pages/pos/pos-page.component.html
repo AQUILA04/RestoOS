@@ -8,9 +8,18 @@
   <div class="pos-tabs">
     <button type="button" id="tab-floor-plan" [class.active]="activeTab === 'floor'" (click)="activeTab = 'floor'">Plan de salle</button>
     <button type="button" id="tab-pos-catalog" [class.active]="activeTab === 'catalog'" (click)="activeTab = 'catalog'">Catalogue</button>
+    <button type="button" id="tab-ready-orders" [class.active]="activeTab === 'orders'" (click)="activeTab = 'orders'; reloadOpenOrders()">
+      Commandes
+      <span class="ready-count" *ngIf="openOrders.length">{{ openOrders.length }}</span>
+    </button>
   </div>
 
   <div *ngIf="activeTab === 'floor'">
+    <div class="floor-actions">
+      <button type="button" id="btn-order-without-table" class="secondary-btn" (click)="startOrderWithoutTable()">
+        Commander sans table
+      </button>
+    </div>
     <resto-floor-plan
       [zones]="zones"
       [tables]="tables"
@@ -21,7 +30,12 @@
   </div>
 
   <div *ngIf="activeTab === 'catalog'">
-    <p *ngIf="selectedTable">Table {{ selectedTable.name || selectedTable.tableNumber }}</p>
+    <div class="table-context">
+      <p *ngIf="selectedTable">Table {{ selectedTable.name || selectedTable.tableNumber }}
+        <button type="button" class="link-btn" (click)="clearTableSelection()">Retirer</button>
+      </p>
+      <p *ngIf="!selectedTable" class="hint">Aucune table — optionnelle, à assigner plus tard</p>
+    </div>
     <resto-pos-layout
       [categories]="categories"
       [products]="products"
@@ -33,9 +47,36 @@
     </resto-pos-layout>
   </div>
 
+  <div *ngIf="activeTab === 'orders'" class="ready-panel" id="ready-orders-panel">
+    <h2>Commandes ouvertes</h2>
+    <p class="hint">Ouvrez une commande pour encaisser à tout moment, ou marquer livré.</p>
+    <p class="hint" *ngIf="!openOrders.length">Aucune commande ouverte.</p>
+    <button
+      type="button"
+      class="ready-card"
+      [class.ready-highlight]="order.status === 'READY'"
+      [class.paid-badge]="order.paymentStatus === 'PAID'"
+      *ngFor="let order of openOrders"
+      [attr.data-order-number]="order.orderNumber"
+      (click)="openOrder(order)">
+      <span class="ready-num">#{{ order.orderNumber }}</span>
+      <span class="ready-meta">
+        {{ tableLabel(order.tableId) }}
+        · {{ statusLabel(order.status, order.paymentStatus) }}
+        <ng-container *ngIf="order.totalAmount != null"> · {{ order.totalAmount | number:'1.2-2' }}</ng-container>
+      </span>
+      <span class="ready-cta">{{ order.paymentStatus === 'PAID' ? 'Ouvrir →' : 'Encaisser →' }}</span>
+    </button>
+  </div>
+
   <div class="order-feedback" *ngIf="orderNumberDisplay">
-    <span id="order-number-display">{{ orderNumberDisplay }}</span>
+    <button type="button" class="link-btn order-link" id="order-number-display" (click)="openLastCreatedOrder()">
+      {{ orderNumberDisplay }}
+    </button>
     <span class="order-status-badge">{{ orderStatus }}</span>
+    <button type="button" class="secondary-btn" *ngIf="lastCreatedOrderNumber != null" (click)="openLastCreatedOrder()">
+      Ouvrir / Encaisser
+    </button>
   </div>
 
   <resto-modifier-modal

@@ -86,6 +86,14 @@ public class OrderController {
         return ok(orderService.deliver(orderId, actor));
     }
 
+    @PatchMapping("/{id}/table")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER', 'CASHIER', 'WAITER')")
+    public Response<Order> updateOrderTable(@PathVariable("id") UUID orderId,
+                                            @RequestBody UpdateTableRequest request) {
+        UUID actor = TenantContext.getUserId() != null ? TenantContext.getUserId() : JwtAuth.userId();
+        return ok(orderService.updateOrderTable(orderId, request.getTableId(), actor));
+    }
+
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER')")
     public Response<Order> cancelOrder(@PathVariable("id") UUID orderId,
@@ -108,6 +116,12 @@ public class OrderController {
         private String reason;
         public String getReason() { return reason; }
         public void setReason(String reason) { this.reason = reason; }
+    }
+
+    public static class UpdateTableRequest {
+        private UUID tableId;
+        public UUID getTableId() { return tableId; }
+        public void setTableId(UUID tableId) { this.tableId = tableId; }
     }
 
     public static class CreateOrderRequest {

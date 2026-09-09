@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -90,7 +91,7 @@ class IdempotencyServiceTest {
         UUID org = UUID.randomUUID();
         when(repository.findByOrganizationIdAndEndpointAndKey(org, "POST /pay", "k-new"))
                 .thenReturn(Optional.empty());
-        when(repository.save(any(IdempotencyKey.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(repository.saveAndFlush(any(IdempotencyKey.class))).thenAnswer(inv -> inv.getArgument(0));
 
         AtomicInteger calls = new AtomicInteger();
         String result = service.execute(org, null, "POST /pay", "k-new", MapReq.of("a"),
@@ -98,7 +99,7 @@ class IdempotencyServiceTest {
 
         assertEquals("created", result);
         assertEquals(1, calls.get());
-        verify(repository).save(argThat(key ->
+        verify(repository).saveAndFlush(argThat(key ->
                 "k-new".equals(key.getKey())
                         && key.getResponseBody() != null
                         && key.getResponseBody().contains("created")
@@ -106,7 +107,7 @@ class IdempotencyServiceTest {
     }
 
     @Test
-    @DisplayName("Concurrent second lookup after first save replays without re-executing")
+    @DisplayName("Second call after first save replays without re-executing")
     void concurrentReplayAfterFirstSave() throws Exception {
         UUID org = UUID.randomUUID();
         String endpoint = "POST /orders";
@@ -129,7 +130,7 @@ class IdempotencyServiceTest {
                     .build();
             return Optional.of(stored);
         });
-        when(repository.save(any(IdempotencyKey.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(repository.saveAndFlush(any(IdempotencyKey.class))).thenAnswer(inv -> inv.getArgument(0));
 
         String first = service.execute(org, null, endpoint, key, MapReq.of("same"),
                 () -> { calls.incrementAndGet(); return "winner"; }, String.class);
@@ -139,7 +140,36 @@ class IdempotencyServiceTest {
         assertEquals("winner", first);
         assertEquals("winner", second);
         assertEquals(1, calls.get());
-        verify(repository, times(1)).save(any(IdempotencyKey.class));
+        verify(repository, times(1)).saveAndFlush(any(IdempotencyKey.class));
+    }
+
+    @Test
+    @DisplayName("Unique constraint race replays winner response without failing")
+    void uniqueConstraintRaceReplaysWinner() throws Exception {
+        UUID org = UUID.randomUUID();
+        String endpoint = "POST /orders";
+        String key = "race-1";
+        IdempotencyKey winner = IdempotencyKey.builder()
+                .organizationId(org)
+                .endpoint(endpoint)
+                .key(key)
+                .requestHash(service.hashRequest(MapReq.of("same")))
+                .responseBody(mapper.writeValueAsString("winner"))
+                .statusCode(200)
+                .build();
+
+        when(repository.findByOrganizationIdAndEndpointAndKey(org, endpoint, key))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(winner));
+        when(repository.saveAndFlush(any(IdempotencyKey.class)))
+                .thenThrow(new DataIntegrityViolationException("duplicate key"));
+
+        AtomicInteger calls = new AtomicInteger();
+        String result = service.execute(org, null, endpoint, key, MapReq.of("same"),
+                () -> { calls.incrementAndGet(); return "loser"; }, String.class);
+
+        assertEquals("winner", result);
+        assertEquals(1, calls.get());
     }
 
     static class MapReq {

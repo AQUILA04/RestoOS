@@ -2,6 +2,7 @@ package com.resto.core.idempotency;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,36 +51,45 @@ public class IdempotencyService {
                 organizationId, endpoint, idempotencyKey);
 
         if (existing.isPresent()) {
-            IdempotencyKey key = existing.get();
-            if (!key.getRequestHash().equals(requestHash)) {
-                throw new IllegalArgumentException("Idempotency-Key reused with different request body");
-            }
-            if (key.getResponseBody() != null) {
-                try {
-                    return objectMapper.readValue(key.getResponseBody(), responseType);
-                } catch (JsonProcessingException e) {
-                    throw new IllegalStateException("Stored idempotent response is corrupt", e);
-                }
-            }
+            return replay(existing.get(), requestHash, responseType);
         }
 
         T result = action.get();
         try {
-            IdempotencyKey record = existing.orElseGet(() -> IdempotencyKey.builder()
+            IdempotencyKey record = IdempotencyKey.builder()
                     .organizationId(organizationId)
                     .storeId(storeId)
                     .endpoint(endpoint)
                     .key(idempotencyKey)
                     .requestHash(requestHash)
-                    .build());
-            record.setRequestHash(requestHash);
+                    .build();
             record.setResponseBody(objectMapper.writeValueAsString(result));
             record.setStatusCode(200);
-            repository.save(record);
+            repository.saveAndFlush(record);
+        } catch (DataIntegrityViolationException dup) {
+            // Concurrent request won the insert — return the stored response
+            IdempotencyKey winner = repository.findByOrganizationIdAndEndpointAndKey(
+                            organizationId, endpoint, idempotencyKey)
+                    .orElseThrow(() -> dup);
+            return replay(winner, requestHash, responseType);
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Unable to persist idempotent response", e);
         }
         return result;
+    }
+
+    private <T> T replay(IdempotencyKey key, String requestHash, Class<T> responseType) {
+        if (!key.getRequestHash().equals(requestHash)) {
+            throw new IllegalArgumentException("Idempotency-Key reused with different request body");
+        }
+        if (key.getResponseBody() == null) {
+            throw new IllegalStateException("Idempotent request is still in progress");
+        }
+        try {
+            return objectMapper.readValue(key.getResponseBody(), responseType);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Stored idempotent response is corrupt", e);
+        }
     }
 
     /** In-memory style helper for unit tests without DB. */

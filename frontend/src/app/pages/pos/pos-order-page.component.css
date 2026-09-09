@@ -1,6 +1,9 @@
-.order-page { padding: 24px; max-width: 480px; }
+.order-page { padding: 24px; max-width: 520px; }
 .actions { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
-.actions button {
+.actions button,
+.payment-methods button,
+.cash-panel button,
+.table-row button {
   min-height: 64px;
   border: none;
   border-radius: 12px;
@@ -8,8 +11,9 @@
   color: white;
   font-size: 1.1rem;
   font-weight: 700;
+  cursor: pointer;
 }
-.actions button:disabled { opacity: 0.5; }
+.actions button:disabled { opacity: 0.5; cursor: not-allowed; }
 .order-status-badge {
   display: inline-block;
   margin: 8px 0;
@@ -19,5 +23,28 @@
   border-radius: 999px;
 }
 .error { color: #C62828; }
+.success { color: #2E7D32; font-weight: 600; }
 label { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
-input { min-height: 48px; padding: 8px 12px; border-radius: 8px; border: 1px solid #CFD8DC; }
+input, select {
+  min-height: 48px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #CFD8DC;
+}
+.table-assign { margin-top: 16px; }
+.table-assign h2, .payment-panel h2 { font-size: 1.1rem; margin: 0 0 8px; }
+.table-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.table-row label { flex: 0 0 100%; font-weight: 600; }
+.table-row select { flex: 1; }
+.table-row button { min-height: 48px; padding: 0 16px; font-size: 0.95rem; }
+.payment-panel {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #ECEFF1;
+}
+.payment-methods { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.cash-panel { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+.cash-panel button:disabled { opacity: 0.5; }
+#cash-change-display.insufficient { color: #C62828; }
+#cash-change-display { font-size: 1.15rem; }

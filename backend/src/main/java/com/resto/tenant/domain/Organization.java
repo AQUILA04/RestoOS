@@ -29,6 +29,10 @@ public class Organization {
     @Builder.Default
     private Boolean active = true;
 
+    /** Display label for MOBILE_MONEY (e.g. Mixx by Yas, Flooz, MoMo, Juice) */
+    @Column(name = "mobile_money_label", length = 100)
+    private String mobileMoneyLabel;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
@@ -43,6 +47,8 @@ public class Organization {
     public void setCode(String code) { this.code = code; }
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }
+    public String getMobileMoneyLabel() { return mobileMoneyLabel; }
+    public void setMobileMoneyLabel(String mobileMoneyLabel) { this.mobileMoneyLabel = mobileMoneyLabel; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
@@ -68,6 +74,7 @@ public class Organization {
         private String name;
         private String code;
         private Boolean active = true;
+        private String mobileMoneyLabel;
         private OffsetDateTime createdAt;
         private OffsetDateTime updatedAt;
 
@@ -75,6 +82,7 @@ public class Organization {
         public OrganizationBuilder name(String name) { this.name = name; return this; }
         public OrganizationBuilder code(String code) { this.code = code; return this; }
         public OrganizationBuilder active(Boolean active) { this.active = active; return this; }
+        public OrganizationBuilder mobileMoneyLabel(String mobileMoneyLabel) { this.mobileMoneyLabel = mobileMoneyLabel; return this; }
         public OrganizationBuilder createdAt(OffsetDateTime createdAt) { this.createdAt = createdAt; return this; }
         public OrganizationBuilder updatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
 
@@ -84,6 +92,7 @@ public class Organization {
             o.setName(this.name);
             o.setCode(this.code);
             o.setActive(this.active != null ? this.active : true);
+            o.setMobileMoneyLabel(this.mobileMoneyLabel);
             o.setCreatedAt(this.createdAt);
             o.setUpdatedAt(this.updatedAt);
             return o;

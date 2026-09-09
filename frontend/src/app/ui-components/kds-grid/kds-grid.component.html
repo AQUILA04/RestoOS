@@ -8,6 +8,9 @@
           {{ getElapsedMinutes(t.createdAt) }}m
         </div>
       </div>
+      <div class="cashier-line" *ngIf="t.cashierName" id="ticket-cashier-name">
+        Caissier: {{ t.cashierName }}
+      </div>
 
       <div class="card-body">
         <button
