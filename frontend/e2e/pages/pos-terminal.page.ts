@@ -86,8 +86,6 @@ export class PosTerminalPage {
     await this.clientEmailInput.fill(clientEmail);
     await this.page.locator('#btn-open-payment').click();
     await this.page.locator('#btn-pay-cash-toggle').click();
-    const totalText = await this.page.locator('.order-page p').filter({ hasText: 'Total' }).textContent();
-    // Ensure cash amount covers total (prefilled); then confirm
     await this.markPaidCashBtn.click();
     await expect(this.orderStatusBadge).toContainText('PAYÉ');
   }
