@@ -73,8 +73,27 @@ test.describe('Companion — POS open orders & pay anytime UI', () => {
 
     await posPage.gotoOrder(String(order.orderNumber));
     await expect(posPage.markDeliveredBtn).toBeEnabled();
+    const deliverResponse = posPage.page.waitForResponse(
+      (res) =>
+        res.url().includes(`/api/v1/orders/${order.id}/deliver`) &&
+        res.request().method() === 'POST',
+      { timeout: 15000 }
+    );
     await posPage.markDeliveredBtn.click();
-    await expect(posPage.orderStatusBadge).toContainText(/PAYÉ/);
+    const deliverRes = await deliverResponse;
+    expect(deliverRes.ok()).toBeTruthy();
+    await expect(posPage.markDeliveredBtn).toContainText(/Déjà livré|livré/i);
+
+    await expect
+      .poll(
+        async () => {
+          const res = await getOrder(request, backendApiUrl, tenant.ownerToken, order.id);
+          const body = await res.json();
+          return body.data?.status;
+        },
+        { timeout: 10000 }
+      )
+      .toBe('CLOSED');
 
     const finalRes = await getOrder(request, backendApiUrl, tenant.ownerToken, order.id);
     const finalOrder = (await finalRes.json()).data;

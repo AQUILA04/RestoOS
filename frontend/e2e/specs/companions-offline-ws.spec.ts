@@ -106,15 +106,8 @@ test.describe('Companion — offline queue & kitchen snapshot recovery', () => {
       expect(queueSnapshot.queueLength).toBeGreaterThanOrEqual(1);
       expect(queueSnapshot.statuses).toContain('pending');
 
-      // Conceptual drain path: when back online, POST /orders with same Idempotency-Key
-      await page.evaluate(() => {
-        Object.defineProperty(navigator, 'onLine', {
-          configurable: true,
-          get: () => true,
-        });
-        window.dispatchEvent(new Event('online'));
-      });
-
+      // Drain via API without firing window "online" — that would race OfflineQueueService.drain()
+      // on the same Idempotency-Key (uk_idempotency_tenant_endpoint_key → 500).
       const drainRes = await request.post(`${backendApiUrl}/api/v1/orders`, {
         headers: {
           ...authHeaders(tenant.ownerToken),
@@ -132,6 +125,14 @@ test.describe('Companion — offline queue & kitchen snapshot recovery', () => {
       expect(drained.status).toBe('SENT_TO_KITCHEN');
       expect(drained.orderNumber).toBeGreaterThan(100);
       expect(drained.orderNumber).not.toBe(1001);
+
+      await page.evaluate(() => {
+        Object.defineProperty(navigator, 'onLine', {
+          configurable: true,
+          get: () => true,
+        });
+        window.dispatchEvent(new Event('online'));
+      });
 
       // Clear IndexedDB after successful sync (mirrors OfflineQueueService.drain delete)
       await page.evaluate(async () => {
