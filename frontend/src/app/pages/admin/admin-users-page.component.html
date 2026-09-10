@@ -1,0 +1,63 @@
+<div class="admin-users">
+  <h1>Utilisateurs &amp; équipe</h1>
+  <p class="hint">Invitez le personnel, attribuez les rôles et définissez les PIN de caisse.</p>
+  <p class="ok" *ngIf="toast" id="users-toast">{{ toast }}</p>
+  <p class="err" *ngIf="error">{{ error }}</p>
+
+  <section class="panel" id="invite-panel">
+    <h2>Inviter un collaborateur</h2>
+    <div class="row">
+      <label class="sr-only" for="invite-email">Email</label>
+      <input id="invite-email" type="email" [(ngModel)]="invite.email" placeholder="email@exemple.com" />
+      <label class="sr-only" for="invite-role">Rôle</label>
+      <select id="invite-role" [(ngModel)]="invite.role">
+        <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+      </select>
+      <label class="sr-only" for="invite-store">Magasin</label>
+      <select id="invite-store" [(ngModel)]="invite.storeId">
+        <option *ngFor="let s of stores" [value]="s.id">{{ s.name }}</option>
+      </select>
+      <button type="button" id="btn-invite-user" (click)="sendInvite()">Inviter</button>
+    </div>
+  </section>
+
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr><th>Utilisateur</th><th>Rôle</th><th>PIN</th><th>Statut</th><th></th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let m of members">
+          <td>
+            <strong>{{ m.email }}</strong>
+            <div class="muted" *ngIf="m.firstName || m.lastName">{{ m.firstName }} {{ m.lastName }}</div>
+          </td>
+          <td>
+            <select [id]="'role-' + m.membershipId" [(ngModel)]="roleDraft[m.membershipId]">
+              <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+            </select>
+            <button type="button" (click)="saveRole(m)">OK</button>
+          </td>
+          <td>
+            <span class="muted">{{ m.hasPin ? 'Défini' : 'Aucun' }}</span>
+            <input
+              [id]="'pin-' + m.userId"
+              type="password"
+              maxlength="4"
+              inputmode="numeric"
+              [(ngModel)]="pinDraft[m.userId]"
+              placeholder="****"
+            />
+            <button type="button" (click)="savePin(m)">PIN</button>
+          </td>
+          <td>{{ m.active === false ? 'Inactif' : 'Actif' }}</td>
+          <td>
+            <button type="button" class="secondary" (click)="toggleActive(m)">
+              {{ m.active === false ? 'Réactiver' : 'Désactiver' }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

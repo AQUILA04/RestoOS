@@ -16,6 +16,7 @@ public class ResolvedProductDto {
     private String imageUrl;
     private Boolean is86;
     private Boolean available;
+    private Integer avgPrepMinutes;
     private List<ResolvedModifierGroupDto> modifierGroups = new ArrayList<>();
 
     public UUID getProductId() { return productId; }
@@ -38,6 +39,8 @@ public class ResolvedProductDto {
     public void setIs86(Boolean is86) { this.is86 = is86; }
     public Boolean getAvailable() { return available; }
     public void setAvailable(Boolean available) { this.available = available; }
+    public Integer getAvgPrepMinutes() { return avgPrepMinutes; }
+    public void setAvgPrepMinutes(Integer avgPrepMinutes) { this.avgPrepMinutes = avgPrepMinutes; }
     public List<ResolvedModifierGroupDto> getModifierGroups() { return modifierGroups; }
     public void setModifierGroups(List<ResolvedModifierGroupDto> modifierGroups) {
         this.modifierGroups = modifierGroups != null ? modifierGroups : new ArrayList<>();
@@ -56,6 +59,7 @@ public class ResolvedProductDto {
         private String imageUrl;
         private Boolean is86;
         private Boolean available;
+        private Integer avgPrepMinutes;
         private List<ResolvedModifierGroupDto> modifierGroups = new ArrayList<>();
 
         public ResolvedProductDtoBuilder productId(UUID productId) { this.productId = productId; return this; }
@@ -68,6 +72,7 @@ public class ResolvedProductDto {
         public ResolvedProductDtoBuilder imageUrl(String imageUrl) { this.imageUrl = imageUrl; return this; }
         public ResolvedProductDtoBuilder is86(Boolean is86) { this.is86 = is86; return this; }
         public ResolvedProductDtoBuilder available(Boolean available) { this.available = available; return this; }
+        public ResolvedProductDtoBuilder avgPrepMinutes(Integer avgPrepMinutes) { this.avgPrepMinutes = avgPrepMinutes; return this; }
         public ResolvedProductDtoBuilder modifierGroups(List<ResolvedModifierGroupDto> modifierGroups) {
             this.modifierGroups = modifierGroups != null ? modifierGroups : new ArrayList<>();
             return this;
@@ -85,6 +90,7 @@ public class ResolvedProductDto {
             dto.setImageUrl(this.imageUrl);
             dto.setIs86(this.is86);
             dto.setAvailable(this.available);
+            dto.setAvgPrepMinutes(this.avgPrepMinutes);
             dto.setModifierGroups(this.modifierGroups);
             return dto;
         }

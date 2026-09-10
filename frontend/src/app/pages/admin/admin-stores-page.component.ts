@@ -2,7 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { ApiService } from '../../core/services/api.service';
 import { StoreContextService } from '../../core/services/store-context.service';
 
-type StoreRow = { id: string; name: string; code?: string; active?: boolean };
+type StoreRow = {
+  id: string;
+  name: string;
+  code?: string;
+  timezone?: string;
+  currency?: string;
+  active?: boolean;
+};
 
 @Component({
   selector: 'resto-admin-stores-page',
@@ -13,10 +20,14 @@ type StoreRow = { id: string; name: string; code?: string; active?: boolean };
 export class AdminStoresPageComponent implements OnInit {
   stores: StoreRow[] = [];
   newStoreName = '';
-  editName: Record<string, string> = {};
+  newStoreCurrency = 'EUR';
+  newStoreTimezone = 'Europe/Paris';
+  edit: Record<string, { name: string; currency: string; timezone: string }> = {};
   message = '';
   error = '';
   activeStoreId = '';
+
+  readonly currencies = ['EUR', 'XOF', 'XAF', 'USD', 'GBP', 'MAD', 'TND', 'GNF', 'CDF'];
 
   constructor(
     private readonly api: ApiService,
@@ -32,8 +43,14 @@ export class AdminStoresPageComponent implements OnInit {
     this.api.getData<StoreRow[]>('/api/v1/stores').subscribe({
       next: (stores) => {
         this.stores = stores || [];
-        this.editName = {};
-        this.stores.forEach((s) => (this.editName[s.id] = s.name));
+        this.edit = {};
+        this.stores.forEach((s) => {
+          this.edit[s.id] = {
+            name: s.name,
+            currency: s.currency || 'EUR',
+            timezone: s.timezone || 'UTC',
+          };
+        });
       },
       error: () => {
         this.error = 'Impossible de charger les établissements.';
@@ -41,21 +58,35 @@ export class AdminStoresPageComponent implements OnInit {
     });
   }
 
-  rename(store: StoreRow): void {
-    const name = (this.editName[store.id] || '').trim();
+  save(store: StoreRow): void {
+    const draft = this.edit[store.id];
+    const name = (draft?.name || '').trim();
     if (!name) {
       return;
     }
-    this.api.patchData<StoreRow>(`/api/v1/stores/${store.id}`, { name }).subscribe({
-      next: (updated) => {
-        store.name = updated.name;
-        this.message = 'Nom mis à jour.';
-        this.error = '';
-      },
-      error: () => {
-        this.error = 'Renommage impossible.';
-      },
-    });
+    this.api
+      .patchData<StoreRow>(`/api/v1/stores/${store.id}`, {
+        name,
+        currency: draft.currency,
+        timezone: draft.timezone,
+      })
+      .subscribe({
+        next: (updated) => {
+          store.name = updated.name;
+          store.currency = updated.currency;
+          store.timezone = updated.timezone;
+          this.message = 'Établissement mis à jour.';
+          this.error = '';
+        },
+        error: () => {
+          this.error = 'Mise à jour impossible.';
+        },
+      });
+  }
+
+  /** Alias for existing E2E rename selectors. */
+  rename(store: StoreRow): void {
+    this.save(store);
   }
 
   addStore(): void {
@@ -66,8 +97,8 @@ export class AdminStoresPageComponent implements OnInit {
     this.api
       .postData<StoreRow>('/api/v1/stores', {
         name,
-        timezone: 'Europe/Paris',
-        currency: 'EUR',
+        timezone: this.newStoreTimezone || 'Europe/Paris',
+        currency: this.newStoreCurrency || 'EUR',
       })
       .subscribe({
         next: () => {

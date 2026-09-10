@@ -49,6 +49,12 @@ export class ApiService {
       .pipe(map((r) => r.data));
   }
 
+  deleteData<T>(path: string): Observable<T> {
+    return this.http
+      .delete<ApiResponse<T>>(`${this.baseUrl}${path}`)
+      .pipe(map((r) => r.data));
+  }
+
   getTables(storeId: string): Observable<any[]> {
     return this.getData<any[]>(`/api/v1/stores/${storeId}/tables`).pipe(
       catchError(() => this.getData<any[]>('/api/v1/floor-plan/tables', { storeId })),
@@ -59,6 +65,69 @@ export class ApiService {
     return this.getData<any[]>(`/api/v1/stores/${storeId}/zones`).pipe(
       catchError(() => this.getData<any[]>('/api/v1/floor-plan/zones', { storeId })),
     );
+  }
+
+  createZone(storeId: string, body: { name: string; displayOrder?: number }): Observable<any> {
+    return this.postData(`/api/v1/stores/${storeId}/zones`, body);
+  }
+
+  createTable(storeId: string, body: unknown): Observable<any> {
+    return this.postData(`/api/v1/stores/${storeId}/tables`, body);
+  }
+
+  updateTable(storeId: string, tableId: string, body: unknown): Observable<any> {
+    return this.patchData(`/api/v1/stores/${storeId}/tables/${tableId}`, body);
+  }
+
+  deleteTable(storeId: string, tableId: string): Observable<any> {
+    return this.deleteData(`/api/v1/stores/${storeId}/tables/${tableId}`);
+  }
+
+  getProducts(organizationId?: string, categoryId?: string): Observable<any[]> {
+    const params: Record<string, string> = {};
+    if (organizationId) params['organizationId'] = organizationId;
+    if (categoryId) params['categoryId'] = categoryId;
+    return this.getData<any[]>('/api/v1/products', Object.keys(params).length ? params : undefined);
+  }
+
+  createCategory(body: { name: string; displayOrder?: number }): Observable<any> {
+    return this.postData('/api/v1/categories', body);
+  }
+
+  updateCategory(id: string, body: unknown): Observable<any> {
+    return this.putData(`/api/v1/categories/${id}`, body);
+  }
+
+  deleteCategory(id: string): Observable<any> {
+    return this.deleteData(`/api/v1/categories/${id}`);
+  }
+
+  createProduct(body: unknown): Observable<any> {
+    return this.postData('/api/v1/products', body);
+  }
+
+  updateProduct(id: string, body: unknown): Observable<any> {
+    return this.putData(`/api/v1/products/${id}`, body);
+  }
+
+  deleteProduct(id: string): Observable<any> {
+    return this.deleteData(`/api/v1/products/${id}`);
+  }
+
+  listMembers(): Observable<any[]> {
+    return this.getData<any[]>('/api/v1/memberships');
+  }
+
+  inviteMember(body: { email: string; role: string; storeId?: string; storeIds?: string[] }): Observable<any> {
+    return this.postData('/api/v1/memberships/invite', body);
+  }
+
+  updateMembership(membershipId: string, body: unknown): Observable<any> {
+    return this.patchData(`/api/v1/memberships/${membershipId}`, body);
+  }
+
+  setPin(userId: string, pin: string): Observable<any> {
+    return this.postData('/api/v1/auth/set-pin', { userId, pin });
   }
 
   getResolvedProducts(storeId: string, organizationId: string): Observable<any[]> {
@@ -112,7 +181,10 @@ export class ApiService {
     return this.getData<any>(`/api/v1/organizations/${orgId}`);
   }
 
-  updateOrganization(orgId: string, body: { mobileMoneyLabel?: string }): Observable<any> {
+  updateOrganization(
+    orgId: string,
+    body: { name?: string; mobileMoneyLabel?: string; logoUrl?: string },
+  ): Observable<any> {
     return this.patchData<any>(`/api/v1/organizations/${orgId}`, body);
   }
 

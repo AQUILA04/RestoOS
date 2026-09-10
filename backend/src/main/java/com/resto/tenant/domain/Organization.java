@@ -33,6 +33,10 @@ public class Organization {
     @Column(name = "mobile_money_label", length = 100)
     private String mobileMoneyLabel;
 
+    /** Public URL of the organization logo (owner-configured branding). */
+    @Column(name = "logo_url", length = 1000)
+    private String logoUrl;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
@@ -49,6 +53,8 @@ public class Organization {
     public void setActive(Boolean active) { this.active = active; }
     public String getMobileMoneyLabel() { return mobileMoneyLabel; }
     public void setMobileMoneyLabel(String mobileMoneyLabel) { this.mobileMoneyLabel = mobileMoneyLabel; }
+    public String getLogoUrl() { return logoUrl; }
+    public void setLogoUrl(String logoUrl) { this.logoUrl = logoUrl; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
@@ -75,6 +81,7 @@ public class Organization {
         private String code;
         private Boolean active = true;
         private String mobileMoneyLabel;
+        private String logoUrl;
         private OffsetDateTime createdAt;
         private OffsetDateTime updatedAt;
 
@@ -83,6 +90,7 @@ public class Organization {
         public OrganizationBuilder code(String code) { this.code = code; return this; }
         public OrganizationBuilder active(Boolean active) { this.active = active; return this; }
         public OrganizationBuilder mobileMoneyLabel(String mobileMoneyLabel) { this.mobileMoneyLabel = mobileMoneyLabel; return this; }
+        public OrganizationBuilder logoUrl(String logoUrl) { this.logoUrl = logoUrl; return this; }
         public OrganizationBuilder createdAt(OffsetDateTime createdAt) { this.createdAt = createdAt; return this; }
         public OrganizationBuilder updatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
 
@@ -93,6 +101,7 @@ public class Organization {
             o.setCode(this.code);
             o.setActive(this.active != null ? this.active : true);
             o.setMobileMoneyLabel(this.mobileMoneyLabel);
+            o.setLogoUrl(this.logoUrl);
             o.setCreatedAt(this.createdAt);
             o.setUpdatedAt(this.updatedAt);
             return o;

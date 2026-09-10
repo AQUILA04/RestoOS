@@ -70,6 +70,41 @@ public class FloorPlanController {
         return ok(floorPlanService.getTablesByStore(storeId));
     }
 
+    @PatchMapping("/tables/{tableId}")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER')")
+    public Response<RestaurantTable> updateTable(@PathVariable("storeId") UUID storeId,
+                                                 @PathVariable("tableId") UUID tableId,
+                                                 @RequestBody UpdateTableRequest request) {
+        String tableNumber = request.getTableNumber() != null ? request.getTableNumber() : request.getName();
+        return ok(floorPlanService.updateTable(
+                tableId, request.getZoneId(), tableNumber, request.getCapacity(),
+                request.getPosX(), request.getPosY(), request.getShape(), request.getStatus()));
+    }
+
+    @DeleteMapping("/tables/{tableId}")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER')")
+    public Response<String> deleteTable(@PathVariable("storeId") UUID storeId,
+                                        @PathVariable("tableId") UUID tableId) {
+        floorPlanService.deleteTable(tableId);
+        return ok("deleted");
+    }
+
+    @PatchMapping("/zones/{zoneId}")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER')")
+    public Response<Zone> updateZone(@PathVariable("storeId") UUID storeId,
+                                     @PathVariable("zoneId") UUID zoneId,
+                                     @RequestBody CreateZoneRequest request) {
+        return ok(floorPlanService.updateZone(zoneId, request.getName(), request.getDisplayOrder()));
+    }
+
+    @DeleteMapping("/zones/{zoneId}")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER')")
+    public Response<String> deleteZone(@PathVariable("storeId") UUID storeId,
+                                       @PathVariable("zoneId") UUID zoneId) {
+        floorPlanService.deleteZone(zoneId);
+        return ok("deleted");
+    }
+
     @PatchMapping("/tables/{tableId}/status")
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER', 'WAITER', 'CASHIER')")
     public Response<RestaurantTable> updateTableStatus(@PathVariable("storeId") UUID storeId,
@@ -145,6 +180,33 @@ public class FloorPlanController {
         public void setPosY(Integer posY) { this.posY = posY; }
         public String getShape() { return shape; }
         public void setShape(String shape) { this.shape = shape; }
+    }
+
+    public static class UpdateTableRequest {
+        private UUID zoneId;
+        private String tableNumber;
+        private String name;
+        private Integer capacity;
+        private Integer posX;
+        private Integer posY;
+        private String shape;
+        private String status;
+        public UUID getZoneId() { return zoneId; }
+        public void setZoneId(UUID zoneId) { this.zoneId = zoneId; }
+        public String getTableNumber() { return tableNumber; }
+        public void setTableNumber(String tableNumber) { this.tableNumber = tableNumber; }
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public Integer getCapacity() { return capacity; }
+        public void setCapacity(Integer capacity) { this.capacity = capacity; }
+        public Integer getPosX() { return posX; }
+        public void setPosX(Integer posX) { this.posX = posX; }
+        public Integer getPosY() { return posY; }
+        public void setPosY(Integer posY) { this.posY = posY; }
+        public String getShape() { return shape; }
+        public void setShape(String shape) { this.shape = shape; }
+        public String getStatus() { return status; }
+        public void setStatus(String status) { this.status = status; }
     }
 
     public static class UpdateStatusRequest {

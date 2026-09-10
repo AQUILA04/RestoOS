@@ -73,7 +73,8 @@ public class OrganizationController {
     public Response<Organization> updateOrganization(
             @PathVariable("id") java.util.UUID id,
             @RequestBody UpdateOrgRequest request) {
-        Organization org = tenantService.updateOrganizationSettings(id, request.getMobileMoneyLabel());
+        Organization org = tenantService.updateOrganizationSettings(
+                id, request.getName(), request.getMobileMoneyLabel(), request.getLogoUrl());
         return Response.<Organization>builder()
                 .status(HttpStatus.OK)
                 .statusCode(HttpStatus.OK.value())
@@ -100,9 +101,15 @@ public class OrganizationController {
     }
 
     public static class UpdateOrgRequest {
+        private String name;
         private String mobileMoneyLabel;
+        private String logoUrl;
 
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
         public String getMobileMoneyLabel() { return mobileMoneyLabel; }
         public void setMobileMoneyLabel(String mobileMoneyLabel) { this.mobileMoneyLabel = mobileMoneyLabel; }
+        public String getLogoUrl() { return logoUrl; }
+        public void setLogoUrl(String logoUrl) { this.logoUrl = logoUrl; }
     }
 }

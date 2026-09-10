@@ -4,6 +4,7 @@ import com.resto.core.response.Response;
 import com.resto.core.security.JwtAuth;
 import com.resto.core.security.TenantContext;
 import com.resto.tenant.domain.Membership;
+import com.resto.tenant.dto.OrgMemberDto;
 import com.resto.tenant.service.InvitationService;
 import com.resto.tenant.service.UserService;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,13 @@ public class MembershipController {
     public MembershipController(UserService userService, InvitationService invitationService) {
         this.userService = userService;
         this.invitationService = invitationService;
+    }
+
+    @GetMapping
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    public Response<List<OrgMemberDto>> listMembers(
+            @RequestParam(value = "organizationId", required = false) UUID organizationId) {
+        return ok(userService.listOrgMembers(resolveOrg(organizationId)));
     }
 
     @PostMapping
@@ -49,6 +57,27 @@ public class MembershipController {
                 organizationId, request.getEmail(), request.getRole(), storeIds
         );
         return ok(membership);
+    }
+
+    @PatchMapping("/{membershipId}")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    public Response<OrgMemberDto> updateMembership(
+            @PathVariable("membershipId") UUID membershipId,
+            @RequestBody UpdateMembershipRequest request) {
+        if (request.getRole() != null) {
+            userService.updateMembershipRole(membershipId, request.getRole());
+        }
+        if (request.getStoreIds() != null) {
+            userService.replaceMembershipStores(membershipId, request.getStoreIds());
+        }
+        if (request.getActive() != null && request.getUserId() != null) {
+            userService.setUserActive(request.getUserId(), request.getActive());
+        }
+        UUID orgId = resolveOrg(null);
+        return ok(userService.listOrgMembers(orgId).stream()
+                .filter(m -> membershipId.equals(m.getMembershipId()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Membership not found: " + membershipId)));
     }
 
     @GetMapping("/user/{userId}")
@@ -106,6 +135,21 @@ public class MembershipController {
         public void setRole(String role) { this.role = role; }
         public UUID getStoreId() { return storeId; }
         public void setStoreId(UUID storeId) { this.storeId = storeId; }
+        public List<UUID> getStoreIds() { return storeIds; }
+        public void setStoreIds(List<UUID> storeIds) { this.storeIds = storeIds; }
+    }
+
+    public static class UpdateMembershipRequest {
+        private UUID userId;
+        private String role;
+        private Boolean active;
+        private List<UUID> storeIds;
+        public UUID getUserId() { return userId; }
+        public void setUserId(UUID userId) { this.userId = userId; }
+        public String getRole() { return role; }
+        public void setRole(String role) { this.role = role; }
+        public Boolean getActive() { return active; }
+        public void setActive(Boolean active) { this.active = active; }
         public List<UUID> getStoreIds() { return storeIds; }
         public void setStoreIds(List<UUID> storeIds) { this.storeIds = storeIds; }
     }

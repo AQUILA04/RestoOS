@@ -1,0 +1,62 @@
+<div class="admin-tables">
+  <h1>Tables &amp; zones</h1>
+  <p class="hint">Plan de salle du magasin actif : zones, capacité et statut des tables.</p>
+  <p class="ok" *ngIf="toast" id="tables-toast">{{ toast }}</p>
+  <p class="err" *ngIf="error">{{ error }}</p>
+
+  <section class="panel">
+    <h2>Zones</h2>
+    <div class="row">
+      <label class="sr-only" for="zone-name">Nom de zone</label>
+      <input id="zone-name" [(ngModel)]="newZoneName" placeholder="Ex. Terrasse" />
+      <button type="button" id="btn-add-zone" (click)="addZone()">Ajouter zone</button>
+    </div>
+    <ul class="zone-list" *ngIf="zones.length">
+      <li *ngFor="let z of zones">{{ z.name }}</li>
+    </ul>
+  </section>
+
+  <section class="panel">
+    <h2>Nouvelle table</h2>
+    <div class="row">
+      <label class="sr-only" for="table-zone">Zone</label>
+      <select id="table-zone" [(ngModel)]="newTable.zoneId">
+        <option *ngFor="let z of zones" [value]="z.id">{{ z.name }}</option>
+      </select>
+      <label class="sr-only" for="table-name">Numéro</label>
+      <input id="table-name" [(ngModel)]="newTable.tableNumber" placeholder="Table 05" />
+      <label class="sr-only" for="table-capacity">Capacité</label>
+      <input id="table-capacity" type="number" min="1" [(ngModel)]="newTable.capacity" placeholder="4" />
+      <button type="button" id="btn-add-table" (click)="addTable()" [disabled]="!zones.length">Ajouter table</button>
+    </div>
+  </section>
+
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr><th>Table</th><th>Zone</th><th>Capacité</th><th>Statut</th><th></th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let t of tables">
+          <td>{{ t.tableNumber }}</td>
+          <td>{{ zoneName(t.zoneId) }}</td>
+          <td>
+            <input [id]="'cap-' + t.id" type="number" min="1" [(ngModel)]="editCapacity[t.id]" />
+          </td>
+          <td>
+            <select [id]="'status-' + t.id" [ngModel]="t.status" (ngModelChange)="setStatus(t, $event)">
+              <option value="AVAILABLE">Disponible</option>
+              <option value="OCCUPIED">Occupée</option>
+              <option value="RESERVED">Réservée</option>
+              <option value="OUT_OF_SERVICE">Hors service</option>
+            </select>
+          </td>
+          <td>
+            <button type="button" (click)="saveTable(t)">Enregistrer</button>
+            <button type="button" class="danger" (click)="deleteTable(t)">Supprimer</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

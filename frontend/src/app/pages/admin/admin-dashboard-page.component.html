@@ -10,16 +10,26 @@
   </div>
 
   <section class="org-settings" id="org-payment-settings">
-    <h2>Paiement — libellé transfert mobile</h2>
-    <p class="hint">Ex. Mixx by Yas, Flooz, MoMo, Juice selon le pays.</p>
+    <h2>Tenant — marque &amp; paiements</h2>
+    <p class="hint">Nom de l’enseigne, logo et libellé transfert mobile (Mixx, Flooz, MoMo…).</p>
+
+    <label for="org-name-input">Nom de l’organisation</label>
+    <input id="org-name-input" type="text" [(ngModel)]="orgName" placeholder="Mon restaurant" />
+
+    <label for="org-logo-url-input">URL du logo</label>
+    <input id="org-logo-url-input" type="url" [(ngModel)]="logoUrl" placeholder="https://…/logo.png" />
+    <div class="logo-preview" *ngIf="logoUrl">
+      <img [src]="logoUrl" alt="Aperçu logo" />
+    </div>
+
+    <label for="mobile-money-label-input">Libellé transfert mobile</label>
     <div class="settings-row">
-      <label class="sr-only" for="mobile-money-label-input">Libellé transfert mobile</label>
       <input
         id="mobile-money-label-input"
         type="text"
         [(ngModel)]="mobileMoneyLabel"
         placeholder="Transfert Mobile" />
-      <button type="button" id="btn-save-mobile-money-label" (click)="saveMobileMoneyLabel()">
+      <button type="button" id="btn-save-mobile-money-label" (click)="saveTenantSettings()">
         Enregistrer
       </button>
     </div>

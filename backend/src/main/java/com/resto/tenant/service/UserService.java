@@ -3,6 +3,7 @@ package com.resto.tenant.service;
 import com.resto.tenant.domain.Membership;
 import com.resto.tenant.domain.MembershipStore;
 import com.resto.tenant.domain.User;
+import com.resto.tenant.dto.OrgMemberDto;
 import com.resto.tenant.repository.MembershipRepository;
 import com.resto.tenant.repository.MembershipStoreRepository;
 import com.resto.tenant.repository.UserRepository;
@@ -10,11 +11,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 @Transactional
 public class UserService {
+
+    private static final Set<String> ASSIGNABLE_ROLES = Set.of(
+            "OWNER", "ADMIN", "STORE_MANAGER", "CASHIER", "WAITER", "KITCHEN");
 
     private final UserRepository userRepository;
     private final MembershipRepository membershipRepository;
@@ -89,6 +94,70 @@ public class UserService {
     @Transactional(readOnly = true)
     public List<Membership> getMembershipsByUser(UUID userId) {
         return membershipRepository.findByUserId(userId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrgMemberDto> listOrgMembers(UUID organizationId) {
+        return membershipRepository.findByOrganizationId(organizationId).stream()
+                .map(m -> {
+                    User user = userRepository.findById(m.getUserId()).orElse(null);
+                    OrgMemberDto dto = new OrgMemberDto();
+                    dto.setMembershipId(m.getId());
+                    dto.setUserId(m.getUserId());
+                    dto.setRole(m.getRole());
+                    if (user != null) {
+                        dto.setEmail(user.getEmail());
+                        dto.setFirstName(user.getFirstName());
+                        dto.setLastName(user.getLastName());
+                        dto.setActive(user.getActive());
+                        dto.setHasPin(user.getPinHash() != null && !user.getPinHash().isBlank());
+                    } else {
+                        dto.setActive(false);
+                        dto.setHasPin(false);
+                    }
+                    dto.setStoreIds(membershipStoreRepository.findByMembershipId(m.getId()).stream()
+                            .map(MembershipStore::getStoreId)
+                            .toList());
+                    return dto;
+                })
+                .toList();
+    }
+
+    public Membership updateMembershipRole(UUID membershipId, String role) {
+        if (role == null || !ASSIGNABLE_ROLES.contains(role)) {
+            throw new IllegalArgumentException("Invalid role: " + role);
+        }
+        Membership membership = membershipRepository.findById(membershipId)
+                .orElseThrow(() -> new IllegalArgumentException("Membership not found: " + membershipId));
+        membership.setRole(role);
+        return membershipRepository.save(membership);
+    }
+
+    public User setUserActive(UUID userId, boolean active) {
+        User user = getUserById(userId);
+        user.setActive(active);
+        return userRepository.save(user);
+    }
+
+    public Membership replaceMembershipStores(UUID membershipId, List<UUID> storeIds) {
+        Membership membership = membershipRepository.findById(membershipId)
+                .orElseThrow(() -> new IllegalArgumentException("Membership not found: " + membershipId));
+        List<MembershipStore> existing = membershipStoreRepository.findByMembershipId(membershipId);
+        if (!existing.isEmpty()) {
+            membershipStoreRepository.deleteAll(existing);
+            membershipStoreRepository.flush();
+        }
+        if (storeIds != null) {
+            for (UUID storeId : storeIds.stream().distinct().toList()) {
+                MembershipStore ms = MembershipStore.builder()
+                        .organizationId(membership.getOrganizationId())
+                        .membershipId(membershipId)
+                        .storeId(storeId)
+                        .build();
+                membershipStoreRepository.save(ms);
+            }
+        }
+        return membership;
     }
 
     @Transactional(readOnly = true)

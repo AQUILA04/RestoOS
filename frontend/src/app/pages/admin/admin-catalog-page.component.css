@@ -7,8 +7,13 @@
 }
 
 h1 {
-  margin: 0 0 16px;
+  margin: 0 0 8px;
   font-size: clamp(1.35rem, 4vw, 2rem);
+}
+
+.hint {
+  color: #607D8B;
+  margin: 0 0 16px;
 }
 
 .inline-toast {
@@ -18,6 +23,125 @@ h1 {
   background: #1B5E20;
   color: #fff;
   font-weight: 600;
+}
+
+.panel {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  max-width: 960px;
+}
+
+.panel h2 {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.row input,
+.form-grid input,
+.form-grid select,
+.form-grid textarea {
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #CFD8DC;
+}
+
+.row button,
+.actions button {
+  min-height: 44px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 8px;
+  background: #D84315;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: #607D8B;
+}
+
+button.danger {
+  background: #C62828;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.chip-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip-list li {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: #ECEFF1;
+  border-radius: 999px;
+  padding: 6px 12px;
+}
+
+.linkish {
+  background: transparent !important;
+  color: #C62828 !important;
+  min-height: auto !important;
+  padding: 0 !important;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #455A64;
+}
+
+.form-grid .full {
+  grid-column: 1 / -1;
+}
+
+.form-grid .check {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.actions {
+  margin-bottom: 12px;
+}
+
+.muted {
+  color: #78909C;
+  font-size: 0.85rem;
+  font-weight: 400;
 }
 
 .table-scroll {
@@ -30,7 +154,7 @@ h1 {
 
 table {
   width: 100%;
-  min-width: 480px;
+  min-width: 640px;
   border-collapse: collapse;
   background: white;
 }
@@ -46,16 +170,24 @@ td:last-child {
   white-space: nowrap;
 }
 
-button {
+td button {
   min-height: 40px;
-  margin-right: 8px;
+  margin-right: 6px;
   margin-bottom: 4px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 8px;
+  background: #D84315;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
 }
 
-input {
+td input {
   min-height: 40px;
   width: min(100px, 28vw);
   max-width: 140px;
+  margin-right: 6px;
 }
 
 .sr-only {
@@ -75,31 +207,12 @@ input {
     padding: 16px 12px;
   }
 
-  th, td {
-    padding: 10px 8px;
-    font-size: 0.95rem;
-  }
-
-  /* Stack edit controls on very narrow cells */
-  td:last-child {
-    white-space: normal;
-  }
-
-  td:last-child button,
-  td:last-child input {
-    display: inline-block;
-    margin: 4px 4px 4px 0;
-  }
-}
-
-@media (max-width: 480px) {
-  /* Card-like rows: hide table chrome feel via denser mobile stack */
-  table {
-    min-width: 0;
-  }
-
   thead {
     display: none;
+  }
+
+  table {
+    min-width: 0;
   }
 
   tbody tr {
@@ -112,26 +225,13 @@ input {
     display: block;
     padding: 4px 0;
     border: none;
+    white-space: normal;
   }
 
-  tbody td:first-child {
-    font-weight: 700;
-    font-size: 1rem;
-  }
-
-  tbody td:nth-child(2)::before {
-    content: 'Prix : ';
-    font-weight: 600;
-    color: #607D8B;
-  }
-
-  input {
+  td button,
+  td input {
     width: 100%;
     max-width: none;
-  }
-
-  td:last-child button {
-    width: 100%;
-    margin: 6px 0 0;
+    margin: 4px 0;
   }
 }

@@ -63,7 +63,7 @@ public class CatalogController {
         UUID organizationId = resolveOrg(request.getOrganizationId());
         return ok(catalogService.createProduct(
                 organizationId, request.getCategoryId(), request.getName(), request.getDescription(),
-                request.getBasePrice(), request.getTaxRate(), request.getImageUrl()
+                request.getBasePrice(), request.getTaxRate(), request.getImageUrl(), request.getAvgPrepMinutes()
         ));
     }
 
@@ -72,7 +72,7 @@ public class CatalogController {
     public Response<Product> updateProduct(@PathVariable("id") UUID id, @RequestBody CreateProductRequest request) {
         return ok(catalogService.updateProduct(id, request.getCategoryId(), request.getName(),
                 request.getDescription(), request.getBasePrice(), request.getTaxRate(),
-                request.getImageUrl(), request.getActive()));
+                request.getImageUrl(), request.getActive(), request.getAvgPrepMinutes()));
     }
 
     @DeleteMapping({"/api/v1/products/{id}", "/api/v1/catalog/products/{id}"})
@@ -84,8 +84,13 @@ public class CatalogController {
 
     @GetMapping({"/api/v1/products", "/api/v1/catalog/products"})
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STORE_MANAGER', 'CASHIER', 'WAITER')")
-    public Response<List<Product>> getProductsByCategory(@RequestParam("categoryId") UUID categoryId) {
-        return ok(catalogService.getProductsByCategory(categoryId));
+    public Response<List<Product>> getProducts(
+            @RequestParam(value = "categoryId", required = false) UUID categoryId,
+            @RequestParam(value = "organizationId", required = false) UUID organizationId) {
+        if (categoryId != null) {
+            return ok(catalogService.getProductsByCategory(categoryId));
+        }
+        return ok(catalogService.getProductsByOrg(resolveOrg(organizationId)));
     }
 
     @PostMapping({"/api/v1/modifier-groups", "/api/v1/catalog/modifier-groups"})
@@ -176,6 +181,7 @@ public class CatalogController {
         private BigDecimal taxRate;
         private String imageUrl;
         private Boolean active;
+        private Integer avgPrepMinutes;
         public UUID getOrganizationId() { return organizationId; }
         public void setOrganizationId(UUID organizationId) { this.organizationId = organizationId; }
         public UUID getCategoryId() { return categoryId; }
@@ -192,6 +198,8 @@ public class CatalogController {
         public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
         public Boolean getActive() { return active; }
         public void setActive(Boolean active) { this.active = active; }
+        public Integer getAvgPrepMinutes() { return avgPrepMinutes; }
+        public void setAvgPrepMinutes(Integer avgPrepMinutes) { this.avgPrepMinutes = avgPrepMinutes; }
     }
 
     public static class CreateModifierGroupRequest {

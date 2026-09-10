@@ -9,6 +9,8 @@ import { KdsPageComponent } from './pages/kds/kds-page.component';
 import { AdminCatalogPageComponent } from './pages/admin/admin-catalog-page.component';
 import { AdminDashboardPageComponent } from './pages/admin/admin-dashboard-page.component';
 import { AdminStoresPageComponent } from './pages/admin/admin-stores-page.component';
+import { AdminTablesPageComponent } from './pages/admin/admin-tables-page.component';
+import { AdminUsersPageComponent } from './pages/admin/admin-users-page.component';
 import { ActivatePageComponent } from './pages/activate/activate-page.component';
 
 export const APP_ROUTES: Routes = [
@@ -24,5 +26,7 @@ export const APP_ROUTES: Routes = [
   { path: 'admin/catalog', component: AdminCatalogPageComponent },
   { path: 'admin/dashboard', component: AdminDashboardPageComponent },
   { path: 'admin/etablissements', component: AdminStoresPageComponent },
+  { path: 'admin/tables', component: AdminTablesPageComponent },
+  { path: 'admin/users', component: AdminUsersPageComponent },
   { path: '**', redirectTo: '' },
 ];
