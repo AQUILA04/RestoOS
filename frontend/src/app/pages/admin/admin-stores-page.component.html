@@ -41,15 +41,18 @@
   <section class="add-store">
     <h2>Ajouter un restaurant</h2>
     <div class="row">
+      <label class="sr-only" for="new-store-name">Nom du restaurant</label>
       <input
         id="new-store-name"
         type="text"
         [(ngModel)]="newStoreName"
         placeholder="Nom du restaurant"
       />
+      <label class="sr-only" for="new-store-currency">Devise</label>
       <select id="new-store-currency" [(ngModel)]="newStoreCurrency">
         <option *ngFor="let c of currencies" [value]="c">{{ c }}</option>
       </select>
+      <label class="sr-only" for="new-store-timezone">Fuseau horaire</label>
       <input
         id="new-store-timezone"
         type="text"
