@@ -71,6 +71,11 @@ public class CatalogService {
 
     public Product createProduct(UUID organizationId, UUID categoryId, String name, String description,
                                  BigDecimal basePrice, BigDecimal taxRate, String imageUrl) {
+        return createProduct(organizationId, categoryId, name, description, basePrice, taxRate, imageUrl, null);
+    }
+
+    public Product createProduct(UUID organizationId, UUID categoryId, String name, String description,
+                                 BigDecimal basePrice, BigDecimal taxRate, String imageUrl, Integer avgPrepMinutes) {
         if (!categoryRepository.existsById(categoryId)) {
             throw new IllegalArgumentException("Category not found: " + categoryId);
         }
@@ -82,12 +87,19 @@ public class CatalogService {
                 .basePrice(basePrice)
                 .taxRate(taxRate != null ? taxRate : new BigDecimal("10.00"))
                 .imageUrl(imageUrl)
+                .avgPrepMinutes(avgPrepMinutes != null ? avgPrepMinutes : 15)
                 .build();
         return productRepository.save(product);
     }
 
     public Product updateProduct(UUID productId, UUID categoryId, String name, String description,
                                  BigDecimal basePrice, BigDecimal taxRate, String imageUrl, Boolean active) {
+        return updateProduct(productId, categoryId, name, description, basePrice, taxRate, imageUrl, active, null);
+    }
+
+    public Product updateProduct(UUID productId, UUID categoryId, String name, String description,
+                                 BigDecimal basePrice, BigDecimal taxRate, String imageUrl, Boolean active,
+                                 Integer avgPrepMinutes) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("Product not found: " + productId));
         if (categoryId != null) product.setCategoryId(categoryId);
@@ -97,6 +109,12 @@ public class CatalogService {
         if (taxRate != null) product.setTaxRate(taxRate);
         if (imageUrl != null) product.setImageUrl(imageUrl);
         if (active != null) product.setActive(active);
+        if (avgPrepMinutes != null) {
+            if (avgPrepMinutes < 1) {
+                throw new IllegalArgumentException("avgPrepMinutes must be >= 1");
+            }
+            product.setAvgPrepMinutes(avgPrepMinutes);
+        }
         return productRepository.save(product);
     }
 
@@ -110,6 +128,11 @@ public class CatalogService {
     @Transactional(readOnly = true)
     public List<Product> getProductsByCategory(UUID categoryId) {
         return productRepository.findByCategoryId(categoryId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Product> getProductsByOrg(UUID organizationId) {
+        return productRepository.findByOrganizationId(organizationId);
     }
 
     public ModifierGroup createModifierGroup(UUID organizationId, String name, Integer minSelection,

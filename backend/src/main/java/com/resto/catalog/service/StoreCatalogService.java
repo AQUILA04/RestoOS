@@ -147,6 +147,7 @@ public class StoreCatalogService {
                     .imageUrl(product.getImageUrl())
                     .is86(!storeAvailable)
                     .available(isAvailable)
+                    .avgPrepMinutes(product.getAvgPrepMinutes())
                     .modifierGroups(modifiersByProduct.getOrDefault(product.getId(), List.of()))
                     .build());
         }

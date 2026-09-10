@@ -35,7 +35,7 @@ h1 {
 
 .store-list li {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
   background: white;
   border-radius: 12px;
@@ -47,8 +47,29 @@ h1 {
   outline: 2px solid #d84315;
 }
 
+.fields {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 10px;
+  align-items: center;
+}
+
+.fields label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #607d8b;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .store-list input,
-.add-store input {
+.store-list select,
+.add-store input,
+.add-store select {
   flex: 1 1 180px;
   min-height: 48px;
   padding: 0 12px;

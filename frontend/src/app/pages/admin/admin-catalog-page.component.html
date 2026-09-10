@@ -1,17 +1,96 @@
 <div class="admin-catalog">
-  <h1>Catalogue magasin</h1>
+  <h1>Catalogue &amp; menu</h1>
+  <p class="hint">Catégories, plats, temps de préparation moyen et prix locaux du magasin actif.</p>
   <div class="inline-toast" id="catalog-toast" *ngIf="toast" role="status">{{ toast }}</div>
+
+  <section class="panel" id="categories-panel">
+    <h2>Catégories</h2>
+    <div class="row">
+      <label class="sr-only" for="new-category-name">Nouvelle catégorie</label>
+      <input id="new-category-name" [(ngModel)]="newCategoryName" placeholder="Ex. Entrées" />
+      <button type="button" id="btn-add-category" (click)="addCategory()">Ajouter</button>
+    </div>
+    <ul class="chip-list" *ngIf="categories.length">
+      <li *ngFor="let c of categories">
+        <span>{{ c.name }}</span>
+        <button type="button" class="linkish" (click)="deleteCategory(c)" [attr.data-testid]="'del-cat-' + c.id">Supprimer</button>
+      </li>
+    </ul>
+  </section>
+
+  <section class="panel" id="product-form-panel" *ngIf="showProductForm">
+    <h2>{{ productForm.id ? 'Modifier le plat' : 'Nouveau plat' }}</h2>
+    <div class="form-grid">
+      <label>
+        Catégorie
+        <select id="product-category" [(ngModel)]="productForm.categoryId">
+          <option *ngFor="let c of categories" [value]="c.id">{{ c.name }}</option>
+        </select>
+      </label>
+      <label>
+        Nom
+        <input id="product-name" [(ngModel)]="productForm.name" />
+      </label>
+      <label>
+        Prix de base
+        <input id="product-price" type="number" step="0.01" [(ngModel)]="productForm.basePrice" />
+      </label>
+      <label>
+        Taxe %
+        <input id="product-tax" type="number" step="0.01" [(ngModel)]="productForm.taxRate" />
+      </label>
+      <label>
+        Temps prep. moyen (min)
+        <input id="product-prep" type="number" min="1" [(ngModel)]="productForm.avgPrepMinutes" />
+      </label>
+      <label>
+        URL image
+        <input id="product-image" [(ngModel)]="productForm.imageUrl" placeholder="https://…" />
+      </label>
+      <label class="full">
+        Description
+        <textarea id="product-desc" rows="2" [(ngModel)]="productForm.description"></textarea>
+      </label>
+      <label class="check">
+        <input type="checkbox" [(ngModel)]="productForm.active" /> Actif
+      </label>
+    </div>
+    <div class="row">
+      <button type="button" id="btn-save-product" (click)="saveProduct()">Enregistrer</button>
+      <button type="button" class="secondary" (click)="showProductForm = false">Annuler</button>
+    </div>
+  </section>
+
+  <div class="row actions">
+    <button type="button" id="btn-new-product" (click)="openNewProduct()" [disabled]="!categories.length">
+      Nouveau plat
+    </button>
+  </div>
+
   <div class="table-scroll">
     <table>
       <thead>
-        <tr><th>Produit</th><th>Prix</th><th></th></tr>
+        <tr>
+          <th>Produit</th>
+          <th>Catégorie</th>
+          <th>Prix</th>
+          <th>Prep.</th>
+          <th></th>
+        </tr>
       </thead>
       <tbody>
         <tr *ngFor="let p of products">
-          <td>{{ p.name }}</td>
-          <td>{{ (p.resolvedPrice ?? p.basePrice) | currency:'EUR' }}</td>
           <td>
-            <button type="button" id="edit-price-btn" (click)="startEdit(p)">Modifier</button>
+            <strong>{{ p.name }}</strong>
+            <div class="muted" *ngIf="p.description">{{ p.description }}</div>
+          </td>
+          <td>{{ categoryName(p.categoryId) }}</td>
+          <td>{{ (p.resolvedPrice ?? p.basePrice) | currency:currency }}</td>
+          <td>{{ p.avgPrepMinutes || 15 }} min</td>
+          <td>
+            <button type="button" (click)="editProduct(p)">Éditer</button>
+            <button type="button" id="edit-price-btn" (click)="startEditOverride(p)">Prix local</button>
+            <button type="button" class="danger" (click)="deleteProduct(p)">Supprimer</button>
             <ng-container *ngIf="editingProductId === p.id">
               <label class="sr-only" for="store-price-override">Prix local</label>
               <input id="store-price-override" name="store-price-override" [(ngModel)]="overridePrice" />

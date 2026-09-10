@@ -16,6 +16,8 @@ export class AdminDashboardPageComponent implements OnInit {
     readyOrdersCount: 0,
     occupiedTablesCount: 0,
   };
+  orgName = '';
+  logoUrl = '';
   mobileMoneyLabel = '';
   settingsToast = '';
 
@@ -31,6 +33,8 @@ export class AdminDashboardPageComponent implements OnInit {
       });
       this.api.getOrganization(orgId).subscribe({
         next: (org) => {
+          this.orgName = org?.name || '';
+          this.logoUrl = org?.logoUrl || '';
           this.mobileMoneyLabel = org?.mobileMoneyLabel || '';
         },
         error: () => undefined,
@@ -40,22 +44,35 @@ export class AdminDashboardPageComponent implements OnInit {
     }
   }
 
-  saveMobileMoneyLabel(): void {
+  saveTenantSettings(): void {
     try {
       const orgId = this.api.requireOrgId();
-      this.api.updateOrganization(orgId, { mobileMoneyLabel: this.mobileMoneyLabel }).subscribe({
-        next: (org) => {
-          this.mobileMoneyLabel = org?.mobileMoneyLabel || this.mobileMoneyLabel;
-          this.settingsToast = 'Libellé enregistré';
-          setTimeout(() => (this.settingsToast = ''), 2500);
-        },
-        error: (err) => {
-          this.settingsToast = err?.error?.message || 'Échec de la sauvegarde';
-          setTimeout(() => (this.settingsToast = ''), 2500);
-        },
-      });
+      this.api
+        .updateOrganization(orgId, {
+          name: this.orgName,
+          logoUrl: this.logoUrl,
+          mobileMoneyLabel: this.mobileMoneyLabel,
+        })
+        .subscribe({
+          next: (org) => {
+            this.orgName = org?.name || this.orgName;
+            this.logoUrl = org?.logoUrl || '';
+            this.mobileMoneyLabel = org?.mobileMoneyLabel || this.mobileMoneyLabel;
+            this.settingsToast = 'Paramètres tenant enregistrés';
+            setTimeout(() => (this.settingsToast = ''), 2500);
+          },
+          error: (err) => {
+            this.settingsToast = err?.error?.message || 'Échec de la sauvegarde';
+            setTimeout(() => (this.settingsToast = ''), 2500);
+          },
+        });
     } catch {
       this.settingsToast = 'Contexte organisation manquant';
     }
+  }
+
+  /** Kept for older E2E selectors that call mobile-money save alone. */
+  saveMobileMoneyLabel(): void {
+    this.saveTenantSettings();
   }
 }

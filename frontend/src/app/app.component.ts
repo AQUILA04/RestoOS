@@ -20,6 +20,9 @@ import { Component } from '@angular/core';
         <a routerLink="/pos" (click)="closeNav()">POS</a>
         <a routerLink="/kds" (click)="closeNav()">KDS</a>
         <a routerLink="/admin/catalog" (click)="closeNav()">Catalogue</a>
+        <a routerLink="/admin/tables" (click)="closeNav()">Tables</a>
+        <a routerLink="/admin/users" (click)="closeNav()">Équipe</a>
+        <a routerLink="/admin/etablissements" (click)="closeNav()">Établissements</a>
         <a routerLink="/admin/dashboard" (click)="closeNav()">Dashboard</a>
       </nav>
     </header>

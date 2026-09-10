@@ -33,11 +33,22 @@ public class TenantService {
         return organizationRepository.save(org);
     }
 
-    public Organization updateOrganizationSettings(UUID id, String mobileMoneyLabel) {
+    public Organization updateOrganizationSettings(UUID id, String name, String mobileMoneyLabel, String logoUrl) {
         Organization org = getOrganizationById(id);
+        if (name != null) {
+            String trimmed = name.trim();
+            if (trimmed.isEmpty()) {
+                throw new IllegalArgumentException("Organization name is required");
+            }
+            org.setName(trimmed);
+        }
         if (mobileMoneyLabel != null) {
             String trimmed = mobileMoneyLabel.trim();
             org.setMobileMoneyLabel(trimmed.isEmpty() ? null : trimmed);
+        }
+        if (logoUrl != null) {
+            String trimmed = logoUrl.trim();
+            org.setLogoUrl(trimmed.isEmpty() ? null : trimmed);
         }
         return organizationRepository.save(org);
     }
@@ -70,14 +81,30 @@ public class TenantService {
         return storeRepository.save(store);
     }
 
-    public Store updateStoreName(UUID storeId, String name) {
-        if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("Store name is required");
-        }
+    public Store updateStore(UUID storeId, String name, String timezone, String currency, Boolean active) {
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new IllegalArgumentException("Store not found with id: " + storeId));
-        store.setName(name.trim());
+        if (name != null) {
+            if (name.isBlank()) {
+                throw new IllegalArgumentException("Store name is required");
+            }
+            store.setName(name.trim());
+        }
+        if (timezone != null && !timezone.isBlank()) {
+            store.setTimezone(timezone.trim());
+        }
+        if (currency != null && !currency.isBlank()) {
+            store.setCurrency(currency.trim().toUpperCase());
+        }
+        if (active != null) {
+            store.setActive(active);
+        }
         return storeRepository.save(store);
+    }
+
+    /** @deprecated use {@link #updateStore} */
+    public Store updateStoreName(UUID storeId, String name) {
+        return updateStore(storeId, name, null, null, null);
     }
 
     @Transactional(readOnly = true)

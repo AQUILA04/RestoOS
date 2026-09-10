@@ -58,10 +58,14 @@ Dine-in order creation: `AVAILABLE → OCCUPIED`. Close/cancel releases to `AVAI
 |--------|------|-------|
 | POST | `/api/v1/organizations` | authenticated bootstrap / OWNER |
 | GET | `/api/v1/organizations` | OWNER, ADMIN |
+| PATCH | `/api/v1/organizations/{id}` | OWNER, ADMIN, STORE_MANAGER — name, logoUrl, mobileMoneyLabel |
 | POST | `/api/v1/stores` | OWNER, ADMIN |
 | GET | `/api/v1/stores` | OWNER, ADMIN, STORE_MANAGER |
+| PATCH | `/api/v1/stores/{id}` | OWNER, ADMIN — name, currency, timezone, active |
 | POST | `/api/v1/users` | OWNER, ADMIN |
+| GET | `/api/v1/memberships` | OWNER, ADMIN — list org members |
 | POST | `/api/v1/memberships` | OWNER, ADMIN |
+| PATCH | `/api/v1/memberships/{id}` | OWNER, ADMIN — role, storeIds, active |
 | POST | `/api/v1/memberships/invite` | OWNER, ADMIN |
 | POST | `/api/v1/auth/pin-login` | public (rate-limited) |
 | POST | `/api/v1/auth/set-pin` | OWNER, ADMIN, STORE_MANAGER |
@@ -70,7 +74,7 @@ Dine-in order creation: `AVAILABLE → OCCUPIED`. Close/cancel releases to `AVAI
 | Method | Path | Roles |
 |--------|------|-------|
 | POST/GET/PUT/DELETE | `/api/v1/categories` | OWNER, ADMIN (+ GET for store staff) |
-| POST/GET/PUT/DELETE | `/api/v1/products` | OWNER, ADMIN (+ GET for store staff) |
+| POST/GET/PUT/DELETE | `/api/v1/products` | OWNER, ADMIN (+ GET for store staff); products include `avgPrepMinutes` |
 | POST/GET | `/api/v1/modifier-groups` | OWNER, ADMIN |
 | POST | `/api/v1/modifier-options` | OWNER, ADMIN |
 | PUT | `/api/v1/stores/{storeId}/products/{productId}` | OWNER, ADMIN, STORE_MANAGER |
@@ -81,7 +85,9 @@ Dine-in order creation: `AVAILABLE → OCCUPIED`. Close/cancel releases to `AVAI
 | Method | Path | Roles |
 |--------|------|-------|
 | POST/GET | `/api/v1/stores/{storeId}/zones` | STORE_MANAGER+ write; WAITER/CASHIER read |
+| PATCH/DELETE | `/api/v1/stores/{storeId}/zones/{zoneId}` | OWNER, ADMIN, STORE_MANAGER |
 | POST/GET | `/api/v1/stores/{storeId}/tables` | STORE_MANAGER+ write; WAITER/CASHIER read |
+| PATCH/DELETE | `/api/v1/stores/{storeId}/tables/{tableId}` | OWNER, ADMIN, STORE_MANAGER |
 | PATCH | `/api/v1/stores/{storeId}/tables/{tableId}/status` | WAITER, CASHIER, STORE_MANAGER+ |
 
 ### Orders / Kitchen / Payment

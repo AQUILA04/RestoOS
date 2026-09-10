@@ -72,7 +72,8 @@ public class StoreController {
     @PatchMapping("/{id}")
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     public Response<Store> updateStore(@PathVariable("id") UUID id, @RequestBody UpdateStoreRequest request) {
-        Store store = tenantService.updateStoreName(id, request.getName());
+        Store store = tenantService.updateStore(
+                id, request.getName(), request.getTimezone(), request.getCurrency(), request.getActive());
         return Response.<Store>builder()
                 .status(HttpStatus.OK)
                 .statusCode(HttpStatus.OK.value())
@@ -106,8 +107,17 @@ public class StoreController {
 
     public static class UpdateStoreRequest {
         private String name;
+        private String timezone;
+        private String currency;
+        private Boolean active;
 
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
+        public String getTimezone() { return timezone; }
+        public void setTimezone(String timezone) { this.timezone = timezone; }
+        public String getCurrency() { return currency; }
+        public void setCurrency(String currency) { this.currency = currency; }
+        public Boolean getActive() { return active; }
+        public void setActive(Boolean active) { this.active = active; }
     }
 }

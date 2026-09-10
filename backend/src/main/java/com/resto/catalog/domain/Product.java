@@ -50,6 +50,11 @@ public class Product {
     @Builder.Default
     private Boolean is86 = false;
 
+    /** Average kitchen preparation time in minutes for this dish. */
+    @Column(name = "avg_prep_minutes", nullable = false)
+    @Builder.Default
+    private Integer avgPrepMinutes = 15;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
@@ -76,6 +81,8 @@ public class Product {
     public void setActive(Boolean active) { this.active = active; }
     public Boolean getIs86() { return is86; }
     public void setIs86(Boolean is86) { this.is86 = is86; }
+    public Integer getAvgPrepMinutes() { return avgPrepMinutes; }
+    public void setAvgPrepMinutes(Integer avgPrepMinutes) { this.avgPrepMinutes = avgPrepMinutes; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
@@ -107,6 +114,7 @@ public class Product {
         private String imageUrl;
         private Boolean active = true;
         private Boolean is86 = false;
+        private Integer avgPrepMinutes = 15;
         private OffsetDateTime createdAt;
         private OffsetDateTime updatedAt;
 
@@ -120,6 +128,7 @@ public class Product {
         public ProductBuilder imageUrl(String imageUrl) { this.imageUrl = imageUrl; return this; }
         public ProductBuilder active(Boolean active) { this.active = active; return this; }
         public ProductBuilder is86(Boolean is86) { this.is86 = is86; return this; }
+        public ProductBuilder avgPrepMinutes(Integer avgPrepMinutes) { this.avgPrepMinutes = avgPrepMinutes; return this; }
         public ProductBuilder createdAt(OffsetDateTime createdAt) { this.createdAt = createdAt; return this; }
         public ProductBuilder updatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
 
@@ -135,6 +144,7 @@ public class Product {
             p.setImageUrl(this.imageUrl);
             p.setActive(this.active != null ? this.active : true);
             p.setIs86(this.is86 != null ? this.is86 : false);
+            p.setAvgPrepMinutes(this.avgPrepMinutes != null ? this.avgPrepMinutes : 15);
             p.setCreatedAt(this.createdAt);
             p.setUpdatedAt(this.updatedAt);
             return p;

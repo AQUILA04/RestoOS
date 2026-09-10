@@ -75,4 +75,56 @@ public class FloorPlanService {
         table.setStatus(status);
         return tableRepository.save(table);
     }
+
+    public RestaurantTable updateTable(UUID tableId, UUID zoneId, String tableNumber, Integer capacity,
+                                       Integer posX, Integer posY, String shape, String status) {
+        RestaurantTable table = tableRepository.findById(tableId)
+                .orElseThrow(() -> new IllegalArgumentException("Table not found: " + tableId));
+        if (zoneId != null) {
+            if (!zoneRepository.existsById(zoneId)) {
+                throw new IllegalArgumentException("Zone not found: " + zoneId);
+            }
+            table.setZoneId(zoneId);
+        }
+        if (tableNumber != null && !tableNumber.isBlank()) {
+            table.setTableNumber(tableNumber.trim());
+        }
+        if (capacity != null) {
+            if (capacity < 1) {
+                throw new IllegalArgumentException("capacity must be >= 1");
+            }
+            table.setCapacity(capacity);
+        }
+        if (posX != null) table.setPosX(posX);
+        if (posY != null) table.setPosY(posY);
+        if (shape != null && !shape.isBlank()) table.setShape(shape.trim());
+        if (status != null && !status.isBlank()) table.setStatus(status.trim());
+        return tableRepository.save(table);
+    }
+
+    public void deleteTable(UUID tableId) {
+        if (!tableRepository.existsById(tableId)) {
+            throw new IllegalArgumentException("Table not found: " + tableId);
+        }
+        tableRepository.deleteById(tableId);
+    }
+
+    public Zone updateZone(UUID zoneId, String name, Integer displayOrder) {
+        Zone zone = zoneRepository.findById(zoneId)
+                .orElseThrow(() -> new IllegalArgumentException("Zone not found: " + zoneId));
+        if (name != null && !name.isBlank()) zone.setName(name.trim());
+        if (displayOrder != null) zone.setDisplayOrder(displayOrder);
+        return zoneRepository.save(zone);
+    }
+
+    public void deleteZone(UUID zoneId) {
+        if (!zoneRepository.existsById(zoneId)) {
+            throw new IllegalArgumentException("Zone not found: " + zoneId);
+        }
+        List<RestaurantTable> tables = tableRepository.findByZoneId(zoneId);
+        if (!tables.isEmpty()) {
+            throw new IllegalArgumentException("Cannot delete zone with tables; remove tables first");
+        }
+        zoneRepository.deleteById(zoneId);
+    }
 }
