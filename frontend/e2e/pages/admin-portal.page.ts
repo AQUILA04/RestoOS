@@ -25,7 +25,7 @@ export class AdminPortalPage {
     this.orgSubmitBtn = page.locator('#create-org-btn');
     this.storeNameInput = page.locator('#store-name');
     this.storeSubmitBtn = page.locator('#create-store-btn');
-    this.categoryNameInput = page.locator('#category-name');
+    this.categoryNameInput = page.locator('#new-category-name');
     this.productNameInput = page.locator('#product-name');
     this.productPriceInput = page.locator('#product-price');
     this.storePriceOverrideInput = page.locator('#store-price-override');
@@ -45,6 +45,18 @@ export class AdminPortalPage {
 
   async gotoCatalogManager() {
     await this.page.goto('/admin/catalog');
+  }
+
+  async gotoStores() {
+    await this.page.goto('/admin/etablissements');
+  }
+
+  async gotoTables() {
+    await this.page.goto('/admin/tables');
+  }
+
+  async gotoUsers() {
+    await this.page.goto('/admin/users');
   }
 
   /** Seed JWT + tenant context used by admin dashboard / catalog pages. */
@@ -121,5 +133,117 @@ export class AdminPortalPage {
     await this.page.locator('#mobile-money-label-input').fill(label);
     await this.page.locator('#btn-save-mobile-money-label').click();
     await expect(this.page.locator('.toast')).toContainText('Libellé enregistré', { timeout: 10000 });
+  }
+
+  async saveTenantBranding(opts: { name?: string; logoUrl?: string; mobileMoneyLabel?: string }) {
+    await this.gotoDashboard();
+    await expect(this.page.locator('#org-payment-settings')).toBeVisible({ timeout: 15000 });
+    if (opts.name !== undefined) {
+      await this.page.locator('#org-name-input').fill(opts.name);
+    }
+    if (opts.logoUrl !== undefined) {
+      await this.page.locator('#org-logo-url-input').fill(opts.logoUrl);
+    }
+    if (opts.mobileMoneyLabel !== undefined) {
+      await this.page.locator('#mobile-money-label-input').fill(opts.mobileMoneyLabel);
+    }
+    await this.page.locator('#btn-save-mobile-money-label').click();
+    await expect(this.page.locator('.toast')).toContainText('Libellé enregistré', { timeout: 10000 });
+  }
+
+  async updateStoreSettings(storeId: string, opts: { name?: string; currency?: string; timezone?: string }) {
+    await this.gotoStores();
+    await expect(this.page.locator('#store-list')).toBeVisible({ timeout: 15000 });
+    if (opts.name !== undefined) {
+      await this.page.locator(`#store-name-${storeId}`).fill(opts.name);
+    }
+    if (opts.currency !== undefined) {
+      await this.page.locator(`#store-currency-${storeId}`).selectOption(opts.currency);
+    }
+    if (opts.timezone !== undefined) {
+      await this.page.locator(`#store-tz-${storeId}`).fill(opts.timezone);
+    }
+    await this.page.locator(`[data-testid="rename-${storeId}"]`).click();
+    await expect(this.page.locator('#stores-message')).toContainText(/mis à jour/i, { timeout: 10000 });
+  }
+
+  async addCategory(name: string) {
+    await this.gotoCatalogManager();
+    await expect(this.page.locator('h1')).toContainText('Catalogue', { timeout: 15000 });
+    await this.categoryNameInput.fill(name);
+    await this.page.locator('#btn-add-category').click();
+    await expect(this.toastMessage).toContainText('Catégorie créée', { timeout: 10000 });
+    await expect(this.page.locator('#categories-panel')).toContainText(name);
+  }
+
+  async createProduct(opts: {
+    name: string;
+    price: string;
+    prepMinutes: string;
+    description?: string;
+  }) {
+    await this.gotoCatalogManager();
+    await expect(this.page.locator('h1')).toContainText('Catalogue', { timeout: 15000 });
+    await this.page.locator('#btn-new-product').click();
+    await expect(this.page.locator('#product-form-panel')).toBeVisible();
+    await this.productNameInput.fill(opts.name);
+    await this.productPriceInput.fill(opts.price);
+    await this.page.locator('#product-prep').fill(opts.prepMinutes);
+    if (opts.description) {
+      await this.page.locator('#product-desc').fill(opts.description);
+    }
+    await this.page.locator('#btn-save-product').click();
+    await expect(this.toastMessage).toContainText(/Produit (créé|mis à jour)/, { timeout: 10000 });
+    const row = this.page.locator(`tr:has-text("${opts.name}")`);
+    await expect(row).toBeVisible({ timeout: 15000 });
+    await expect(row).toContainText(`${opts.prepMinutes} min`);
+  }
+
+  async addZone(name: string) {
+    await this.gotoTables();
+    await expect(this.page.locator('h1')).toContainText('Tables', { timeout: 15000 });
+    await this.zoneInput.fill(name);
+    await this.page.locator('#btn-add-zone').click();
+    await expect(this.page.locator('#tables-toast')).toContainText('Zone créée', { timeout: 10000 });
+    await expect(this.page.locator('.zone-list')).toContainText(name);
+  }
+
+  async addTable(opts: { name: string; capacity: string }) {
+    await this.gotoTables();
+    await expect(this.page.locator('h1')).toContainText('Tables', { timeout: 15000 });
+    await this.tableNameInput.fill(opts.name);
+    await this.tableCapacityInput.fill(opts.capacity);
+    await this.page.locator('#btn-add-table').click();
+    await expect(this.page.locator('#tables-toast')).toContainText('Table créée', { timeout: 10000 });
+    await expect(this.page.locator(`tr:has-text("${opts.name}")`)).toBeVisible({ timeout: 10000 });
+  }
+
+  async inviteStaff(opts: { email: string; role: string }) {
+    await this.gotoUsers();
+    await expect(this.page.locator('h1')).toContainText('Utilisateurs', { timeout: 15000 });
+    await this.page.locator('#invite-email').fill(opts.email);
+    await this.page.locator('#invite-role').selectOption(opts.role);
+    await this.page.locator('#btn-invite-user').click();
+    await expect(this.page.locator('#users-toast')).toContainText('Invitation envoyée', { timeout: 10000 });
+    await expect(this.page.locator(`tr:has-text("${opts.email}")`)).toBeVisible({ timeout: 10000 });
+  }
+
+  async setMemberRole(email: string, role: string) {
+    await this.gotoUsers();
+    const row = this.page.locator(`tr:has-text("${email}")`);
+    await expect(row).toBeVisible({ timeout: 15000 });
+    await row.locator('select').first().selectOption(role);
+    await row.getByRole('button', { name: 'OK' }).click();
+    await expect(this.page.locator('#users-toast')).toContainText('Rôle mis à jour', { timeout: 10000 });
+  }
+
+  async setMemberPin(email: string, pin: string) {
+    await this.gotoUsers();
+    const row = this.page.locator(`tr:has-text("${email}")`);
+    await expect(row).toBeVisible({ timeout: 15000 });
+    await row.locator('input[type="password"]').fill(pin);
+    await row.getByRole('button', { name: 'PIN' }).click();
+    await expect(this.page.locator('#users-toast')).toContainText('PIN enregistré', { timeout: 10000 });
+    await expect(row).toContainText('Défini');
   }
 }
