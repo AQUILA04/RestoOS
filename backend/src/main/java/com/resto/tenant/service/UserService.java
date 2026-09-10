@@ -143,9 +143,12 @@ public class UserService {
         Membership membership = membershipRepository.findById(membershipId)
                 .orElseThrow(() -> new IllegalArgumentException("Membership not found: " + membershipId));
         List<MembershipStore> existing = membershipStoreRepository.findByMembershipId(membershipId);
-        membershipStoreRepository.deleteAll(existing);
+        if (!existing.isEmpty()) {
+            membershipStoreRepository.deleteAll(existing);
+            membershipStoreRepository.flush();
+        }
         if (storeIds != null) {
-            for (UUID storeId : storeIds) {
+            for (UUID storeId : storeIds.stream().distinct().toList()) {
                 MembershipStore ms = MembershipStore.builder()
                         .organizationId(membership.getOrganizationId())
                         .membershipId(membershipId)

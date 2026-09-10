@@ -83,12 +83,13 @@ export class AdminUsersPageComponent implements OnInit {
       .updateMembership(member.membershipId, {
         role,
         userId: member.userId,
-        storeIds: member.storeIds,
       })
       .subscribe({
         next: () => {
           member.role = role;
+          this.error = '';
           this.toast = 'Rôle mis à jour';
+          setTimeout(() => (this.toast = ''), 2500);
         },
         error: (err) => {
           this.error = err?.error?.message || 'Mise à jour rôle impossible';
@@ -102,13 +103,13 @@ export class AdminUsersPageComponent implements OnInit {
       .updateMembership(member.membershipId, {
         userId: member.userId,
         active,
-        role: member.role,
-        storeIds: member.storeIds,
       })
       .subscribe({
         next: () => {
           member.active = active;
+          this.error = '';
           this.toast = active ? 'Utilisateur réactivé' : 'Utilisateur désactivé';
+          setTimeout(() => (this.toast = ''), 2500);
         },
         error: (err) => {
           this.error = err?.error?.message || 'Changement statut impossible';

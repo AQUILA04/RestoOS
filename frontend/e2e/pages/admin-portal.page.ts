@@ -232,8 +232,16 @@ export class AdminPortalPage {
     await this.gotoUsers();
     const row = this.page.locator(`tr:has-text("${email}")`);
     await expect(row).toBeVisible({ timeout: 15000 });
+    const patchWait = this.page.waitForResponse(
+      (res) =>
+        res.url().includes('/api/v1/memberships/') &&
+        res.request().method() === 'PATCH',
+      { timeout: 15000 }
+    );
     await row.locator('select').first().selectOption(role);
     await row.getByRole('button', { name: 'OK' }).click();
+    const patchRes = await patchWait;
+    expect(patchRes.ok(), `PATCH membership role → ${patchRes.status()}`).toBeTruthy();
     await expect(this.page.locator('#users-toast')).toContainText('Rôle mis à jour', { timeout: 10000 });
   }
 
@@ -241,8 +249,14 @@ export class AdminPortalPage {
     await this.gotoUsers();
     const row = this.page.locator(`tr:has-text("${email}")`);
     await expect(row).toBeVisible({ timeout: 15000 });
+    const pinWait = this.page.waitForResponse(
+      (res) => res.url().includes('/api/v1/auth/set-pin') && res.request().method() === 'POST',
+      { timeout: 15000 }
+    );
     await row.locator('input[type="password"]').fill(pin);
     await row.getByRole('button', { name: 'PIN' }).click();
+    const pinRes = await pinWait;
+    expect(pinRes.ok(), `set-pin → ${pinRes.status()}`).toBeTruthy();
     await expect(this.page.locator('#users-toast')).toContainText('PIN enregistré', { timeout: 10000 });
     await expect(row).toContainText('Défini');
   }
