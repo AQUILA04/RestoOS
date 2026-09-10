@@ -33,6 +33,7 @@
             <div class="muted" *ngIf="m.firstName || m.lastName">{{ m.firstName }} {{ m.lastName }}</div>
           </td>
           <td>
+            <label class="sr-only" [attr.for]="'role-' + m.membershipId">Rôle de {{ m.email }}</label>
             <select [id]="'role-' + m.membershipId" [(ngModel)]="roleDraft[m.membershipId]">
               <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
             </select>
@@ -40,6 +41,7 @@
           </td>
           <td>
             <span class="muted">{{ m.hasPin ? 'Défini' : 'Aucun' }}</span>
+            <label class="sr-only" [attr.for]="'pin-' + m.userId">PIN de {{ m.email }}</label>
             <input
               [id]="'pin-' + m.userId"
               type="password"

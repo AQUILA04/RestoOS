@@ -41,9 +41,11 @@
           <td>{{ t.tableNumber }}</td>
           <td>{{ zoneName(t.zoneId) }}</td>
           <td>
+            <label class="sr-only" [attr.for]="'cap-' + t.id">Capacité {{ t.tableNumber }}</label>
             <input [id]="'cap-' + t.id" type="number" min="1" [(ngModel)]="editCapacity[t.id]" />
           </td>
           <td>
+            <label class="sr-only" [attr.for]="'status-' + t.id">Statut {{ t.tableNumber }}</label>
             <select [id]="'status-' + t.id" [ngModel]="t.status" (ngModelChange)="setStatus(t, $event)">
               <option value="AVAILABLE">Disponible</option>
               <option value="OCCUPIED">Occupée</option>
