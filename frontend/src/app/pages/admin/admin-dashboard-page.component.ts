@@ -58,7 +58,7 @@ export class AdminDashboardPageComponent implements OnInit {
             this.orgName = org?.name || this.orgName;
             this.logoUrl = org?.logoUrl || '';
             this.mobileMoneyLabel = org?.mobileMoneyLabel || this.mobileMoneyLabel;
-            this.settingsToast = 'Paramètres tenant enregistrés';
+            this.settingsToast = 'Libellé enregistré';
             setTimeout(() => (this.settingsToast = ''), 2500);
           },
           error: (err) => {
