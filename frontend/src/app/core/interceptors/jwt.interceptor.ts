@@ -13,6 +13,9 @@ import { StoreContextService } from '../services/store-context.service';
 
 const PUBLIC_PATH_PREFIXES = ['/login', '/signup', '/activate', '/auth/callback', '/home'];
 
+/** Station PIN unlock routes: 401s (e.g. staff list without JWT) must not bounce to Keycloak. */
+const STATION_PIN_PATH_PREFIXES = ['/pos', '/kds'];
+
 @Injectable()
 export class JwtInterceptor implements HttpInterceptor {
   constructor(private readonly injector: Injector) {}
@@ -29,7 +32,7 @@ export class JwtInterceptor implements HttpInterceptor {
           const storeContext = this.injector.get(StoreContextService);
           const router = this.injector.get(Router);
           storeContext.clearAuth();
-          if (!this.isPublicAppPath(router.url)) {
+          if (!this.shouldSkipLoginRedirect(router.url, storeContext)) {
             void router.navigateByUrl('/login');
           }
         }
@@ -45,6 +48,18 @@ export class JwtInterceptor implements HttpInterceptor {
       url.includes('/auth/activate') ||
       url.includes('/auth/oidc/callback')
     );
+  }
+
+  private shouldSkipLoginRedirect(url: string, storeContext: StoreContextService): boolean {
+    if (this.isPublicAppPath(url)) {
+      return true;
+    }
+    const path = url.split('?')[0] || '/';
+    const onStationPinRoute = STATION_PIN_PATH_PREFIXES.some(
+      (prefix) => path === prefix || path.startsWith(`${prefix}/`),
+    );
+    // Bound stations stay on PIN lockscreen when unauthenticated API calls 401.
+    return onStationPinRoute && storeContext.hasStationBinding();
   }
 
   private isPublicAppPath(url: string): boolean {
