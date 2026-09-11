@@ -5,7 +5,19 @@
 
 <div *ngIf="authenticated" class="pos-shell">
   <resto-offline-status [isOnline]="isOnline" [pendingCount]="pendingCount"></resto-offline-status>
-  <div class="pos-tabs">
+
+  <div class="cash-bar" *ngIf="cashSession">
+    <div class="cash-bar-info">
+      <span class="cash-dot"></span>
+      <span>Caisse ouverte</span>
+      <span class="cash-meta" *ngIf="cashSession.openedAt">depuis {{ cashSession.openedAt | date:'HH:mm' }}</span>
+    </div>
+    <button type="button" id="btn-close-cash-session" class="secondary-btn" (click)="askCloseCashSession()">
+      Fermer la caisse
+    </button>
+  </div>
+
+  <div class="pos-tabs" *ngIf="cashSession">
     <button type="button" id="tab-floor-plan" [class.active]="activeTab === 'floor'" (click)="activeTab = 'floor'">Plan de salle</button>
     <button type="button" id="tab-pos-catalog" [class.active]="activeTab === 'catalog'" (click)="activeTab = 'catalog'">Catalogue</button>
     <button type="button" id="tab-ready-orders" [class.active]="activeTab === 'orders'" (click)="activeTab = 'orders'; reloadOpenOrders()">
@@ -14,69 +26,76 @@
     </button>
   </div>
 
-  <div *ngIf="activeTab === 'floor'">
-    <div class="floor-actions">
-      <button type="button" id="btn-order-without-table" class="secondary-btn" (click)="startOrderWithoutTable()">
-        Commander sans table
+  <ng-container *ngIf="cashSession">
+    <div *ngIf="activeTab === 'floor'">
+      <div class="floor-actions">
+        <button type="button" id="btn-order-without-table" class="secondary-btn" (click)="startOrderWithoutTable()">
+          Commander sans table
+        </button>
+      </div>
+      <resto-floor-plan
+        [zones]="zones"
+        [tables]="tables"
+        [activeZoneId]="activeZoneId"
+        (zoneSelect)="activeZoneId = $event"
+        (tableSelect)="selectTable($event)">
+      </resto-floor-plan>
+    </div>
+
+    <div *ngIf="activeTab === 'catalog'">
+      <div class="table-context">
+        <p *ngIf="selectedTable">Table {{ selectedTable.name || selectedTable.tableNumber }}
+          <button type="button" class="link-btn" (click)="clearTableSelection()">Retirer</button>
+        </p>
+        <p *ngIf="!selectedTable" class="hint">Aucune table — optionnelle, à assigner plus tard</p>
+      </div>
+      <resto-pos-layout
+        [categories]="categories"
+        [products]="products"
+        [cartItems]="cartItems"
+        [activeCategoryId]="activeCategoryId"
+        (categorySelect)="onCategorySelect($event)"
+        (productSelect)="onProductSelect($event)"
+        (checkout)="submitOrder()">
+      </resto-pos-layout>
+    </div>
+
+    <div *ngIf="activeTab === 'orders'" class="ready-panel" id="ready-orders-panel">
+      <h2>Commandes ouvertes</h2>
+      <p class="hint">Ouvrez une commande pour encaisser à tout moment, ou marquer livré.</p>
+      <p class="hint" *ngIf="!openOrders.length">Aucune commande ouverte.</p>
+      <button
+        type="button"
+        class="ready-card"
+        [class.ready-highlight]="order.status === 'READY'"
+        [class.paid-badge]="order.paymentStatus === 'PAID'"
+        *ngFor="let order of openOrders"
+        [attr.data-order-number]="order.orderNumber"
+        (click)="openOrder(order)">
+        <span class="ready-num">#{{ order.orderNumber }}</span>
+        <span class="ready-meta">
+          {{ tableLabel(order.tableId) }}
+          · {{ statusLabel(order.status, order.paymentStatus) }}
+          <ng-container *ngIf="order.totalAmount != null"> · {{ order.totalAmount | number:'1.2-2' }}</ng-container>
+        </span>
+        <span class="ready-cta">{{ order.paymentStatus === 'PAID' ? 'Ouvrir →' : 'Encaisser →' }}</span>
       </button>
     </div>
-    <resto-floor-plan
-      [zones]="zones"
-      [tables]="tables"
-      [activeZoneId]="activeZoneId"
-      (zoneSelect)="activeZoneId = $event"
-      (tableSelect)="selectTable($event)">
-    </resto-floor-plan>
-  </div>
 
-  <div *ngIf="activeTab === 'catalog'">
-    <div class="table-context">
-      <p *ngIf="selectedTable">Table {{ selectedTable.name || selectedTable.tableNumber }}
-        <button type="button" class="link-btn" (click)="clearTableSelection()">Retirer</button>
-      </p>
-      <p *ngIf="!selectedTable" class="hint">Aucune table — optionnelle, à assigner plus tard</p>
+    <div class="order-feedback" *ngIf="orderNumberDisplay">
+      <button type="button" class="link-btn order-link" id="order-number-display" (click)="openLastCreatedOrder()">
+        {{ orderNumberDisplay }}
+      </button>
+      <span class="order-status-badge">{{ orderStatus }}</span>
+      <button type="button" class="secondary-btn" *ngIf="lastCreatedOrderNumber != null" (click)="openLastCreatedOrder()">
+        Ouvrir / Encaisser
+      </button>
     </div>
-    <resto-pos-layout
-      [categories]="categories"
-      [products]="products"
-      [cartItems]="cartItems"
-      [activeCategoryId]="activeCategoryId"
-      (categorySelect)="onCategorySelect($event)"
-      (productSelect)="onProductSelect($event)"
-      (checkout)="submitOrder()">
-    </resto-pos-layout>
-  </div>
+  </ng-container>
 
-  <div *ngIf="activeTab === 'orders'" class="ready-panel" id="ready-orders-panel">
-    <h2>Commandes ouvertes</h2>
-    <p class="hint">Ouvrez une commande pour encaisser à tout moment, ou marquer livré.</p>
-    <p class="hint" *ngIf="!openOrders.length">Aucune commande ouverte.</p>
-    <button
-      type="button"
-      class="ready-card"
-      [class.ready-highlight]="order.status === 'READY'"
-      [class.paid-badge]="order.paymentStatus === 'PAID'"
-      *ngFor="let order of openOrders"
-      [attr.data-order-number]="order.orderNumber"
-      (click)="openOrder(order)">
-      <span class="ready-num">#{{ order.orderNumber }}</span>
-      <span class="ready-meta">
-        {{ tableLabel(order.tableId) }}
-        · {{ statusLabel(order.status, order.paymentStatus) }}
-        <ng-container *ngIf="order.totalAmount != null"> · {{ order.totalAmount | number:'1.2-2' }}</ng-container>
-      </span>
-      <span class="ready-cta">{{ order.paymentStatus === 'PAID' ? 'Ouvrir →' : 'Encaisser →' }}</span>
-    </button>
-  </div>
-
-  <div class="order-feedback" *ngIf="orderNumberDisplay">
-    <button type="button" class="link-btn order-link" id="order-number-display" (click)="openLastCreatedOrder()">
-      {{ orderNumberDisplay }}
-    </button>
-    <span class="order-status-badge">{{ orderStatus }}</span>
-    <button type="button" class="secondary-btn" *ngIf="lastCreatedOrderNumber != null" (click)="openLastCreatedOrder()">
-      Ouvrir / Encaisser
-    </button>
+  <div class="cash-waiting" *ngIf="cashSessionChecked && !cashSession && !openCashModal && !reportModal">
+    <p>Aucune session de caisse ouverte.</p>
+    <button type="button" class="primary-btn" (click)="openCashModal = true">Ouvrir la caisse</button>
   </div>
 
   <resto-modifier-modal
@@ -86,6 +105,89 @@
     (confirm)="onModifiersConfirmed($event)"
     (dismiss)="modifierOpen = false">
   </resto-modifier-modal>
+
+  <div class="modal-overlay" *ngIf="openCashModal" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <h2>Ouvrir la caisse</h2>
+      <p class="hint">Une session est requise avant d’encaisser. Chaque caissier a sa propre session sur le magasin.</p>
+      <label class="field">
+        <span>Fond de caisse (optionnel)</span>
+        <input type="number" min="0" step="0.01" [(ngModel)]="openingFloatInput" placeholder="0.00" />
+      </label>
+      <div class="modal-actions">
+        <button type="button" id="btn-confirm-open-cash" class="primary-btn" [disabled]="cashBusy" (click)="confirmOpenCashSession()">
+          {{ cashBusy ? 'Ouverture…' : 'Ouvrir' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" *ngIf="closeCashModal" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <h2>Fermer la caisse</h2>
+      <p class="hint">Le rapport de session (CA, produits, historique) sera généré à la clôture.</p>
+      <label class="field">
+        <span>Notes de clôture (optionnel)</span>
+        <textarea rows="3" [(ngModel)]="closingNotes" placeholder="Fin de service…"></textarea>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="secondary-btn" [disabled]="cashBusy" (click)="closeCashModal = false">Annuler</button>
+        <button type="button" id="btn-confirm-close-cash" class="primary-btn" [disabled]="cashBusy" (click)="confirmCloseCashSession()">
+          {{ cashBusy ? 'Clôture…' : 'Fermer et générer le rapport' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" *ngIf="reportModal && sessionReport" role="dialog" aria-modal="true">
+    <div class="modal-card report-card">
+      <h2>Rapport de session</h2>
+      <p class="hint">{{ sessionReport.storeName || 'Magasin' }} · {{ sessionReport.cashierName || 'Caissier' }}</p>
+      <div class="report-kpi">
+        <div>
+          <span class="kpi-label">CA total</span>
+          <strong>{{ sessionReport.totalRevenue | number:'1.2-2' }}</strong>
+        </div>
+        <div>
+          <span class="kpi-label">Paiements</span>
+          <strong>{{ sessionReport.paymentCount || 0 }}</strong>
+        </div>
+      </div>
+
+      <h3>Par moyen de paiement</h3>
+      <ul class="report-list" *ngIf="sessionReport.revenueByMethod">
+        <li *ngFor="let entry of sessionReport.revenueByMethod | keyvalue">
+          <span>{{ entry.key }}</span>
+          <span>{{ entry.value | number:'1.2-2' }}</span>
+        </li>
+      </ul>
+
+      <h3>Par produit</h3>
+      <ul class="report-list" *ngIf="sessionReport.products?.length; else noProducts">
+        <li *ngFor="let p of sessionReport.products">
+          <span>{{ p.productName }} × {{ p.quantity }}</span>
+          <span>{{ p.totalAmount | number:'1.2-2' }}</span>
+        </li>
+      </ul>
+      <ng-template #noProducts><p class="hint">Aucun produit.</p></ng-template>
+
+      <h3>Commandes</h3>
+      <ul class="report-list" *ngIf="sessionReport.orders?.length; else noOrders">
+        <li *ngFor="let o of sessionReport.orders">
+          <span>#{{ o.orderNumber }} · {{ o.paymentMethods?.join(', ') }}</span>
+          <span>{{ o.sessionPaidAmount | number:'1.2-2' }}</span>
+        </li>
+      </ul>
+      <ng-template #noOrders><p class="hint">Aucune commande encaissée.</p></ng-template>
+
+      <p class="hint" *ngIf="shareHint">{{ shareHint }}</p>
+      <div class="modal-actions">
+        <button type="button" id="btn-download-cash-pdf" class="secondary-btn" (click)="downloadSessionPdf()">Télécharger PDF</button>
+        <button type="button" id="btn-share-cash-report" class="secondary-btn" (click)="shareSessionReport()">Partager</button>
+        <button type="button" class="primary-btn" (click)="dismissReportModal()">OK</button>
+      </div>
+    </div>
+  </div>
 
   <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
 </div>

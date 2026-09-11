@@ -27,6 +27,47 @@
   color: white;
 }
 
+.cash-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border: 1px solid #FFCCBC;
+  background: #FFF3E0;
+  border-radius: 8px;
+}
+
+.cash-bar-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.cash-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #2E7D32;
+}
+
+.cash-meta {
+  font-weight: 400;
+  color: #6D4C41;
+  font-size: 0.9rem;
+}
+
+.cash-waiting {
+  margin-top: 24px;
+  text-align: center;
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+}
+
 .order-feedback {
   margin-top: 12px;
   display: flex;
@@ -43,10 +84,139 @@
   font-weight: 600;
 }
 
+.secondary-btn,
+.primary-btn,
+.link-btn {
+  min-height: 44px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.secondary-btn {
+  border: 2px solid #D84315;
+  background: white;
+  color: #D84315;
+  padding: 8px 14px;
+}
+
+.primary-btn {
+  border: none;
+  background: #D84315;
+  color: white;
+  padding: 10px 16px;
+}
+
+.link-btn {
+  border: none;
+  background: transparent;
+  color: #D84315;
+  text-decoration: underline;
+  padding: 4px 6px;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1200;
+  padding: 0;
+}
+
+.modal-card {
+  background: #fff;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90dvh;
+  overflow: auto;
+  border-radius: 16px 16px 0 0;
+  padding: 16px 20px 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.modal-card h2,
+.modal-card h3 {
+  margin: 0 0 8px;
+}
+
+.modal-card h3 {
+  margin-top: 16px;
+  font-size: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0;
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  border: 1px solid #BDBDBD;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.report-kpi {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.kpi-label {
+  display: block;
+  color: #6D4C41;
+  font-size: 0.85rem;
+}
+
+.report-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.report-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #EEEEEE;
+}
+
+.hint {
+  color: #6D4C41;
+  margin: 4px 0 8px;
+}
+
 .error {
   color: #C62828;
   text-align: center;
   padding: 0 12px;
+}
+
+@media (min-width: 768px) {
+  .modal-overlay {
+    align-items: center;
+    padding: 24px;
+  }
+
+  .modal-card {
+    border-radius: 12px;
+  }
 }
 
 @media (max-width: 767px) {
