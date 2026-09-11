@@ -47,6 +47,29 @@ export class PosPageComponent implements OnInit, OnDestroy {
     status: string;
     paymentStatus: string;
   }> = [];
+
+  cashSession: any | null = null;
+  cashSessionChecked = false;
+  openCashModal = false;
+  closeCashModal = false;
+  reportModal = false;
+  openingFloatInput: number | null = null;
+  closingNotes = '';
+  cashBusy = false;
+  sessionReport: any | null = null;
+  shareHint = '';
+
+  get revenueByMethodEntries(): Array<{ key: string; value: number }> {
+    const byMethod = this.sessionReport?.revenueByMethod;
+    if (!byMethod || typeof byMethod !== 'object') {
+      return [];
+    }
+    return Object.keys(byMethod).map((key) => ({
+      key,
+      value: Number(byMethod[key] ?? 0),
+    }));
+  }
+
   private wsSub?: Subscription;
 
   constructor(
@@ -64,6 +87,7 @@ export class PosPageComponent implements OnInit, OnDestroy {
     this.offlineQueue.getQueue().subscribe((q) => (this.pendingCount = q.length));
     if (this.authenticated) {
       this.loadOperationalData();
+      this.checkCashSession();
     } else {
       this.loadStaffForPin();
     }
@@ -111,11 +135,143 @@ export class PosPageComponent implements OnInit, OnDestroy {
         this.authenticated = true;
         this.activeTab = 'floor';
         this.loadOperationalData();
+        this.checkCashSession();
       },
       error: () => {
         this.errorMessage = 'PIN invalide';
       },
     });
+  }
+
+  checkCashSession(): void {
+    let storeId: string;
+    try {
+      storeId = this.api.requireStoreId();
+    } catch {
+      return;
+    }
+    this.cashSessionChecked = false;
+    this.api.getCurrentCashSession(storeId).subscribe({
+      next: (session) => {
+        this.cashSession = session;
+        this.cashSessionChecked = true;
+        this.openCashModal = !session;
+      },
+      error: () => {
+        this.cashSession = null;
+        this.cashSessionChecked = true;
+        this.openCashModal = true;
+      },
+    });
+  }
+
+  confirmOpenCashSession(): void {
+    let storeId: string;
+    try {
+      storeId = this.api.requireStoreId();
+    } catch {
+      this.errorMessage = 'Contexte magasin manquant';
+      return;
+    }
+    this.cashBusy = true;
+    this.errorMessage = '';
+    this.api.openCashSession(storeId, this.openingFloatInput).subscribe({
+      next: (session) => {
+        this.cashSession = session;
+        this.openCashModal = false;
+        this.cashBusy = false;
+        this.openingFloatInput = null;
+      },
+      error: (err) => {
+        this.cashBusy = false;
+        this.errorMessage = err?.error?.message || "Impossible d'ouvrir la caisse";
+      },
+    });
+  }
+
+  askCloseCashSession(): void {
+    if (!this.cashSession?.id) {
+      return;
+    }
+    this.closingNotes = '';
+    this.closeCashModal = true;
+  }
+
+  confirmCloseCashSession(): void {
+    if (!this.cashSession?.id) {
+      return;
+    }
+    this.cashBusy = true;
+    this.errorMessage = '';
+    this.api.closeCashSession(this.cashSession.id, this.closingNotes).subscribe({
+      next: (session) => {
+        this.cashBusy = false;
+        this.closeCashModal = false;
+        this.cashSession = null;
+        this.sessionReport = session?.report || null;
+        this.reportModal = true;
+        this.shareHint = '';
+      },
+      error: (err) => {
+        this.cashBusy = false;
+        this.errorMessage = err?.error?.message || 'Impossible de fermer la caisse';
+      },
+    });
+  }
+
+  downloadSessionPdf(): void {
+    const sessionId = this.sessionReport?.sessionId || this.cashSession?.id;
+    if (!sessionId) {
+      return;
+    }
+    this.api.downloadCashSessionReportPdf(sessionId).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `rapport-caisse-${sessionId}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.errorMessage = 'Téléchargement PDF impossible';
+      },
+    });
+  }
+
+  async shareSessionReport(): Promise<void> {
+    const sessionId = this.sessionReport?.sessionId || this.cashSession?.id;
+    if (!sessionId) {
+      return;
+    }
+    this.shareHint = '';
+    try {
+      const blob = await this.api.downloadCashSessionReportPdf(sessionId).toPromise();
+      if (!blob) {
+        throw new Error('empty pdf');
+      }
+      const file = new File([blob], `rapport-caisse-${sessionId}.pdf`, { type: 'application/pdf' });
+      const nav: any = navigator;
+      if (nav.share && (!nav.canShare || nav.canShare({ files: [file] }))) {
+        await nav.share({
+          title: 'Rapport de caisse',
+          text: `Rapport de caisse — CA ${this.sessionReport?.totalRevenue ?? ''}`,
+          files: [file],
+        });
+        return;
+      }
+      this.downloadSessionPdf();
+      this.shareHint = 'Partage natif indisponible — PDF téléchargé.';
+    } catch {
+      this.downloadSessionPdf();
+      this.shareHint = 'Partage impossible — PDF téléchargé.';
+    }
+  }
+
+  dismissReportModal(): void {
+    this.reportModal = false;
+    this.sessionReport = null;
+    this.openCashModal = true;
   }
 
   loadOperationalData(): void {

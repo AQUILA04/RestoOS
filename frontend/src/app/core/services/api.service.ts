@@ -239,4 +239,31 @@ export class ApiService {
     }
     return orgId;
   }
+
+  getCurrentCashSession(storeId: string): Observable<any | null> {
+    return this.getData<any>(`/api/v1/stores/${storeId}/cash-sessions/current`).pipe(
+      catchError(() => of(null)),
+    );
+  }
+
+  openCashSession(storeId: string, openingFloat?: number | null): Observable<any> {
+    const body = openingFloat != null && openingFloat !== undefined ? { openingFloat } : {};
+    return this.postData<any>(`/api/v1/stores/${storeId}/cash-sessions/open`, body);
+  }
+
+  closeCashSession(sessionId: string, closingNotes?: string): Observable<any> {
+    return this.postData<any>(`/api/v1/cash-sessions/${sessionId}/close`, {
+      closingNotes: closingNotes || null,
+    });
+  }
+
+  getCashSessionReport(sessionId: string): Observable<any> {
+    return this.getData<any>(`/api/v1/cash-sessions/${sessionId}/report`);
+  }
+
+  downloadCashSessionReportPdf(sessionId: string): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/api/v1/cash-sessions/${sessionId}/report.pdf`, {
+      responseType: 'blob',
+    });
+  }
 }

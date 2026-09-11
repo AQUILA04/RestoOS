@@ -256,6 +256,36 @@ export async function assignOrderTable(
   return (await res.json()).data;
 }
 
+/**
+ * Ensures the authenticated user has an OPEN cash session on the store.
+ * Payments require a per-cashier open session.
+ */
+export async function ensureOpenCashSession(
+  request: APIRequestContext,
+  backendApiUrl: string,
+  token: string,
+  storeId: string,
+  openingFloat?: number
+) {
+  const current = await request.get(
+    `${backendApiUrl}/api/v1/stores/${storeId}/cash-sessions/current`,
+    { headers: authHeaders(token) }
+  );
+  if (current.status() === 200) {
+    return (await current.json()).data;
+  }
+
+  const openRes = await request.post(
+    `${backendApiUrl}/api/v1/stores/${storeId}/cash-sessions/open`,
+    {
+      headers: authHeaders(token),
+      data: openingFloat != null ? { openingFloat } : {},
+    }
+  );
+  expect(openRes.status(), 'open cash session').toBe(201);
+  return (await openRes.json()).data;
+}
+
 export async function markOrderPaid(
   request: APIRequestContext,
   backendApiUrl: string,
@@ -267,6 +297,12 @@ export async function markOrderPaid(
     amountTendered?: number;
   }
 ) {
+  const orderRes = await getOrder(request, backendApiUrl, token, orderId);
+  expect(orderRes.status(), 'load order before mark paid').toBe(200);
+  const order = (await orderRes.json()).data;
+  expect(order.storeId, 'order.storeId for cash session').toBeTruthy();
+  await ensureOpenCashSession(request, backendApiUrl, token, order.storeId);
+
   const res = await request.post(`${backendApiUrl}/api/v1/orders/${orderId}/payment/mark-paid`, {
     headers: {
       ...authHeaders(token),

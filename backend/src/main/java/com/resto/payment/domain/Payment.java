@@ -32,6 +32,9 @@ public class Payment {
     @Column(name = "cashier_user_id")
     private UUID cashierUserId;
 
+    @Column(name = "cash_session_id")
+    private UUID cashSessionId;
+
     @Column(name = "payment_method", nullable = false, length = 50)
     private String paymentMethod; // CASH, CARD, MOBILE_MONEY, OTHER
 
@@ -59,6 +62,8 @@ public class Payment {
     public void setOrderId(UUID orderId) { this.orderId = orderId; }
     public UUID getCashierUserId() { return cashierUserId; }
     public void setCashierUserId(UUID cashierUserId) { this.cashierUserId = cashierUserId; }
+    public UUID getCashSessionId() { return cashSessionId; }
+    public void setCashSessionId(UUID cashSessionId) { this.cashSessionId = cashSessionId; }
     public String getPaymentMethod() { return paymentMethod; }
     public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
     public BigDecimal getAmount() { return amount; }
@@ -85,6 +90,7 @@ public class Payment {
         private UUID storeId;
         private UUID orderId;
         private UUID cashierUserId;
+        private UUID cashSessionId;
         private String paymentMethod;
         private BigDecimal amount;
         private BigDecimal amountTendered;
@@ -96,6 +102,7 @@ public class Payment {
         public PaymentBuilder storeId(UUID storeId) { this.storeId = storeId; return this; }
         public PaymentBuilder orderId(UUID orderId) { this.orderId = orderId; return this; }
         public PaymentBuilder cashierUserId(UUID cashierUserId) { this.cashierUserId = cashierUserId; return this; }
+        public PaymentBuilder cashSessionId(UUID cashSessionId) { this.cashSessionId = cashSessionId; return this; }
         public PaymentBuilder paymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; return this; }
         public PaymentBuilder amount(BigDecimal amount) { this.amount = amount; return this; }
         public PaymentBuilder amountTendered(BigDecimal amountTendered) { this.amountTendered = amountTendered; return this; }
@@ -109,6 +116,7 @@ public class Payment {
             p.setStoreId(this.storeId);
             p.setOrderId(this.orderId);
             p.setCashierUserId(this.cashierUserId);
+            p.setCashSessionId(this.cashSessionId);
             p.setPaymentMethod(this.paymentMethod);
             p.setAmount(this.amount);
             p.setAmountTendered(this.amountTendered);

@@ -66,7 +66,39 @@ export class PosTerminalPage {
       await this.page.locator(`.pin-button[data-digit="${digit}"]`).click();
     }
     await expect(this.pinDisplay).toHaveText('••••');
-    // Wait for API-driven unlock (PIN login is async)
+    // Wait for API-driven unlock (PIN login is async), then open cash if gated
+    await this.ensureCashSessionOpen();
+    await expect(this.floorPlanTab).toBeVisible({ timeout: 15000 });
+  }
+
+  /**
+   * Opens a cash session when the POS gate/modal is shown.
+   * No-op if tabs are already available (session already open).
+   */
+  async ensureCashSessionOpen() {
+    const confirmOpen = this.page.locator('#btn-confirm-open-cash');
+    const openGateBtn = this.page.getByRole('button', { name: 'Ouvrir la caisse' });
+
+    await expect
+      .poll(
+        async () => {
+          if (await this.floorPlanTab.isVisible().catch(() => false)) return 'ready';
+          if (await confirmOpen.isVisible().catch(() => false)) return 'modal';
+          if (await openGateBtn.isVisible().catch(() => false)) return 'gate';
+          return 'waiting';
+        },
+        { timeout: 15000 }
+      )
+      .not.toBe('waiting');
+
+    if (await this.floorPlanTab.isVisible().catch(() => false)) {
+      return;
+    }
+    if (await openGateBtn.isVisible().catch(() => false)) {
+      await openGateBtn.click();
+    }
+    await expect(confirmOpen).toBeVisible({ timeout: 10000 });
+    await confirmOpen.click();
     await expect(this.floorPlanTab).toBeVisible({ timeout: 15000 });
   }
 

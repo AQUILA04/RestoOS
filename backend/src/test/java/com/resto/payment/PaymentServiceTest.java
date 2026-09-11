@@ -4,7 +4,9 @@ import com.resto.audit.service.AuditService;
 import com.resto.order.domain.Order;
 import com.resto.order.repository.OrderRepository;
 import com.resto.order.service.OrderService;
+import com.resto.payment.domain.CashSession;
 import com.resto.payment.domain.Payment;
+import com.resto.payment.repository.CashSessionRepository;
 import com.resto.payment.repository.PaymentRepository;
 import com.resto.payment.service.PaymentService;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +30,7 @@ class PaymentServiceTest {
 
     @Mock PaymentRepository paymentRepository;
     @Mock OrderRepository orderRepository;
+    @Mock CashSessionRepository cashSessionRepository;
     @Mock AuditService auditService;
     @Mock OrderService orderService;
 
@@ -37,10 +40,21 @@ class PaymentServiceTest {
     UUID storeId = UUID.randomUUID();
     UUID orderId = UUID.randomUUID();
     UUID cashierId = UUID.randomUUID();
+    UUID sessionId = UUID.randomUUID();
 
     @BeforeEach
     void setUp() {
-        paymentService = new PaymentService(paymentRepository, orderRepository, auditService, orderService);
+        paymentService = new PaymentService(
+                paymentRepository, orderRepository, cashSessionRepository, auditService, orderService);
+        CashSession session = CashSession.builder()
+                .id(sessionId)
+                .organizationId(orgId)
+                .storeId(storeId)
+                .openedByUserId(cashierId)
+                .status("OPEN")
+                .build();
+        lenient().when(cashSessionRepository.findByStoreIdAndOpenedByUserIdAndStatus(storeId, cashierId, "OPEN"))
+                .thenReturn(Optional.of(session));
     }
 
     @Test
@@ -61,15 +75,15 @@ class PaymentServiceTest {
             p.setId(UUID.randomUUID());
             return p;
         });
-        when(paymentRepository.findByOrderId(orderId)).thenAnswer(inv -> {
-            Payment p = Payment.builder().amount(new BigDecimal("20.00")).orderId(orderId).build();
-            return List.of(p);
-        });
+        when(paymentRepository.findByOrderId(orderId)).thenAnswer(inv -> List.of(
+                Payment.builder().amount(new BigDecimal("20.00")).orderId(orderId).cashSessionId(sessionId).build()
+        ));
         when(orderRepository.save(any(Order.class))).thenAnswer(i -> i.getArgument(0));
 
         Payment payment = paymentService.markPaid(orgId, storeId, orderId, cashierId, "CARD", new BigDecimal("20.00"));
 
         assertNotNull(payment);
+        assertEquals(sessionId, payment.getCashSessionId());
         assertEquals("PAID", order.getPaymentStatus());
         assertEquals("CLOSED", order.getStatus());
         verify(auditService).record(eq(orgId), eq(storeId), eq(cashierId), eq("PAYMENT_RECORDED"), any(), eq(orderId), any());
@@ -117,10 +131,9 @@ class PaymentServiceTest {
             p.setId(UUID.randomUUID());
             return p;
         });
-        when(paymentRepository.findByOrderId(orderId)).thenAnswer(inv -> {
-            Payment p = Payment.builder().amount(new BigDecimal("20.00")).orderId(orderId).build();
-            return List.of(p);
-        });
+        when(paymentRepository.findByOrderId(orderId)).thenAnswer(inv -> List.of(
+                Payment.builder().amount(new BigDecimal("20.00")).orderId(orderId).build()
+        ));
         when(orderRepository.save(any(Order.class))).thenAnswer(i -> i.getArgument(0));
 
         paymentService.markPaid(orgId, storeId, orderId, cashierId, "CARD", new BigDecimal("20.00"));
@@ -128,6 +141,20 @@ class PaymentServiceTest {
         assertEquals("PAID", order.getPaymentStatus());
         assertEquals("SENT_TO_KITCHEN", order.getStatus());
         verify(orderService, never()).releaseTableIfIdle(any(), any());
+    }
+
+    @Test
+    @DisplayName("Rejects payment without open cash session")
+    void rejectsWithoutOpenSession() {
+        when(cashSessionRepository.findByStoreIdAndOpenedByUserIdAndStatus(storeId, cashierId, "OPEN"))
+                .thenReturn(Optional.empty());
+        Order order = Order.builder()
+                .id(orderId).organizationId(orgId).storeId(storeId).orderNumber(1)
+                .status("READY").totalAmount(new BigDecimal("10.00")).build();
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+
+        assertThrows(IllegalStateException.class,
+                () -> paymentService.markPaid(orgId, storeId, orderId, cashierId, "CASH", new BigDecimal("10.00")));
     }
 
     @Test

@@ -2,10 +2,11 @@ package com.resto.payment.service;
 
 import com.resto.audit.service.AuditService;
 import com.resto.order.domain.Order;
-import com.resto.order.domain.OrderStateMachine;
 import com.resto.order.repository.OrderRepository;
 import com.resto.order.service.OrderService;
+import com.resto.payment.domain.CashSession;
 import com.resto.payment.domain.Payment;
+import com.resto.payment.repository.CashSessionRepository;
 import com.resto.payment.repository.PaymentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,26 +23,22 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
+    private final CashSessionRepository cashSessionRepository;
     private final AuditService auditService;
     private final OrderService orderService;
 
     public PaymentService(PaymentRepository paymentRepository,
                           OrderRepository orderRepository,
+                          CashSessionRepository cashSessionRepository,
                           AuditService auditService,
                           OrderService orderService) {
         this.paymentRepository = paymentRepository;
         this.orderRepository = orderRepository;
+        this.cashSessionRepository = cashSessionRepository;
         this.auditService = auditService;
         this.orderService = orderService;
     }
 
-    /**
-     * Mark order paid (declarative). Full cover → PAID.
-     * CLOSED only when already DELIVERED (payment is allowed at any operational step;
-     * kitchen/service flow continues until delivery).
-     * Invariant: CLOSED + UNPAID is forbidden.
-     * For CASH, optional amountTendered records cash received and computes change.
-     */
     public Payment markPaid(UUID organizationId, UUID storeId, UUID orderId, UUID cashierUserId,
                             String paymentMethod, BigDecimal amount) {
         return markPaid(organizationId, storeId, orderId, cashierUserId, paymentMethod, amount, null);
@@ -65,6 +62,12 @@ public class PaymentService {
             throw new IllegalArgumentException("Invalid payment method: " + paymentMethod);
         }
 
+        UUID effectiveStoreId = storeId != null ? storeId : order.getStoreId();
+        CashSession openSession = cashSessionRepository
+                .findByStoreIdAndOpenedByUserIdAndStatus(effectiveStoreId, cashierUserId, "OPEN")
+                .orElseThrow(() -> new IllegalStateException(
+                        "No open cash session for this cashier. Open the register before recording payments."));
+
         BigDecimal changeAmount = null;
         if ("CASH".equals(paymentMethod) && amountTendered != null) {
             if (amountTendered.compareTo(amount) < 0) {
@@ -75,9 +78,10 @@ public class PaymentService {
 
         Payment payment = Payment.builder()
                 .organizationId(organizationId)
-                .storeId(storeId != null ? storeId : order.getStoreId())
+                .storeId(effectiveStoreId)
                 .orderId(orderId)
                 .cashierUserId(cashierUserId)
+                .cashSessionId(openSession.getId())
                 .paymentMethod(paymentMethod)
                 .amount(amount)
                 .amountTendered(amountTendered)
@@ -91,7 +95,6 @@ public class PaymentService {
 
         if (order.getTotalAmount() != null && totalPaid.compareTo(order.getTotalAmount()) >= 0) {
             order.setPaymentStatus("PAID");
-            // Close only after delivery; early payment must not abort kitchen/service flow
             if ("DELIVERED".equals(order.getStatus())) {
                 order.setStatus("CLOSED");
                 if (order.getTableId() != null) {
@@ -99,11 +102,9 @@ public class PaymentService {
                 }
             }
         } else {
-            // Partial payments stay UNPAID until fully covered (contract: UNPAID | PAID only)
             order.setPaymentStatus("UNPAID");
         }
 
-        // Guard invariant
         if ("CLOSED".equals(order.getStatus()) && !"PAID".equals(order.getPaymentStatus())) {
             throw new IllegalStateException("CLOSED + UNPAID is forbidden");
         }
@@ -112,12 +113,11 @@ public class PaymentService {
 
         auditService.record(organizationId, order.getStoreId(), cashierUserId,
                 "PAYMENT_RECORDED", "ORDER", orderId,
-                "method=" + paymentMethod + " amount=" + amount);
+                "method=" + paymentMethod + " amount=" + amount + " cashSessionId=" + openSession.getId());
 
         return savedPayment;
     }
 
-    /** @deprecated use {@link #markPaid} */
     @Deprecated
     public Payment recordPayment(UUID organizationId, UUID storeId, UUID orderId, UUID cashierUserId,
                                  String paymentMethod, BigDecimal amount) {
