@@ -59,6 +59,17 @@ export class PosPageComponent implements OnInit, OnDestroy {
   sessionReport: any | null = null;
   shareHint = '';
 
+  get revenueByMethodEntries(): Array<{ key: string; value: number }> {
+    const byMethod = this.sessionReport?.revenueByMethod;
+    if (!byMethod || typeof byMethod !== 'object') {
+      return [];
+    }
+    return Object.keys(byMethod).map((key) => ({
+      key,
+      value: Number(byMethod[key] ?? 0),
+    }));
+  }
+
   private wsSub?: Subscription;
 
   constructor(

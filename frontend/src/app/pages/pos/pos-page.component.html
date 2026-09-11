@@ -155,8 +155,8 @@
       </div>
 
       <h3>Par moyen de paiement</h3>
-      <ul class="report-list" *ngIf="sessionReport.revenueByMethod">
-        <li *ngFor="let entry of sessionReport.revenueByMethod | keyvalue">
+      <ul class="report-list" *ngIf="revenueByMethodEntries.length">
+        <li *ngFor="let entry of revenueByMethodEntries">
           <span>{{ entry.key }}</span>
           <span>{{ entry.value | number:'1.2-2' }}</span>
         </li>
