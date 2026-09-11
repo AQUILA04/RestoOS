@@ -3,6 +3,7 @@ import {
   authHeaders,
   bootstrapTenant,
   createDineInOrder,
+  ensureOpenCashSession,
   getOrder,
   patchKitchenStatus,
 } from '../helpers/api-bootstrap';
@@ -127,6 +128,9 @@ test.describe('Companion — POS open orders & pay anytime UI', () => {
       productId: tenant.productId,
       sendToKitchen: true,
     });
+
+    // Order detail page can pay without visiting the POS cash gate — open session via API.
+    await ensureOpenCashSession(request, backendApiUrl, tenant.ownerToken, tenant.storeId);
 
     await posPage.page.goto('/pos');
     await posPage.page.evaluate(

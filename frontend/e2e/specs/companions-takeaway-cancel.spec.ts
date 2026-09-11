@@ -5,6 +5,7 @@ import {
   bootstrapTenant,
   createTakeawayOrder,
   getOrder,
+  markOrderPaid,
   mintToken,
   patchKitchenStatus,
 } from '../helpers/api-bootstrap';
@@ -42,20 +43,10 @@ test.describe('Companion — TAKEAWAY lifecycle & cancel', () => {
     expect(deliverRes.status()).toBe(200);
     expect((await deliverRes.json()).data.status).toBe('DELIVERED');
 
-    const paidRes = await request.post(
-      `${backendApiUrl}/api/v1/orders/${order.id}/payment/mark-paid`,
-      {
-        headers: {
-          ...authHeaders(tenant.ownerToken),
-          'Idempotency-Key': randomUUID(),
-        },
-        data: {
-          paymentMethod: 'CASH',
-          amount: order.totalAmount,
-        },
-      }
-    );
-    expect(paidRes.status()).toBe(200);
+    await markOrderPaid(request, backendApiUrl, tenant.ownerToken, order.id, {
+      paymentMethod: 'CASH',
+      amount: order.totalAmount,
+    });
 
     const finalRes = await getOrder(request, backendApiUrl, tenant.ownerToken, order.id);
     expect(finalRes.status()).toBe(200);
