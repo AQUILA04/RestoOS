@@ -7,6 +7,7 @@ import {
   getOrder,
   patchKitchenStatus,
 } from '../helpers/api-bootstrap';
+import { seedBrowserSession } from '../helpers/session';
 
 /**
  * UI companion: open-orders list + pay anytime + cash change + mobile label on POS.
@@ -45,16 +46,11 @@ test.describe('Companion — POS open orders & pay anytime UI', () => {
       sendToKitchen: true,
     });
 
-    await posPage.gotoPos();
-    await posPage.page.evaluate(
-      ([org, store, staff]) => {
-        localStorage.setItem('organization_id', org as string);
-        localStorage.setItem('store_id', store as string);
-        localStorage.setItem('pos_staff', JSON.stringify([staff]));
-      },
-      [tenant.orgId, tenant.storeId, { id: tenant.ownerUserId, name: `Owner ${runId}` }]
-    );
-    await posPage.page.reload();
+    await seedBrowserSession(posPage.page, {
+      organizationId: tenant.orgId,
+      storeId: tenant.storeId,
+      staff: [{ id: tenant.ownerUserId, name: `Owner ${runId}` }],
+    });
     await posPage.authenticateWithPin('4242', `Owner ${runId}`);
 
     await posPage.openOrderFromList(String(order.orderNumber));
@@ -132,17 +128,12 @@ test.describe('Companion — POS open orders & pay anytime UI', () => {
     // Order detail page can pay without visiting the POS cash gate — open session via API.
     await ensureOpenCashSession(request, backendApiUrl, tenant.ownerToken, tenant.storeId);
 
-    await posPage.page.goto('/pos');
-    await posPage.page.evaluate(
-      ([token, org, store, uid]) => {
-        localStorage.setItem('access_token', token as string);
-        localStorage.setItem('organization_id', org as string);
-        localStorage.setItem('store_id', store as string);
-        localStorage.setItem('user_id', uid as string);
-        localStorage.setItem('resto_authenticated', 'true');
-      },
-      [tenant.ownerToken, tenant.orgId, tenant.storeId, tenant.ownerUserId]
-    );
+    await seedBrowserSession(posPage.page, {
+      accessToken: tenant.ownerToken,
+      organizationId: tenant.orgId,
+      storeId: tenant.storeId,
+      userId: tenant.ownerUserId,
+    });
     await posPage.gotoOrder(String(order.orderNumber));
     await expect(posPage.page.locator('#order-number-display')).toContainText(`#${order.orderNumber}`);
     await posPage.openPaymentBtn.click();

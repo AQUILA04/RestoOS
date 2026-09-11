@@ -1,30 +1,39 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { AuthService } from './core/services/auth.service';
+import { StoreContextService } from './core/services/store-context.service';
 
 @Component({
   selector: 'resto-root',
   template: `
     <header class="shell-header">
-      <div class="brand">RestoOS</div>
-      <button
-        type="button"
-        class="nav-toggle"
-        [attr.aria-expanded]="navOpen"
-        aria-controls="shell-nav"
-        aria-label="Menu de navigation"
-        (click)="navOpen = !navOpen">
-        <span class="nav-toggle-bar"></span>
-        <span class="nav-toggle-bar"></span>
-        <span class="nav-toggle-bar"></span>
-      </button>
-      <nav id="shell-nav" class="shell-nav" [class.open]="navOpen">
-        <a routerLink="/pos" (click)="closeNav()">POS</a>
-        <a routerLink="/kds" (click)="closeNav()">KDS</a>
-        <a routerLink="/admin/catalog" (click)="closeNav()">Catalogue</a>
-        <a routerLink="/admin/tables" (click)="closeNav()">Tables</a>
-        <a routerLink="/admin/users" (click)="closeNav()">Équipe</a>
-        <a routerLink="/admin/etablissements" (click)="closeNav()">Établissements</a>
-        <a routerLink="/admin/dashboard" (click)="closeNav()">Dashboard</a>
-      </nav>
+      <a routerLink="/" class="brand" (click)="closeNav()">RestoOS</a>
+      <ng-container *ngIf="showStationNav || showAdminNav">
+        <button
+          type="button"
+          class="nav-toggle"
+          [attr.aria-expanded]="navOpen"
+          aria-controls="shell-nav"
+          aria-label="Menu de navigation"
+          (click)="navOpen = !navOpen">
+          <span class="nav-toggle-bar"></span>
+          <span class="nav-toggle-bar"></span>
+          <span class="nav-toggle-bar"></span>
+        </button>
+        <nav id="shell-nav" class="shell-nav" [class.open]="navOpen">
+          <a *ngIf="showStationNav" routerLink="/pos" (click)="closeNav()">POS</a>
+          <a *ngIf="showStationNav" routerLink="/kds" (click)="closeNav()">KDS</a>
+          <ng-container *ngIf="showAdminNav">
+            <a routerLink="/admin/catalog" (click)="closeNav()">Catalogue</a>
+            <a routerLink="/admin/tables" (click)="closeNav()">Tables</a>
+            <a routerLink="/admin/users" (click)="closeNav()">Équipe</a>
+            <a routerLink="/admin/etablissements" (click)="closeNav()">Établissements</a>
+            <a routerLink="/admin/dashboard" (click)="closeNav()">Dashboard</a>
+          </ng-container>
+          <button type="button" class="shell-logout" (click)="logout()">Déconnexion</button>
+        </nav>
+      </ng-container>
     </header>
     <main class="shell-main">
       <router-outlet></router-outlet>
@@ -61,6 +70,7 @@ import { Component } from '@angular/core';
       letter-spacing: -0.02em;
       grid-column: 1;
       grid-row: 1;
+      text-decoration: none;
     }
 
     .nav-toggle {
@@ -98,7 +108,8 @@ import { Component } from '@angular/core';
       justify-self: end;
     }
 
-    .shell-nav a {
+    .shell-nav a,
+    .shell-logout {
       text-decoration: none;
       color: #F5F5F5;
       font-weight: 500;
@@ -106,6 +117,10 @@ import { Component } from '@angular/core';
       min-height: 44px;
       display: inline-flex;
       align-items: center;
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+      font: inherit;
     }
 
     .shell-main {
@@ -136,13 +151,16 @@ import { Component } from '@angular/core';
         display: flex;
       }
 
-      .shell-nav a {
+      .shell-nav a,
+      .shell-logout {
         padding: 12px 8px;
         border-radius: 8px;
       }
 
       .shell-nav a:active,
-      .shell-nav a:hover {
+      .shell-nav a:hover,
+      .shell-logout:active,
+      .shell-logout:hover {
         background: rgba(255, 255, 255, 0.08);
       }
     }
@@ -152,17 +170,53 @@ import { Component } from '@angular/core';
         gap: 4px 12px;
       }
 
-      .shell-nav a {
+      .shell-nav a,
+      .shell-logout {
         font-size: 0.95rem;
       }
     }
   `],
   standalone: false,
 })
-export class AppComponent {
+export class AppComponent implements OnInit, OnDestroy {
   navOpen = false;
+  showAdminNav = false;
+  showStationNav = false;
+  private sessionSub?: Subscription;
+
+  constructor(
+    private readonly storeContext: StoreContextService,
+    private readonly auth: AuthService,
+    private readonly router: Router,
+  ) {}
+
+  ngOnInit(): void {
+    this.refreshAuthState();
+    this.sessionSub = this.storeContext.session$.subscribe(() => {
+      this.refreshAuthState();
+      if (!this.showAdminNav && !this.showStationNav) {
+        this.navOpen = false;
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.sessionSub?.unsubscribe();
+  }
+
+  private refreshAuthState(): void {
+    this.showAdminNav = this.storeContext.hasTenantSession();
+    this.showStationNav =
+      this.storeContext.hasTenantSession() || this.storeContext.hasStationBinding();
+  }
 
   closeNav(): void {
     this.navOpen = false;
+  }
+
+  logout(): void {
+    this.closeNav();
+    this.auth.logout();
+    void this.router.navigateByUrl('/');
   }
 }

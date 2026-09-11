@@ -31,6 +31,24 @@ export class StoreContextService {
     return this.session?.userId ?? localStorage.getItem('user_id') ?? localStorage.getItem('resto_user_id');
   }
 
+  /**
+   * True when a bearer token plus user and organization (tenant) IDs are present.
+   * Store ID is optional so multi-store owners can reach establishment picker before selecting a site.
+   */
+  hasTenantSession(): boolean {
+    const token = localStorage.getItem('access_token');
+    const userId = this.userId?.trim();
+    const organizationId = this.organizationId?.trim();
+    return !!(token && userId && organizationId);
+  }
+
+  /** Station is bound to a tenant site (used before PIN unlock on shared terminals). */
+  hasStationBinding(): boolean {
+    const organizationId = this.organizationId?.trim();
+    const storeId = this.storeId?.trim();
+    return !!(organizationId && storeId);
+  }
+
   setSession(session: StoreSession): void {
     if (session.accessToken) {
       localStorage.setItem('access_token', session.accessToken);
@@ -53,10 +71,34 @@ export class StoreContextService {
     this.setSession({ ...current, ...partial });
   }
 
-  clear(): void {
-    ['access_token', 'user_id', 'organization_id', 'store_id', 'roles', 'resto_authenticated'].forEach((k) =>
+  /** Drop bearer identity but keep org/store station binding for PIN re-entry. */
+  clearAuth(): void {
+    const organizationId =
+      localStorage.getItem('organization_id') || localStorage.getItem('resto_org_id') || '';
+    const storeId = localStorage.getItem('store_id') || localStorage.getItem('resto_store_id') || '';
+    ['access_token', 'user_id', 'roles', 'resto_authenticated', 'resto_user_id'].forEach((k) =>
       localStorage.removeItem(k),
     );
+    this.sessionSubject.next(
+      organizationId || storeId
+        ? { userId: '', organizationId, storeId, roles: [] }
+        : null,
+    );
+  }
+
+  clear(): void {
+    [
+      'access_token',
+      'user_id',
+      'organization_id',
+      'store_id',
+      'roles',
+      'resto_authenticated',
+      'pos_staff',
+      'resto_org_id',
+      'resto_store_id',
+      'resto_user_id',
+    ].forEach((k) => localStorage.removeItem(k));
     this.sessionSubject.next(null);
   }
 
