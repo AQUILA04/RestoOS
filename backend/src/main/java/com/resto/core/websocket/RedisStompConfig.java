@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisPassword;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.listener.ChannelTopic;
@@ -34,8 +36,15 @@ public class RedisStompConfig {
     @Bean
     public RedisConnectionFactory redisConnectionFactory(
             @Value("${spring.data.redis.host:localhost}") String host,
-            @Value("${spring.data.redis.port:6379}") int port) {
-        return new LettuceConnectionFactory(host, port);
+            @Value("${spring.data.redis.port:6379}") int port,
+            @Value("${spring.data.redis.password:}") String password,
+            @Value("${spring.data.redis.database:0}") int database) {
+        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host, port);
+        config.setDatabase(database);
+        if (password != null && !password.isBlank()) {
+            config.setPassword(RedisPassword.of(password));
+        }
+        return new LettuceConnectionFactory(config);
     }
 
     @Bean

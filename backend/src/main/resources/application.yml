@@ -32,8 +32,10 @@ spring:
       mail.smtp.starttls.enable: false
   data:
     redis:
-      host: ${SPRING_REDIS_HOST:localhost}
-      port: ${SPRING_REDIS_PORT:6379}
+      host: ${SPRING_DATA_REDIS_HOST:${SPRING_REDIS_HOST:localhost}}
+      port: ${SPRING_DATA_REDIS_PORT:${SPRING_REDIS_PORT:6379}}
+      password: ${SPRING_DATA_REDIS_PASSWORD:${SPRING_REDIS_PASSWORD:}}
+      database: ${SPRING_DATA_REDIS_DATABASE:${SPRING_REDIS_DATABASE:0}}
   security:
     oauth2:
       resourceserver:
