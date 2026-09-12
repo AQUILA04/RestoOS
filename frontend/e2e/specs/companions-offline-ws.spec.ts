@@ -6,6 +6,7 @@ import {
   createTakeawayOrder,
   patchKitchenStatus,
 } from '../helpers/api-bootstrap';
+import { seedBrowserSession } from '../helpers/session';
 
 /**
  * Companion: offline queue (IndexedDB / onLine stub) + kitchen snapshot recovery
@@ -28,15 +29,13 @@ test.describe('Companion — offline queue & kitchen snapshot recovery', () => {
     });
 
     await test.step('Offline queue: stub offline, write IndexedDB, assert pending', async () => {
+      await seedBrowserSession(page, {
+        accessToken: tenant.ownerToken,
+        organizationId: tenant.orgId,
+        storeId: tenant.storeId,
+        userId: tenant.ownerUserId,
+      });
       await page.goto('/pos');
-      await page.evaluate(
-        ([token, org, store]) => {
-          localStorage.setItem('access_token', token as string);
-          localStorage.setItem('organization_id', org as string);
-          localStorage.setItem('store_id', store as string);
-        },
-        [tenant.ownerToken, tenant.orgId, tenant.storeId]
-      );
 
       const queueSnapshot = await page.evaluate(
         async ({ productId, storeId, idempotencyKey }) => {

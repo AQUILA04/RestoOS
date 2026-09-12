@@ -45,8 +45,14 @@ export class AuthCallbackPageComponent implements OnInit {
     }
     this.auth.completeKeycloakLogin(code).subscribe({
       next: (data) => {
+        const stored = sessionStorage.getItem('restoos_return_url');
+        sessionStorage.removeItem('restoos_return_url');
+        if (stored && stored.startsWith('/') && !stored.startsWith('//')) {
+          void this.router.navigateByUrl(stored);
+          return;
+        }
         const stores = data?.storeCount ?? 1;
-        this.router.navigateByUrl(stores > 1 ? '/admin/etablissements' : '/admin/dashboard');
+        void this.router.navigateByUrl(stores > 1 ? '/admin/etablissements' : '/admin/dashboard');
       },
       error: () => {
         this.message = 'Impossible de finaliser la connexion.';

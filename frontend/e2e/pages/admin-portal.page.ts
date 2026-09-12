@@ -1,4 +1,5 @@
 import { Page, Locator, expect } from '@playwright/test';
+import { seedBrowserSession } from '../helpers/session';
 
 export class AdminPortalPage {
   readonly page: Page;
@@ -66,21 +67,13 @@ export class AdminPortalPage {
     storeId: string,
     userId?: string
   ) {
-    await this.page.goto('/admin/dashboard', { waitUntil: 'domcontentloaded' });
-    await this.page.waitForSelector('resto-root', { state: 'attached', timeout: 15000 });
-    await this.page.evaluate(
-      ([accessToken, org, store, uid]) => {
-        localStorage.setItem('access_token', accessToken as string);
-        localStorage.setItem('organization_id', org as string);
-        localStorage.setItem('store_id', store as string);
-        localStorage.setItem('resto_authenticated', 'true');
-        if (uid) {
-          localStorage.setItem('user_id', uid as string);
-        }
-      },
-      [token, organizationId, storeId, userId || '']
-    );
-    await this.page.reload({ waitUntil: 'networkidle' });
+    await seedBrowserSession(this.page, {
+      accessToken: token,
+      organizationId,
+      storeId,
+      userId: userId || 'e2e-user',
+    });
+    await this.page.goto('/admin/dashboard', { waitUntil: 'networkidle' });
     await expect(this.page.locator('h1')).toContainText('Dashboard', { timeout: 15000 });
   }
 

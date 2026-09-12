@@ -57,10 +57,14 @@ export class PosTerminalPage {
 
   async authenticateWithPin(pin: string, userName?: string) {
     await this.gotoPos();
-    if (userName) {
-      await this.page.locator(`.user-card:has-text("${userName}")`).click();
-    } else {
-      await this.page.locator('.user-card').first().click();
+    const card = userName
+      ? this.page.locator(`.user-card:has-text("${userName}")`)
+      : this.page.locator('.user-card').first();
+    await expect(card).toBeVisible({ timeout: 15000 });
+    // First staff member is auto-selected; clicking an already-active card can race DOM updates.
+    const alreadyActive = await card.evaluate((el) => el.classList.contains('active'));
+    if (!alreadyActive) {
+      await card.click({ timeout: 15000 });
     }
     for (const digit of pin) {
       await this.page.locator(`.pin-button[data-digit="${digit}"]`).click();

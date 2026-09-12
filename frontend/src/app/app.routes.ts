@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard, stationGuard } from './core/guards/auth.guard';
 import { LandingPageComponent } from './pages/landing/landing-page.component';
 import { SignupPageComponent } from './pages/signup/signup-page.component';
 import { LoginPageComponent } from './pages/login/login-page.component';
@@ -20,13 +21,13 @@ export const APP_ROUTES: Routes = [
   { path: 'login', component: LoginPageComponent },
   { path: 'auth/callback', component: AuthCallbackPageComponent },
   { path: 'activate', component: ActivatePageComponent },
-  { path: 'pos', component: PosPageComponent },
-  { path: 'pos/orders/:orderNumber', component: PosOrderPageComponent },
-  { path: 'kds', component: KdsPageComponent },
-  { path: 'admin/catalog', component: AdminCatalogPageComponent },
-  { path: 'admin/dashboard', component: AdminDashboardPageComponent },
-  { path: 'admin/etablissements', component: AdminStoresPageComponent },
-  { path: 'admin/tables', component: AdminTablesPageComponent },
-  { path: 'admin/users', component: AdminUsersPageComponent },
+  { path: 'pos', component: PosPageComponent, canActivate: [stationGuard] },
+  { path: 'pos/orders/:orderNumber', component: PosOrderPageComponent, canActivate: [stationGuard] },
+  { path: 'kds', component: KdsPageComponent, canActivate: [stationGuard] },
+  { path: 'admin/catalog', component: AdminCatalogPageComponent, canActivate: [authGuard] },
+  { path: 'admin/dashboard', component: AdminDashboardPageComponent, canActivate: [authGuard] },
+  { path: 'admin/etablissements', component: AdminStoresPageComponent, canActivate: [authGuard] },
+  { path: 'admin/tables', component: AdminTablesPageComponent, canActivate: [authGuard] },
+  { path: 'admin/users', component: AdminUsersPageComponent, canActivate: [authGuard] },
   { path: '**', redirectTo: '' },
 ];

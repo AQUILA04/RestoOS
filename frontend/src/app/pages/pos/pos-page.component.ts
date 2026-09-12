@@ -114,7 +114,9 @@ export class PosPageComponent implements OnInit, OnDestroy {
     if (!this.staff.length) {
       this.staff = [{ id: 'station-user', name: 'Serveur' }];
     }
-    if (!storeId) {
+    // Station cold-start has org/store binding but no JWT yet — avoid 401 staff fetches.
+    const token = localStorage.getItem('access_token');
+    if (!storeId || !token) {
       return;
     }
     this.api.getData<any[]>(`/api/v1/stores/${storeId}/staff`).subscribe({

@@ -1,4 +1,5 @@
 import { test, expect } from '../fixtures/test-fixtures';
+import { seedBrowserSession } from '../helpers/session';
 
 /**
  * Golden Path — production-realistic acceptance.
@@ -230,17 +231,11 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
     });
 
     await test.step('Stage 3: POS PIN, table, modifiers, idempotent order', async () => {
-      await posPage.gotoPos();
-      await posPage.page.evaluate(
-        ([org, store, staff]) => {
-          localStorage.setItem('organization_id', org as string);
-          localStorage.setItem('store_id', store as string);
-          localStorage.setItem('pos_staff', JSON.stringify(staff));
-        },
-        [orgId, storeId, [{ id: waiterUserId, name: 'Wendy Waiter' }]]
-      );
-      await posPage.page.reload();
-
+      await seedBrowserSession(posPage.page, {
+        organizationId: orgId,
+        storeId,
+        staff: [{ id: waiterUserId, name: 'Wendy Waiter' }],
+      });
       await posPage.authenticateWithPin('1234', 'Wendy Waiter');
       await posPage.selectTable('Table 05');
       await posPage.addProductWithModifier('Burger Signature', 'A point');
@@ -250,15 +245,12 @@ test.describe('RestoOS — Golden Path Full Lifecycle', () => {
     });
 
     await test.step('Stage 4: KDS realtime ticket → READY', async () => {
-      await kdsPage.page.goto('/kds');
-      await kdsPage.page.evaluate(
-        ([token, org, store]) => {
-          localStorage.setItem('access_token', token as string);
-          localStorage.setItem('organization_id', org as string);
-          localStorage.setItem('store_id', store as string);
-        },
-        [ownerToken, orgId, storeId]
-      );
+      await seedBrowserSession(kdsPage.page, {
+        accessToken: ownerToken,
+        organizationId: orgId,
+        storeId,
+        userId: ownerUserId,
+      });
       await kdsPage.gotoKds();
       await kdsPage.waitForOrderTicket(orderNumber);
       await kdsPage.strikeThroughLineItem(orderNumber, 'Burger Signature');
